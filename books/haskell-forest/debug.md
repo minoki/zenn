@@ -1,5 +1,5 @@
 ---
-title: "Haskell でのデバッグ手法"
+title: "Haskellでのデバッグ手法"
 ---
 
 この章は [Haskell でのデバッグ手法あれこれ](https://blog.miz-ar.info/2018/01/debugging-haskell-program/)（2018年1月）を改編したものです。
@@ -63,7 +63,17 @@ traceShow :: Show a => a -> b -> b
 
 もちろん、 Haskell はデフォルトで遅延評価の言語ですし、 GHC は処理が純粋だと仮定して最適化するので、ログ出力の順番や回数は期待したものとは異なるかもしれません。
 
-例えば、下記のコードを筆者の環境の GHC 8.2.2 で試したところ、 `stack runghc` で実行した場合は
+例えば、下記のコード
+
+```haskell
+import Debug.Trace
+main = do
+  let x = trace "foo" 42
+  let y = trace "bar" 36
+  print (x * y)
+```
+
+を筆者の環境の GHC 8.2.2 で試したところ、 `stack runghc` で実行した場合は
 
 ```
 foo
@@ -81,13 +91,62 @@ foo
 
 が出力されました（i.e. 最適化によって出力の順番が違う）。
 
+## 多相関数の printf デバッグ：recover-rttiパッケージ
+
+`trace` で具体的な型の値を表示するのは良いのですが、多相関数をデバッグするときは型パラメーターに `Show` 制約を加える必要があって大変です。
+
+例えば、
+
+```haskell
+foo :: Num a => a -> a
+foo n = n^2 + n_plus_1
+  where n_plus_1 = n + 1
+
+bar :: Num a => a -> a
+bar n = foo (n^2 - 3 * n)
+
+main = print (bar 2)
+```
+
+というプログラムがあったとして、 `foo` の呼び出し時に `n` の値を表示したい、としましょう。このとき、
+
 ```haskell
 import Debug.Trace
-main = do
-  let x = trace "foo" 42
-  let y = trace "bar" 36
-  print (x * y)
+
+foo :: Num a => a -> a
+foo n = trace ("n=" ++ show n) $ n^2 + n_plus_1
+  where n_plus_1 = n + 1
 ```
+
+と書くのではうまくいきません（コンパイルが通りません）。型変数 `a` には `Show` 制約がついていないからです。`Show` 制約を書き足すとなると `foo` だけでなく呼び出し元の `bar` の型も変える必要があり、大変です。
+
+そこで使えるのが[recover-rttiパッケージ](https://hackage.haskell.org/package/recover-rtti)です。このパッケージは
+
+```haskell
+anythingToString :: a -> String
+```
+
+という関数を提供しており、**`Show` 制約なしで値を文字列化することができます。** `anythingToString` 関数を `show` の代わりに使えば、
+
+```haskell
+import Debug.Trace
+import Debug.RecoverRTTI
+
+foo :: Num a => a -> a
+foo n = trace ("n=" ++ anythingToString n) $ n^2 + n_plus_1
+  where n_plus_1 = n + 1
+
+bar :: Num a => a -> a
+bar n = foo (n^2 - 3 * n)
+
+main = print (bar 2)
+```
+
+と、`foo` や `bar` の型を変えることなくtraceによるデバッグを行えます。
+
+もちろん、recover-rttiパッケージは万能ではなく、欠点もあります。詳しくはドキュメントを読んでください。
+
+* [recover-rtti: Recover run-time type information from the GHC heap](https://hackage.haskell.org/package/recover-rtti) (Hackage)
 
 # Control.Exception.assert
 
@@ -103,7 +162,7 @@ assert False _ = error "Assertion failed"
 assert True  x = x
 ```
 
-しかしこの程度の関数を自分で書く必要はなく、 GHC 標準（？）の assert が Control.Exception モジュールで提供されています。
+しかしこの程度の関数を自分で書く必要はなく、 GHC 標準の assert が Control.Exception モジュールで提供されています。
 
 Control.Exception モジュールで提供される assert の特徴は、
 
@@ -296,7 +355,9 @@ head (x:_) = x
 
 # 実行トレース：debug パッケージ
 
-山本悠滋氏にコメントで教えていただきましたが、最近 debug パッケージというものが登場したようです。
+※このパッケージの紹介はGHC 8.2時代のものであり、最新のGHCではこの通りに動作するとは限りません。
+
+debugパッケージを使うと、実行トレースを取得できます。
 
 準備として、デバッグしたい関数の定義を `debug [d| … |]` で囲みます。
 
@@ -310,8 +371,8 @@ import Debug
 debug [d|
   foo :: Int -> Int
   foo n = n^2 + n_plus_1
-  where n_plus_1 = n + 1
-        n_plus_2 = n + 2
+    where n_plus_1 = n + 1
+          n_plus_2 = n + 2
   bar :: Int -> Int
   bar n = foo (n^2 - 3 * n)
   main = print (bar 2)
