@@ -23,9 +23,10 @@ C99では色々追加されました。ここでは一部のみの紹介とし�
     * 十六進表記
         * 筆者による関連記事：[浮動小数点数の16進表記](https://qiita.com/mod_poppo/items/3fa4cdc35f9bfb352ad5)
     * `fma`
-        * 筆者による関連記事：[FMA (fused multiply-add) の話 - Qiita](https://qiita.com/mod_poppo/items/e6577df362f44a3ef8dd)
+        * 筆者による関連記事：[FMA (fused multiply-add) の話](https://qiita.com/mod_poppo/items/e6577df362f44a3ef8dd)
     * `#pragma STDC FENV_ACCESS`, `#pragma STDC CX_LIMITED_RANGE`, `#pragma STDC FP_CONTRACT`
 * `restrict`
+* ブロックの先頭以外での変数宣言
 * `intmax_t` というのもC99で導入されましたがABI互換の問題がありC23に向けて議論中です。
 
 メジャーなCコンパイラーであるGCCやClangは長いこと `#pragma STDC FENV_ACCESS` に対応していなかったのですが、Clang 12がついに `#pragma STDC FENV_ACCESS` に対応しました。
@@ -144,11 +145,14 @@ Working Draftにすでに取り込まれたものを中心に挙げていきま�
 * POSIXの機能の取り込み: `strdup`, `strndup`, `memccpy`
 * C++の機能の取り込み:
     * `[[]]` による属性：N2596の時点では `[[nodiscard]]`, `[[maybe_unused]]`, `[[deprecated]]`, `[[fallthrough]]` の4つ。このほか `[[noreturn]]` も入りそう。
-    * `u8` 文字リテラル
+    * `u8` 文字リテラル（注：u8文字**列**リテラルはC11ですでに導入されている）
     * 1引数の `_Static_assert`
 * 浮動小数点数
     * IEEE 754-2008またはIEEE 754-2019への対応。これまではIEEE 754-1985を参照していた。
     * TS 18661-1, TS 18661-2およびTS 18661-4の一部は本文に取り込まれ、TS 18661-3（`_FloatN` 型など）はAnnexとして取り込まれる見込み。
+* K&amp;Rスタイルの関数定義の廃止
+    * ただし、定義が伴わない関数宣言の仮引数リストが空の場合は相変わらず「引数の規定がない」ものとして扱われ、「関数が引数を取らない」ことを明示するには `int f(void);` という風に `void` を使う必要があります。
+* 2の補数表現が必須となる
 
 他にも色々提案中の機能があります
 
@@ -182,6 +186,12 @@ GCC 10では
 * `__has_c_attribute`
 
 などが実装されています。
+
+## Clangの対応状況
+
+Clangもバージョン9以降で `-std=c2x` によりC23の機能の一部が使えるようになっているようです。
+
+* [Clang - C Programming Language Status - C2x implementation status](https://clang.llvm.org/c_status.html#c2x)
 
 ---
 
