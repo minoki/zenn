@@ -146,6 +146,15 @@ y :: Bar -> String
 
 例を挙げると、 `BangPatterns`, `RankNTypes`, `TypeApplications`, `ScopedTypeVariables`, `MultiParamTypeClasses`, `GeneralizedNewtypeDeriving` です。
 
+完全なリストは次のとおりです：
+
+* 構文：`EmptyCase`, `PostfixOperators`, `TupleSections`, `ImportQualifiedPost`, `NamedFieldPuns`, `BangPatterns`
+* リテラル：`BinaryLiterals`, `HexFloatLiterals`, `NumericUnderscores`
+* 型：`GADTSyntax`, `RankNTypes`, `TypeApplications`, `PolyKinds`, `StandaloneKindSignatures`, `ExistentialQuantification`, `TypeOperators`, `ConstraintKinds`
+* 型注釈：`ExplicitForAll`, `KindSignatures`, `NamedWildCards`, `ScopedTypeVariables`
+* クラスとインスタンスの宣言：`FlexibleContexts`, `FlexibleInstances`, `MultiParamTypeClasses`, `ConstrainedClassMethods`, `InstanceSigs`, `TypeSynonymInstances`
+* deriving: `DeriveDataTypeable`, `DeriveFoldable`, `DeriveFunctor`, `DeriveTraversable`, `StandaloneDeriving`, `EmptyDataDeriving`, `DeriveLift`, `GeneralisedNewtypeDeriving`, `DeriveGeneric`
+
 これは `Haskell98` や `Haskell2010` と並ぶ、言語を指定するGHC拡張として扱われます。`NoGHC2021` はありません。
 
 `Haskell98` や `Haskell2010` を指定しない場合はデフォルトで有効になりますが、逆に言うと.cabalファイルに `default-language: Haskell2010` と書いているパッケージでは `GHC2021` は有効になりません。
