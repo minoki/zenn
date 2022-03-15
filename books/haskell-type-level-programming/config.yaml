@@ -1,0 +1,14 @@
+title: "Haskellでの型レベルプログラミング"
+summary: "Haskellでの型レベルプログラミングの解説書です。"
+topics: ["haskell"]
+published: false
+price: 0 # 有料の場合200〜5000
+# 本に含めるチャプターを順番に並べましょう
+chapters:
+  - preface
+  - types-and-kinds
+  - phantom-types-and-proxy
+  - datatype-promotion
+  - type-families
+  - type-classes
+  - gadts
