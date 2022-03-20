@@ -62,7 +62,7 @@ data a :~: b where
   Refl :: a :~: a
 ```
 
-これは [Data.Type.Equality モジュール](https://hackage.haskell.org/package/base-4.16.0.0/docs/Data-Type-Equality.html)で定義されています。
+これは [Data.Type.Equality モジュール](https://hackage.haskell.org/package/base-4.16.0.0/docs/Data-Type-Equality.html)で定義されています。`Refl` は等号の反射律の英語 reflexivity の最初の4文字です。
 
 `a :~: b` は `a` と `b` が同じ型のときのみ停止する値 `Refl` を持ちます。`a :~: b` 型の値に `Refl` でパターンマッチすることにより、`a` と `b` が同じ型であることをコンパイラーに教えることができます。
 

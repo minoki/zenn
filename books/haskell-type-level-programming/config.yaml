@@ -12,3 +12,4 @@ chapters:
   - type-families
   - type-classes
   - gadts
+  - examples
