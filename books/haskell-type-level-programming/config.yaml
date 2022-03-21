@@ -1,5 +1,5 @@
 title: "Haskellでの型レベルプログラミング"
-summary: "Haskellでの型レベルプログラミングの解説書です。"
+summary: "Haskellでの型レベルプログラミングの解説書です。まだ執筆途中です。"
 topics: ["haskell"]
 published: true
 price: 0 # 有料の場合200〜5000
@@ -13,3 +13,5 @@ chapters:
   - type-classes
   - gadts
   - examples
+  - singletons
+  - theorem-proving

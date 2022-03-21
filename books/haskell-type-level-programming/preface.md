@@ -22,10 +22,26 @@ Haskellで型レベルプログラミングを使用する場面をいくつか�
 * 型レベル関数と型族、型演算子
 * 型レベル計算の結果を実行時に利用する：型クラス
 * GADTと型の等価性
-* シングルトン型と依存型の模倣（未執筆）
-* 定理証明（未執筆）
+* シングルトン型と依存型の模倣
+* 定理証明
 * 応用：制約カインド（未執筆）
 * 応用：GHCの型レベル自然数（Natカインド、GHC.TypeNats）（未執筆）
 * 応用：GHCの型レベル文字列（Symbolカインド、GHC.TypeLits）（未執筆）
 * 応用：GHC.Generics（未執筆）
 * 応用：実行時型情報（Typeable）（未執筆）
+
+本文やサンプルコードの記述は、**GHC 8.10以降**を前提とします。
+
+以下のGHC拡張は、断りなく使う場合があります：
+
+* DataKinds
+* GADTs
+* KindSignatures ★
+* NoStarIsType
+* ScopedTypeVariables ★
+* StandaloneKindSignatures ★
+* TypeFamilies
+* TypeOperators ★
+* UndecidableInstances
+
+なお、★マークをつけた拡張は、GHC 9.2以降のデフォルトの言語オプション「GHC2021」で自動的に有効になります。

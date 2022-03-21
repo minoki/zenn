@@ -9,10 +9,10 @@ title: "復習・小まとめ"
 ```haskell
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE GADTs #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE StandaloneKindSignatures #-} -- GHC 8.10以降
-{-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE StandaloneKindSignatures #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE UndecidableInstances #-}
 import Data.Kind -- Type
 import Data.Proxy
 ```
@@ -20,7 +20,7 @@ import Data.Proxy
 REPL (GHCi)で試す場合は次のコマンドを使うとこれらを有効化できます：
 
 ```haskell
-ghci> :set -XDataKinds -XGADTs -XTypeFamilies -XStandaloneKindSignatures -XUndecidableInstances -XScopedTypeVariables
+ghci> :set -XDataKinds -XGADTs -XScopedTypeVariables -XStandaloneKindSignatures -XTypeFamilies -XUndecidableInstances
 ghci> :m + Data.Kind Data.Proxy
 ```
 
@@ -243,7 +243,7 @@ type instance Add ('Succ n') m = 'Succ (Add n' m)
 
 なので我々からすると当然成り立つはずなのですが、GHCにはこれらの等式は非自明なのです。
 
-GHCにとって非自明な型レベル等式が成り立つことをGHCに教えてやるには、いわゆる**定理証明**と呼ばれる作業が必要になります。これについては後の方で紹介します。
+GHCにとって非自明な型レベル等式が成り立つことをGHCに教えてやるには、いわゆる**定理証明**と呼ばれる作業が必要になります。これについては後の章で紹介します。
 
 最後に、「リストの i 番目の要素を取得する」関数を書いてみましょう。通常のリストに対する `(!!)` 関数はリストの範囲外アクセスの場合は実行時エラーを投げますが、ここでは「型レベルで長さがわかっているリスト」を扱っているので、インデックスも型レベル自然数で与えて適宜制約を書けば「絶対に範囲外アクセスにならないインデックス関数」が書けるはずです。型はこんな感じになると想定されます：
 
@@ -331,19 +331,19 @@ data SomePeanoNat where
 
 が、この方法はスケールしません。自然数に対する処理を追加するたびに存在型の定義をいじるか、型クラスにメソッドを追加するのでしょうか？また、複数の型レベル自然数にまたがる `compareNat` のような処理にはこの方法では対応できません。
 
-必要なのは、ひとつの万能な型クラス `SingI_PeanoNat` であって、それがあれば型レベル自然数に対してパターンマッチが行えるようなものです。それがあれば、存在型 `SomePeanoNat` や型レベル自然数を使った各種処理は以下のように書けるでしょう：
+必要なのは、ひとつの万能な型クラス `PeanoNatI` であって、それがあれば型レベル自然数に対してパターンマッチが行えるようなものです。それがあれば、存在型 `SomePeanoNat` や型レベル自然数を使った各種処理は以下のように書けるでしょう：
 
 ```haskell
-class SingI_PeanoNat (n :: PeanoNat) where ...
-instance SingI_PeanoNat 'Zero where ...
-instance SingI_PeanoNat n => SPeanoNat ('Succ n) where ...
+class PeanoNatI (n :: PeanoNat) where ...
+instance PeanoNatI 'Zero where ...
+instance PeanoNatI n => PeanoNatI ('Succ n) where ...
 
 data SomePeanoNat where
-  SomePeanoNat :: forall (n :: PeanoNat). SingI_PeanoNat n => Proxy n -> SomePeanoNat
+  SomePeanoNat :: forall (n :: PeanoNat). PeanoNatI n => Proxy n -> SomePeanoNat
 
-peanoNatToInteger :: SingI_PeanoNat n => Proxy n -> Integer
-index :: (SingI_PeanoNat i, Compare i n ~ 'LT) => Proxy i -> SizedList n a -> a
-compareNat :: (SingI_PeanoNat n, SingI_PeanoNat m) => Proxy n -> Proxy m -> Ordering
+peanoNatToInteger :: PeanoNatI n => Proxy n -> Integer
+index :: (PeanoNatI i, Compare i n ~ 'LT) => Proxy i -> SizedList n a -> a
+compareNat :: (PeanoNatI n, PeanoNatI m) => Proxy n -> Proxy m -> Ordering
 ```
 
-次章では、この「万能な」型クラス `SingI_PeanoNat` の定義を扱います。
+次章では、この「万能な」型クラス `PeanoNatI` の定義を扱います。

@@ -22,8 +22,8 @@ newtype SizedList (n :: PeanoNat) a = SizedList [a]
 例えば、部分関数として悪名高い `head :: [a] -> a` をラップした
 
 ```haskell
-head :: SizedList ('Succ m) a -> a
-head (SizedList xs) = head xs
+safeHead :: SizedList ('Succ m) a -> a
+safeHead (SizedList xs) = head xs
 ```
 
 は安全な関数となります（`'Succ m` は「何らかの自然数 `m` に1を加えたもの」、要するに「1以上の自然数」という意味で、詳しくは後述します）。

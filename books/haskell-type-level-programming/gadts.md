@@ -2,7 +2,7 @@
 title: "一般化された代数的データ型 (GADT)"
 ---
 
-# GADTs
+# 一般化された代数的データ型
 
 通常の代数的データ型はデータ構築子（タグ）により分岐の種類やその他値レベルの情報を持っていますが、**一般化された代数的データ型** (generalized algebraic data type; GADT) を使うとデータ構築子に型に関する情報を持たせることができます。
 
@@ -140,12 +140,12 @@ showSomething (Showable x) = show x
 例えば、ある型 `a` が `Show` クラスのインスタンスであることの「証拠」を持ったデータ型 `ShowWitness` は次のように定義・利用できます：
 
 ```haskell
-data ShowWitness a = Show a => ShowWitness a
+data ShowWitness a = Show a => ShowWitness
 
 showSomethingWithWitness :: ShowWitness a -> a -> String -- a に Show 制約は課されていない
 showSomethingWithWitness x y = case x of
-                                 ShowWitness x' -> {- ここでは a は Show のインスタンス -}
-                                                   "(" ++ show x' ++ "," ++ show y ++ ")"
+                                 ShowWitness -> {- ここでは a は Show のインスタンス -}
+                                                show y
 ```
 
 GHCでは、存在量化されていない型変数についての型制約をデータ構築子に持たせるためにExistentialQuantification拡張またはGADTs拡張を要求します。そのため、この本ではこの機能も存在型の一種として扱います。

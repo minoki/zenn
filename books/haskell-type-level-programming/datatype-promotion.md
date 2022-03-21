@@ -71,4 +71,4 @@ newtype SizedList n a = ...
 
 その前に、型レベル関数についてもう少し詳しく扱います。
 
-ちなみに、 `newtype SizedList (n :: PeanoNat) a` という風に型の定義時にカインド注釈 (`:: PeanoNat`) を書けるのはKindSignaturesというGHC拡張拡張の機能です。
+ちなみに、 `newtype SizedList (n :: PeanoNat) a` という風に型の定義時にカインド注釈 (`:: PeanoNat`) を書けるのはKindSignaturesというGHC拡張の機能です。
