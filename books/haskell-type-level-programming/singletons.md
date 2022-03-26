@@ -142,7 +142,7 @@ peanoNatToInteger :: forall n. PeanoNatI n => Proxy n -> Integer
 peanoNatToInteger _ = sPeanoNatToInteger (singPeanoNat :: SPeanoNat n)
 ```
 
-# 残りのピース：値から型への持ち上げ
+# 値から型への持ち上げ
 
 型レベル自然数 `n` からシングルトン `SPeanoNat n` を得るのは `PeanoNatI` クラスを使えばできるようになりました。逆に、シングルトン `SPeanoNat n` から `PeanoNatI n` 制約を捻出する関数（および存在型）は次のように書けます：
 

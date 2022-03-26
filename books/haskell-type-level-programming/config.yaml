@@ -15,3 +15,5 @@ chapters:
   - examples
   - singletons
   - theorem-proving
+  - constraint-kinds
+  - ghc-typenats
