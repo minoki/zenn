@@ -215,7 +215,7 @@ matMulMaybe a b = case sameNat (Proxy :: Proxy m) (Proxy :: Proxy m') of
 
 # 大小比較
 
-自然数の大小を比較することもできます。`<=?` 型演算子は `Bool` カインドの型（型レベル `Bool`）を返すほか、`Ordering` を返す `CmpNat` 型族も提供されています。大小関係を制約として表す `<=` も使えます。
+自然数の大小を比較することもできます。`<=?` 型演算子は比較結果を `Bool` カインドの型（型レベル `Bool`）として返すほか、`Ordering` を返す `CmpNat` 型族も提供されています。大小関係を制約として表す `<=` も使えます。
 
 ```haskell
 type (<=) :: Nat -> Nat -> Constraint
@@ -226,7 +226,7 @@ type CmpNat :: Nat -> Nat -> Ordering
 cmpNat :: (KnownNat a, KnownNat b) => proxy1 a -> proxy2 b -> Data.Type.Ord.OrderingI a b
 ```
 
-GHC 9.2では実行時に比較を行う `cmpNat` が追加されたほか、 `<=` 以外の比較演算子が `Data.Type.Ord` モジュールからエクスポートされるようになりました：
+GHC 9.2では実行時に比較を行う `cmpNat` が追加されたほか、 `<=` 以外の比較演算子が `Data.Type.Ord` モジュールから提供されるようになりました：
 
 ```haskell
 module Data.Type.Ord where
@@ -353,17 +353,111 @@ main = print (foo (Proxy :: Proxy 7))
 
 ペアノ自然数の場合はシングルトンを使ったトリックでなんとかすることができましたが、`Nat` カインドおよび `KnownNat` クラスはGHC組み込みなので真っ当な方法では対処できません。
 
-*（以下執筆中）*
-
 ## コンパイラープラグインでの解決
 
+簡単なのは、コンパイラープラグインを使う解決法です。この手のコンパイラープラグインはいくつか存在します：
+
 * [ghc-typelits-natnormalise: GHC typechecker plugin for types of kind GHC.TypeLits.Nat](https://hackage.haskell.org/package/ghc-typelits-natnormalise)
+    * 型レベル自然数の等式を導いてくれるプラグインです。積和標準形への正規化を行なって比較します。
 * [ghc-typelits-presburger: Presburger Arithmetic Solver for GHC Type-level natural numbers.](https://hackage.haskell.org/package/ghc-typelits-presburger)
+    * 型レベル自然数の等式を導いてくれるプラグインです。プレスバーガー算術に基づいています。
 * [ghc-typelits-knownnat: Derive KnownNat constraints from other KnownNat constraints](https://hackage.haskell.org/package/ghc-typelits-knownnat)
+    * 「型レベル自然数の演算結果に対して `KnownNat` インスタンスがない」という問題を解消するプラグインです。
+
+`ghc-typelits-natnormalise` を使うには、パッケージの依存関係に `ghc-typelits-natnormalise` を追加し、ファイルの先頭部に
+
+```haskell
+{-# OPTIONS_GHC -fplugin GHC.TypeLits.Normalise #-}
+```
+
+と記述します。他の二つも同様で、詳しくはマニュアルを見てください。
+
+使用例を見てみましょう。先ほどの、コンパイルが通らなかったコードは以下のようにプラグインを指定することでコンパイルが通るようになります：
+
+```haskell
+{- cabal:
+build-depends: base
+             , ghc-typelits-natnormalise
+             -- , ghc-typelits-presburger
+             , ghc-typelits-knownnat
+-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeOperators, NoStarIsType #-}
+{-# OPTIONS_GHC -fplugin GHC.TypeLits.Normalise #-}
+-- {-# OPTIONS_GHC -fplugin GHC.TypeLits.Presburger #-}
+{-# OPTIONS_GHC -fplugin GHC.TypeLits.KnownNat.Solver #-}
+import Prelude hiding (replicate)
+import qualified Data.List as List
+import Data.Proxy
+import GHC.TypeNats
+
+-- 長さを型パラメーター（幽霊型）で持つリスト型
+-- 不変条件：長さが n である
+newtype SizedList (n :: Nat) a = SizedList [a] deriving (Eq, Show)
+
+replicate :: forall n a. KnownNat n => a -> SizedList n a
+replicate x = SizedList (List.replicate (fromIntegral (natVal (Proxy :: Proxy n))) x)
+
+append :: SizedList n a -> SizedList m a -> SizedList (n + m) a
+append (SizedList xs) (SizedList ys) = SizedList (xs ++ ys)
+
+foo :: forall n. KnownNat n => Proxy n -> Bool
+foo _ = let xs = replicate 'a' :: SizedList (2 * n) Char
+            ys = replicate 'a' :: SizedList n Char
+            zs = append ys ys :: SizedList (n + n) Char
+        in xs == zs
+
+main = print (foo (Proxy :: Proxy 7))
+```
+
+ghc-typelits-natnormaliseとghc-typelits-presburgerはどちらも型レベル等式を導出してくれるプラグインで、競合します。実際に使用するときはどちらか一つを使用することになるでしょう。
+
+ghc-typelits-presburgerはプレスバーガー算術の理論的な制約を受けるので、ghc-typelits-natnormaliseでコンパイルが通るコードでもghc-typelits-presburgerではコンパイルが通らない場合があります。以下のコードが例です：
+
+```haskell
+{- cabal:
+build-depends: base
+             -- , ghc-typelits-natnormalise
+             , ghc-typelits-presburger
+-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeOperators, NoStarIsType #-}
+-- {-# OPTIONS_GHC -fplugin GHC.TypeLits.Normalise #-}
+{-# OPTIONS_GHC -fplugin GHC.TypeLits.Presburger #-}
+import Data.Proxy
+import GHC.TypeNats
+
+foo :: forall (x :: Nat) (y :: Nat). Proxy x -> Proxy y -> Bool
+foo _ _ = let a = Proxy :: Proxy (x * (y + 1))
+              b = Proxy :: Proxy ((y + 1) * x)
+          in a == b -- a と b は同じ型のはず
+
+main = print (foo (Proxy :: Proxy 3) (Proxy :: Proxy 5))
+```
+
+（ghc-typelits-presburger 0.6.2.0およびghc-typelits-natnormalise 0.7.6で確認）
 
 ## ライブラリーでの解決
 
-[singletons-baseパッケージ](https://hackage.haskell.org/package/singletons-base-3.1)
+「GHCが型レベル自然数の等式を知らない」「GHCが演算結果の `KnownNat` を導出してくれない」という問題については、ライブラリーレベルで対処することもできます。前者は「適切な `:~:` 型の値を返す関数（証明）」によって、後者は「演算結果に対する `KnownNat` を封じ込めたデータ型を返す関数」によって対処できます。
+
+「特定の型レベル自然数に対する `KnownNat` を封じ込めたデータ型」は慣例として `SNat` と呼ばれ、典型的には
+
+```haskell
+data SNat (x :: Nat) = KnownNat x => SNat
+{- GADT風に書けば
+data SNat :: Nat -> Type where
+  SNat :: KnownNat x => SNat x
+-}
+```
+
+と定義されます。これは各 `x` について一通りしか値を持たないので、 `Nat` に関するシングルトン型となっています。
+
+[singletons-baseパッケージ](https://hackage.haskell.org/package/singletons-base-3.1)は、 `SNat` 型とそれに対する各種演算を提供しています：
 
 ```haskell
 module Prelude.Singletons where
@@ -388,11 +482,109 @@ sDiv :: SNat x -> SNat y -> SNat (Div x y)
 sMod :: SNat x -> SNat y -> SNat (Mod x y)
 ```
 
-[typelits-witnessesパッケージ](https://hackage.haskell.org/package/typelits-witnesses)
+使用例は次のようになります：
 
-singletonsパッケージのサブセットみたいなパッケージです。0.4.0.0の時点では既知のバグがいくつかあるほか、GHC 9.2に対応していません。
+```haskell
+{- cabal:
+build-depends: base, singletons-base
+-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeOperators, NoStarIsType #-}
+{-# LANGUAGE TypeApplications #-}
+import Prelude hiding (replicate)
+import qualified Data.List as List
+import Data.Proxy
+import GHC.TypeNats
+import Prelude.Singletons ((%*))
+import GHC.TypeLits.Singletons (SNat(SNat))
 
-[constraintsパッケージ](https://hackage.haskell.org/package/constraints)
+-- 長さを型パラメーター（幽霊型）で持つリスト型
+-- 不変条件：長さが n である
+newtype SizedList (n :: Nat) a = SizedList [a] deriving (Eq, Show)
+
+replicate :: forall n a. KnownNat n => a -> SizedList n a
+replicate x = SizedList (List.replicate (fromIntegral (natVal (Proxy :: Proxy n))) x)
+
+foo :: forall n. KnownNat n => Proxy n -> Bool
+foo _ = case SNat @2 %* SNat @n of
+          SNat -> -- ここで KnownNat (2 * n) が使えるようになる
+            let xs = replicate 'a' :: SizedList (2 * n) Char -- ここで KnownNat (2 * n) が必要になる
+            in xs == xs
+
+main = print (foo (Proxy :: Proxy 7))
+```
+
+[typelits-witnessesパッケージ](https://hackage.haskell.org/package/typelits-witnesses) はsingletonsパッケージのサブセットみたいなパッケージです。0.4.0.0の時点では既知のバグがいくつかあるほか、GHC 9.2に対応していません。
+
+[type-naturalパッケージ](https://hackage.haskell.org/package/type-natural)は以前はペアノ自然数を扱うパッケージでしたが、バージョン1.0.0.0以降はGHC組み込みの `Nat` カインドを対象とするようになっているようです（この本を書いている時点での最新版は1.1.0.1）。
+
+`Data.Type.Natural` モジュールにシングルトン型 `SNat` とその演算（`(%+) :: SNat x -> SNat y -> SNat (x + y)` など）が定義されているほか、 `Data.Type.Natural.Lemma.Arithmetic` モジュールや `Data.Type.Natural.Lemma.Order` モジュールで自然数に関する各種「定理」が提供されているようです。
+
+バージョン1.1.0.1時点でのデータ型と関数の一部：
+
+```haskell
+module Data.Type.Natural where
+
+data SNat (n :: Nat) -- ペアノ自然数風のコンストラクターが提供されているがここでは紹介しない
+sNat :: KnownNat n => SNat n
+sNatP :: KnownNat n => pxy n -> SNat n
+toNatural :: SNat n -> Natural
+withKnownNat :: SNat n -> (KnownNat n => r) -> r
+(%+) :: SNat x -> SNat y -> SNat (x + y)
+(%-) :: SNat x -> SNat y -> SNat (x - y)
+(%*) :: SNat x -> SNat y -> SNat (x * y)
+sDiv :: SNat x -> SNat y -> SNat (Div x y)
+sMod :: SNat x -> SNat y -> SNat (Mod x y)
+(%^) :: SNat a -> SNat b -> SNat (a ^ b)
+sLog2 :: SNat x -> SNat (Log2 x)
+(%<=?) :: SNat a -> SNat b -> SBool (a <=? b)
+```
+
+```haskell
+module Data.Type.Natural.Lemma.Arithmetic where
+plusMinus :: SNat n -> SNat m -> ((n + m) - m) :~: n
+plusZeroL :: SNat n -> (0 + n) :~: n
+plusZeroR :: SNat n -> (n + 0) :~: n
+plusComm :: SNat n -> SNat m -> (n + m) :~: (m + n)
+```
+
+使用例は次のようになります：
+
+```haskell
+{- cabal:
+build-depends: base, type-natural
+-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeOperators, NoStarIsType #-}
+{-# LANGUAGE TypeApplications #-}
+import Prelude hiding (replicate)
+import qualified Data.List as List
+import Data.Proxy
+import GHC.TypeNats
+import Data.Type.Natural (SNat, sNat, withKnownNat, (%*))
+
+-- 長さを型パラメーター（幽霊型）で持つリスト型
+-- 不変条件：長さが n である
+newtype SizedList (n :: Nat) a = SizedList [a] deriving (Eq, Show)
+
+replicate :: forall n a. KnownNat n => a -> SizedList n a
+replicate x = SizedList (List.replicate (fromIntegral (natVal (Proxy :: Proxy n))) x)
+
+foo :: forall n. KnownNat n => Proxy n -> Bool
+foo _ = withKnownNat (sNat @2 %* sNat @n)
+          ( -- ここで KnownNat (2 * n) が使えるようになる
+            let xs = replicate 'a' :: SizedList (2 * n) Char
+            in xs == xs
+          )
+
+main = print (foo (Proxy :: Proxy 7))
+```
+
+「Constraintカインド」の章で紹介した[constraintsパッケージ](https://hackage.haskell.org/package/constraints)は、型レベル自然数に役立つ関数も提供しています。`KnownNat` や `~` 制約のデータ型での表現には `SNat` や `:~:` ではなく、constraintsパッケージが提供する `Dict` 型や `:-` 型を使います。
 
 ```haskell
 module Data.Constraint.Nat where
@@ -420,35 +612,36 @@ timesCommutes :: forall n m. Dict ((m * n) ~ (n * m))
 plusDistributesOverTimes :: forall n m o. Dict ((n * (m + o)) ~ ((n * m) + (n * o)))
 ```
 
-[type-naturalパッケージ](https://hackage.haskell.org/package/type-natural)
-
-以前はペアノ自然数を扱うパッケージでしたが、バージョン1.0.0.0以降はGHC組み込みの `Nat` カインドを対象とするようになっているようです（この本を書いている時点での最新版は1.1.0.1）。
-`Data.Type.Natural` モジュールにシングルトン型 `SNat` とその演算（`(%+) :: SNat x -> SNat y -> SNat (x + y)` など）が定義されているほか、 `Data.Type.Natural.Lemma.Arithmetic` モジュールや `Data.Type.Natural.Lemma.Order` モジュールで自然数に関する各種「定理」が提供されているようです。
-
-バージョン1.1.0.1時点でのデータ型と関数の一部：
+使用例は次の通りです：
 
 ```haskell
-module Data.Type.Natural where
+{- cabal:
+build-depends: base, constraints
+-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeOperators, NoStarIsType #-}
+{-# LANGUAGE TypeApplications #-}
+import Prelude hiding (replicate)
+import qualified Data.List as List
+import Data.Proxy
+import GHC.TypeNats
+import Data.Constraint (Dict(Dict), (:-)(Sub))
+import Data.Constraint.Nat (timesNat)
 
-data SNat (n :: Nat)
-sNat :: KnownNat n => SNat n
-sNatP :: KnownNat n => pxy n -> SNat n
-toNatural :: SNat n -> Natural
-withKnownNat :: SNat n -> (KnownNat n => r) -> r
-(%+) :: SNat x -> SNat y -> SNat (x + y)
-(%-) :: SNat x -> SNat y -> SNat (x - y)
-(%*) :: SNat x -> SNat y -> SNat (x * y)
-sDiv :: SNat x -> SNat y -> SNat (Div x y)
-sMod :: SNat x -> SNat y -> SNat (Mod x y)
-(%^) :: SNat a -> SNat b -> SNat (a ^ b)
-sLog2 :: SNat x -> SNat (Log2 x)
-(%<=?) :: SNat a -> SNat b -> SBool (a <=? b)
-```
+-- 長さを型パラメーター（幽霊型）で持つリスト型
+-- 不変条件：長さが n である
+newtype SizedList (n :: Nat) a = SizedList [a] deriving (Eq, Show)
 
-```haskell
-module Data.Type.Natural.Lemma.Arithmetic where
-plusMinus :: SNat n -> SNat m -> ((n + m) - m) :~: n
-plusZeroL :: SNat n -> (0 + n) :~: n
-plusZeroR :: SNat n -> (n + 0) :~: n
-plusComm :: SNat n -> SNat m -> (n + m) :~: (m + n)
+replicate :: forall n a. KnownNat n => a -> SizedList n a
+replicate x = SizedList (List.replicate (fromIntegral (natVal (Proxy :: Proxy n))) x)
+
+foo :: forall n. KnownNat n => Proxy n -> Bool
+foo _ = case timesNat @2 @n of
+          Sub Dict -> -- ここで KnownNat (2 * n) が使えるようになる
+            let xs = replicate 'a' :: SizedList (2 * n) Char
+            in xs == xs
+
+main = print (foo (Proxy :: Proxy 7))
 ```
