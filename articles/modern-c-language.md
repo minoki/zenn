@@ -156,7 +156,7 @@ Working Draftにすでに取り込まれたものを中心に挙げていきま�
 
 他にも色々提案中の機能があります
 
-* `bool`, `true`, `false` をfirst-classにする
+* [`bool`, `true`, `false` をfirst-classにする](boolean-in-c)
 * `#elifdef`, `#elifndef`
 * C++ライクな `auto` とかlambda（無名関数）とか
 * `typeof`
