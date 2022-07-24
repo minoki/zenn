@@ -19,9 +19,11 @@ C23については[最近のC言語と、次期C標準(C23)](modern-c-language)�
 
 というわけで、C23に入る主な機能はこちらです：
 
+# C23に入る主な機能
+
 * POSIXの機能の取り込み: `strdup`, `strndup`, `memccpy`
 * C++の機能の取り込み:
-    * `[[]]` による属性：標準では `[[nodiscard]]`, `[[maybe_unused]]`, `[[deprecated]]`, `[[fallthrough]]`, `[[noreturn]]`, `[[_Noreturn]]` の6つ。そのほかベンダー独自のもの `[[vendor::attr]]` も処理系次第で使える。
+    * `[[]]` による属性：標準では `[[nodiscard]]`, `[[maybe_unused]]`, `[[deprecated]]`, `[[fallthrough]]`, `[[noreturn]]`, `[[_Noreturn]]` の6つ（実質5つ）。そのほかベンダー独自のもの `[[vendor::attr]]` も処理系次第で使える。
     * `u8` 文字リテラル（注：u8文字**列**リテラルはC11ですでに導入されている）
     * 定義済みの `bool`, `true`, `false`, `static_assert`, `alignof`, `alignas`, `thread_local`
         * [C言語のbool型とその名前について 〜もう_Boolは嫌だ〜](boolean-in-c)も参照してください。
@@ -58,6 +60,8 @@ C23については[最近のC言語と、次期C標準(C23)](modern-c-language)�
 * [C2x標準の属性(attribute) - yohhoyの日記](https://yohhoy.hatenadiary.jp/entry/20200505/p1)
 * [#elifdefと#elifndef - yohhoyの日記](https://yohhoy.hatenadiary.jp/entry/20210604/p1)
 * [2進数リテラル in 標準C - yohhoyの日記](https://yohhoy.hatenadiary.jp/entry/20210228/p1)
+* [realloc(ptr, 0)は廃止予定 - yohhoyの日記](https://yohhoy.hatenadiary.jp/entry/20210909/p1)
+* [2進数フォーマット出力 in 標準C - yohhoyの日記](https://yohhoy.hatenadiary.jp/entry/20211028/p1)
 
 ## GCCの対応状況
 
