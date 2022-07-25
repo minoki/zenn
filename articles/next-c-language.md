@@ -40,11 +40,12 @@ C23については[最近のC言語と、次期C標準(C23)](modern-c-language)�
 * 浮動小数点数
     * IEEE 754-2019への対応。これまではIEEE 754-1985を参照していた。
     * TS 18661-1, TS 18661-2およびTS 18661-4の一部は本文に取り込まれ、TS 18661-3（`_FloatN` 型など）はAnnex Hとして取り込まれた（以前のAnnex HはLanguage Independent Arithmeticだった）。
-    * `#pragma STDC FENV_ROUND`, `#pragma STDC FENV_DEC_ROUND` など
+    * 追加される `#pragma` は `#pragma STDC FENV_ROUND`, `#pragma STDC FENV_DEC_ROUND` などです。
 * K&amp;Rスタイルの関数定義の廃止
     * また、定義が伴わない関数宣言の仮引数リストが空の場合は「関数が引数を取らない」ことを表すようになります（[N2841](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n2841.htm)）。
 * 必須の引数を持たない可変長引数関数を定義できるようになる（[N2975](http://www.open-std.org/jtc1/sc22/wg14/www/docs/n2975.pdf)）
     * `va_start` の二番目の引数はoptionalとなる。
+    * C++では以前から「必須の引数を持たない可変長引数関数の定義」ができ、SFINAEとかで活用されていましたが、 `va_start` を使えないため引数にアクセスすることはできませんでした。
 * 2の補数表現が必須となる
 * `#elifdef`, `#elifndef`
 * `#embed` ([N3017](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3017.htm))
@@ -56,6 +57,7 @@ C23については[最近のC言語と、次期C標準(C23)](modern-c-language)�
     * キーワードにアンダースコアとかがつかないのは、各種コンパイラーが既に `typeof` キーワードを提供しているし変数名に使っているやつはいないだろ、というアレがあるんでしょう（適当）。
     * N2927では `typeof` の他に `remove_quals` というやつが入ります。一方で `remove_quals` ではなく `unqual_typeof` みたいな名前にしようぜ、という提案（[N2930](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n2930.pdf)）もあり、結局どっちになったの？
 * `unreachable()` ([N2826](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n2826.pdf))
+    * GCC/Clangの `__builtin_unreachable()` とかMSVCの `__assume(false)` とかC++23の `std::unreachable()` みたいなやつです。ある種の最適化に役立ちます。
 * `_BitInt`
 * `memset_explicit`
     * 以前から似たようなやつにAnnex Kの `memset_s` がありましたが、引数がちょっと違います。
