@@ -10,9 +10,9 @@ C23については[最近のC言語と、次期C標準(C23)](modern-c-language)�
 
 今回、C23入りする内容が大体固まったようなので改めて紹介します。
 
-この記事を書いている時点での最新のWorking Draftは[N2912](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n2912.pdf)です。
+この記事を書いている時点での最新のWorking Draftは ~~[N2912](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n2912.pdf)~~ [N3047](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3047.pdf)です。
 
-直近の会議の議事録はまだ出ていないようなので、内容については会議参加者の投稿を参考にしています：
+~~直近の会議の議事録はまだ出ていないようなので、~~ 内容については会議参加者の投稿を参考にしています：
 
 * https://twitter.com/rcs/status/1550526425211584512
 * [C23 now finalized! : C_Programming](https://www.reddit.com/r/C_Programming/comments/w5hl80/c23_now_finalized/)
@@ -21,15 +21,15 @@ C23については[最近のC言語と、次期C標準(C23)](modern-c-language)�
 
 # C23に入る主な機能
 
-* POSIXの機能の取り込み: `strdup`, `strndup`, `memccpy`
+* POSIXの機能の取り込み: `strdup`, `strndup`, `memccpy`, `gmtime_r`, `localtime_r`
 * C++の機能の取り込み:
-    * `[[]]` による属性：標準では `[[nodiscard]]`, `[[maybe_unused]]`, `[[deprecated]]`, `[[fallthrough]]`, `[[noreturn]]`, `[[_Noreturn]]` の6つ（実質5つ）。そのほかベンダー独自のもの `[[vendor::attr]]` も処理系次第で使える。
+    * `[[]]` による属性：標準では `[[nodiscard]]`, `[[maybe_unused]]`, `[[deprecated]]`, `[[fallthrough]]`, `[[noreturn]]`, `[[_Noreturn]]`, `[[reproducible]]`, `[[unsequenced]]` の8つ（実質7つ）。そのほかベンダー独自のもの `[[vendor::attr]]` も処理系次第で使える。
     * `char8_t` （ただしC++とは異なり、 `unsigned char` のtypedef）
     * `u8` 文字リテラル（注：u8文字**列**リテラルはC11ですでに導入されている）
     * 定義済みの `bool`, `true`, `false`, `static_assert`, `alignof`, `alignas`, `thread_local`
         * [C言語のbool型とその名前について 〜もう_Boolは嫌だ〜](boolean-in-c)も参照してください。
     * 1引数の `static_assert`
-    * `auto`
+    * `auto` ([N3007](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3007.htm))
         * GCC等ではすでに `__auto_type` というキーワードでC++の `auto` みたいなやつが使えるようになっていました。マクロとかで便利なようです。[Typeof (Using the GNU Compiler Collection (GCC))](https://gcc.gnu.org/onlinedocs/gcc-12.1.0/gcc/Typeof.html#Typeof)
     * `constexpr` による定数。関数は不可。 ([N3018](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3018.htm))
     * 基礎となる型を指定した `enum` ([N3021](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3021.htm))
@@ -50,20 +50,20 @@ C23については[最近のC言語と、次期C標準(C23)](modern-c-language)�
 * `#elifdef`, `#elifndef`
 * `#embed` ([N3017](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3017.htm))
     * ファイルの埋め込みができます。
-    * [finally. #embed | The Pasture](https://thephd.dev/finally-embed-in-c23)
 * `#warning`
 * `typeof` ([N2927](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n2927.htm))
     * C++の `decltype` は参照型に依存するため、C言語には持ってこれませんでした。
     * キーワードにアンダースコアとかがつかないのは、各種コンパイラーが既に `typeof` キーワードを提供しているし変数名に使っているやつはいないだろ、というアレがあるんでしょう（適当）。
-    * N2927では `typeof` の他に `remove_quals` というやつが入ります。一方で `remove_quals` ではなく `unqual_typeof` みたいな名前にしようぜ、という提案（[N2930](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n2930.pdf)）もあり、結局どっちになったの？
+    * ~~N2927では `typeof` の他に `remove_quals` というやつが入ります。一方で `remove_quals` ではなく `unqual_typeof` みたいな名前にしようぜ、という提案（[N2930](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n2930.pdf)）もあり、結局どっちになったの？~~ `typeof` の他に `typeof_unqual` も入ります。
 * `unreachable()` ([N2826](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n2826.pdf))
     * GCC/Clangの `__builtin_unreachable()` とかMSVCの `__assume(false)` とかC++23の `std::unreachable()` みたいなやつです。ある種の最適化に役立ちます。
 * `_BitInt`
 * `memset_explicit`
     * 以前から似たようなやつにAnnex Kの `memset_s` がありましたが、引数がちょっと違います。
 * スタックに確保しない可変長配列（ポインターとか引数とか）は必須の機能に昇格されます。
-* オーバーフローを検査する整数演算：`ckd_add`, `ckd_sub`, `ckd_mul`
+* オーバーフローを検査する整数演算：`ckd_add`, `ckd_sub`, `ckd_mul` in `<stdckdint.h>` ([N2683](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n2683.pdf))
 * `__has_include`
+* popcountやclz, ctzなどのビット演算 `<stdbit.h>`: `stdc_count_ones`, `stdc_leading_zeros`, `stdc_trailing_zeros` など（[N3022](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3022.htm)の一部）
 
 個々の機能についてここで詳しい説明をするといくら時間があっても足りません。いくつかについては、yohhoy氏の記事があるので紹介しておきます：
 
@@ -72,6 +72,11 @@ C23については[最近のC言語と、次期C標準(C23)](modern-c-language)�
 * [2進数リテラル in 標準C - yohhoyの日記](https://yohhoy.hatenadiary.jp/entry/20210228/p1)
 * [realloc(ptr, 0)は廃止予定 - yohhoyの日記](https://yohhoy.hatenadiary.jp/entry/20210909/p1)
 * [2進数フォーマット出力 in 標準C - yohhoyの日記](https://yohhoy.hatenadiary.jp/entry/20211028/p1)
+
+標準化委員会の中の人による記事も参考になります：
+
+* [finally. #embed | The Pasture](https://thephd.dev/finally-embed-in-c23)
+* [C23 is Finished: Here is What is on the Menu | The Pasture](https://thephd.dev/c23-is-coming-here-is-what-is-on-the-menu)
 
 # GCCの対応状況
 
@@ -107,4 +112,4 @@ Clangもバージョン9以降で `-std=c2x` によりC23の機能の一部が�
 
 ---
 
-見落としていた重要な機能に気付いたり、議事録が出たりしたら適宜この記事をアップデートしていきたいと思います。
+この記事は随時アップデートしています。変更履歴は[GitHub](https://github.com/minoki/zenn/blob/master/articles/next-c-language.md)を見てください。
