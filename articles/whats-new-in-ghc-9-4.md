@@ -3,22 +3,26 @@ title: "GHC 9.4の新機能"
 emoji: "🐈"
 type: "tech" # tech: 技術記事 / idea: アイデア
 topics: ["haskell"]
-published: false
+published: true
 ---
 
-GHC 9.4.1は2022年7月下旬にリリースされる予定です（ソース：[Mid 2022 Release Plans — The Glasgow Haskell Compiler](https://www.haskell.org/ghc/blog/20220523-release-status.html)）。
+GHC 9.4.1が2022年8月7日にリリースされました（[GHC 9.4.1 released — The Glasgow Haskell Compiler](https://www.haskell.org/ghc/blog/20220807-ghc-9.4.1-released.html)）。
 
-GHC 9.4の新機能を確認していきます。過去記事：
+この記事では、GHC 9.4の新機能を確認していきます。過去の類似の記事は
 
 * [GHC 9.2の新機能と、GHCの動向2021](ghc-9-2-and-future)
 * [GHC 8.10とGHC 9.0の新機能](ghc-8-10-and-9-0)
+
+です。
 
 # GHC 9.4に入る機能
 
 ここでは筆者が独断と偏見で選んだ変更をリストしています。公式の変更リストは
 
-* [docs/users_guide/9.4.1-notes.rst · ghc-9.4 · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/blob/ghc-9.4/docs/users_guide/9.4.1-notes.rst)
-* [libraries/base/changelog.md · master · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/blob/ghc-9.4/libraries/base/changelog.md)
+* [2.1. Version 9.4.1 — Glasgow Haskell Compiler 9.4.1 User's Guide](https://downloads.haskell.org/~ghc/9.4.1/docs/users_guide/9.4.1-notes.html)
+    * ソース：[docs/users_guide/9.4.1-notes.rst · ghc-9.4 · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/blob/ghc-9.4/docs/users_guide/9.4.1-notes.rst)
+* [Changelog for base-4.17.0.0 | Hackage](https://hackage.haskell.org/package/base-4.17.0.0/changelog)
+    * ソース：[libraries/base/changelog.md · master · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/blob/ghc-9.4/libraries/base/changelog.md)
 * Migration Guide [9.4 · Wiki · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/wikis/migration/9.4)
 
 を参照してください。
@@ -60,6 +64,24 @@ f = \cases
 
 という感じです。
 
+## `DeepSubsumption` 拡張
+
+* [ghc-proposals/0511-deep-subsumption.rst at master · ghc-proposals/ghc-proposals](https://github.com/ghc-proposals/ghc-proposals/blob/master/proposals/0511-deep-subsumption.rst)
+
+GHC 9.0でsimplified subsumptionという変更が行われました。詳しくは
+
+* [GHC 8.10とGHC 9.0の新機能](ghc-8-10-and-9-0)
+
+を見てください。
+
+simplified subsumptionでは手動でη変換が必要になる場面が増えました。これはコンパイルの簡略化のためですが、手動でのη変換はやっぱり面倒なものです。
+
+`DeepSubsumption` はsimplified subsumption以前の挙動を復活させます。これにより、自動でη変換される場面が増えます。
+
+`Haskell2010` の下では `DeepSubsumption` はデフォルトで有効、 `GHC2021` の下では `DeepSubsumption` はデフォルトで無効です。
+
+`DeepSubsumption` はGHC 9.2.4にもバックポートされています。GHCのマイナーリリースで新しくGHC拡張が実装されるのは異例のことです（GHC 9.2系がLTSということもあるのでしょうけど）。
+
 ## `ByteArray` と `MutableByteArray`
 
 * [Data.Primitive.ByteArray.ByteArray + instances in base? (#20044) · Issues · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/issues/20044)
@@ -67,13 +89,33 @@ f = \cases
 * [Rename Data.ByteArray to Data.Array.Byte + add Trustworthy (!6742) · Merge requests · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/merge_requests/6742)
 * [Export MutableByteArray from Data.Array.Byte (!7785) · Merge requests · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/merge_requests/7785)
 
-GHCにはヒープで管理されたバイト列を表すプリミティブ型として `ByteArray#` 型および `MutableByteArray#` 型があります。これらはunliftedな型で普段使いには辛いので、liftedなラッパーが[primitiveパッケージ](https://hackage.haskell.org/package/primitive)など提供されていました。
+GHCにはヒープで管理されたバイト列を表すプリミティブ型として `ByteArray#` 型および `MutableByteArray#` 型があります。これらはunliftedな型で普段使いには辛いので、liftedなラッパーが[primitiveパッケージ](https://hackage.haskell.org/package/primitive)などで提供されていました。
 
-今回、GHC付属のbaseパッケージでliftedなラッパーが提供されることになります。primitiveパッケージが提供する型はbaseパッケージの再エクスポートになると見込まれます。
+今回、GHC付属のbaseパッケージでliftedなラッパーが提供されることになります。将来、primitiveパッケージが提供する型はbaseパッケージの再エクスポートになるかもしれません。
+
+* [Reexport ByteArray and MutableByteArray from base on newer GHCs · Issue #336 · haskell/primitive](https://github.com/haskell/primitive/issues/336)
 
 ## Levity-polymorphic arrays
 
 * [Levity-polymorphic arrays and mutable variables (!7299) · Merge requests · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/merge_requests/7299)
+
+`GHC.Exts` の `Array#` 型のカインドが
+
+```haskell
+type Array# :: Type -> UnliftedType
+```
+
+から
+
+```haskell
+type Array# :: TYPE ('BoxedRep l) -> UnliftedType
+```
+
+へ一般化されました。これによって、 `Array#` の要素として通常の型の他にunliftedな型（サンクを許容しない型）が使えるようになります。
+
+これまでは `ArrayArray#` 型というunliftedな配列の配列みたいな組み込み型がありましたが、それが不要になります。
+
+まあ名前に `#` のつく型なので一般ユーザーにはあまり影響はないかもしれません。
 
 ## `ST` が `MonadFail` のインスタンスじゃなくなる
 
@@ -102,7 +144,7 @@ magicDict :: a
 という情報量皆無な代物で、正しく使うのは大変でした。GHC 9.4では `magicDict` が
 
 ```haskell
-withDict :: st -> (dt => r) -> r
+withDict :: meth -> (cls => r) -> r
 ```
 
 に置き換えられることになりました。
@@ -139,6 +181,12 @@ data Word64 = W64# Word64#
 
 SPARC NCGがついに削除されました。
 
-## Windows上でClangベースのツールチェインを使う
+## その他
 
-## Generically, Generically1
+他にも
+
+* Windows上でClangベースのツールチェインを使う
+* `Semigroup`, `Monoid` をderiveするのに便利な `Generically`, `Generically1`
+* multiple home packages
+
+などなど新機能がありますが、今回の記事はこの辺にしておきます。
