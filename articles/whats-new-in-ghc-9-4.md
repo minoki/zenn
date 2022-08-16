@@ -181,6 +181,20 @@ data Word64 = W64# Word64#
 
 SPARC NCGがついに削除されました。
 
+## xorとシフト演算子の追加
+
+* [Implement bitwise infix ops (!5522) · Merge requests · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/merge_requests/5522)
+
+Haskellでのビット論理和とビット論理積はそれぞれ `(.|.)` と `(.&.)` ですが、排他的論理和 (xor) やシフトは `xor` や `shiftL`/`shiftR` という風にアルファベットの名前がついていました。
+
+今回、 `xor` と `shiftL`/`shiftR` に対応する記号の演算子が追加されました。他の関数や演算子のように `Data.Bits` からエクスポートされます。
+
+* `(.^.)` (`infixl 6`): `xor`
+* `(.>>.)` (`infixl 8`): `shiftR`
+* `(.<<.)` (`infixl 8`): `shiftL`
+* `(!>>.)` (`infixl 8`): `unsafeShiftR`
+* `(!<<.)` (`infixl 8`): `unsafeShiftL`
+
 ## その他
 
 他にも
