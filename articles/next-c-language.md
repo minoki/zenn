@@ -72,11 +72,20 @@ C23については[最近のC言語と、次期C標準(C23)](modern-c-language)�
 * [2進数リテラル in 標準C - yohhoyの日記](https://yohhoy.hatenadiary.jp/entry/20210228/p1)
 * [realloc(ptr, 0)は廃止予定 - yohhoyの日記](https://yohhoy.hatenadiary.jp/entry/20210909/p1)
 * [2進数フォーマット出力 in 標準C - yohhoyの日記](https://yohhoy.hatenadiary.jp/entry/20211028/p1)
+* [nullptr定数 in 標準C - yohhoyの日記](https://yohhoy.hatenadiary.jp/entry/20220906/p1)
+* [reproducible/unsequenced属性 - yohhoyの日記](https://yohhoy.hatenadiary.jp/entry/20220909/p1)
+* [typeof演算子 in 標準C - yohhoyの日記](https://yohhoy.hatenadiary.jp/entry/20220912/p1)
+* [#embedディレクティブ - yohhoyの日記](https://yohhoy.hatenadiary.jp/entry/20220915/p1)
+* [R.I.P. "= {0}" - yohhoyの日記](https://yohhoy.hatenadiary.jp/entry/20220917/p1)
 
 標準化委員会の中の人による記事も参考になります：
 
 * [finally. #embed | The Pasture](https://thephd.dev/finally-embed-in-c23)
 * [C23 is Finished: Here is What is on the Menu | The Pasture](https://thephd.dev/c23-is-coming-here-is-what-is-on-the-menu)
+
+機能リストについてはcppreferenceの方にもまとまっているようです。
+
+* [C23 - cppreference.com](https://en.cppreference.com/w/c/23)
 
 # GCCの対応状況
 
