@@ -10,9 +10,9 @@ C23については[最近のC言語と、次期C標準(C23)](modern-c-language)�
 
 今回、C23入りする内容が大体固まったようなので改めて紹介します。
 
-この記事を書いている時点での最新のWorking Draftは ~~[N2912](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n2912.pdf)~~ [N3047](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3047.pdf)です。
+この記事を書いている時点での最新のWorking Draftは ~~[N2912](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n2912.pdf)~~ ~~[N3047](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3047.pdf)~~ [N3054](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3054.pdf)です。
 
-~~直近の会議の議事録はまだ出ていないようなので、~~ 内容については会議参加者の投稿を参考にしています：
+内容については会議参加者の投稿も参考にしています：
 
 * https://twitter.com/rcs/status/1550526425211584512
 * [C23 now finalized! : C_Programming](https://www.reddit.com/r/C_Programming/comments/w5hl80/c23_now_finalized/)
