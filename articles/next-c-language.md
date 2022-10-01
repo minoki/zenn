@@ -27,7 +27,6 @@ C23については[最近のC言語と、次期C標準(C23)](modern-c-language)�
     * `char8_t` （ただしC++とは異なり、 `unsigned char` のtypedef）
     * `u8` 文字リテラル（注：u8文字**列**リテラルはC11ですでに導入されている）
     * 定義済みの `bool`, `true`, `false`, `static_assert`, `alignof`, `alignas`, `thread_local`
-        * [C言語のbool型とその名前について 〜もう_Boolは嫌だ〜](boolean-in-c)も参照してください。
     * 1引数の `static_assert`
     * `auto` ([N3007](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3007.htm))
         * GCC等ではすでに `__auto_type` というキーワードでC++の `auto` みたいなやつが使えるようになっていました。マクロとかで便利なようです。[Typeof (Using the GNU Compiler Collection (GCC))](https://gcc.gnu.org/onlinedocs/gcc-12.1.0/gcc/Typeof.html#Typeof)
@@ -65,7 +64,12 @@ C23については[最近のC言語と、次期C標準(C23)](modern-c-language)�
 * `__has_include`
 * popcountやclz, ctzなどのビット演算 `<stdbit.h>`: `stdc_count_ones`, `stdc_leading_zeros`, `stdc_trailing_zeros` など（[N3022](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3022.htm)の一部）
 
-個々の機能についてここで詳しい説明をするといくら時間があっても足りません。いくつかについては、yohhoy氏の記事があるので紹介しておきます：
+個々の機能についてここで詳しい説明をするといくら時間があっても足りません。いくつかについては私の書いた記事があります。
+
+* [C言語のbool型とその名前について 〜もう_Boolは嫌だ〜](boolean-in-c)
+* [C言語でのオーバーフロー検査](c-checked-int)
+
+他のいくつかについては、yohhoy氏の記事があるので紹介しておきます：
 
 * [C2x標準の属性(attribute) - yohhoyの日記](https://yohhoy.hatenadiary.jp/entry/20200505/p1)
 * [#elifdefと#elifndef - yohhoyの日記](https://yohhoy.hatenadiary.jp/entry/20210604/p1)
