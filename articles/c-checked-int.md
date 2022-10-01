@@ -1,5 +1,5 @@
 ---
-title: "C言語でのオーバーフロー検査"
+title: "C言語での整数のオーバーフロー検査"
 emoji: "😽"
 type: "tech" # tech: 技術記事 / idea: アイデア
 topics: [c言語]
