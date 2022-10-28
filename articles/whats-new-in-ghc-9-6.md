@@ -22,9 +22,20 @@ GHC 9.6.1は2023年の初め頃にリリースされる予定です。
 
 まだマージされていません。
 
+* [javascript backend · Wiki · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/wikis/javascript-backend)
+
+GHCJSのマージ。
+
 ## WebAssemblyバックエンド
 
 まだマージされていません。
+
+* [WebAssembly backend · Wiki · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/wikis/WebAssembly-backend)
+* [WebAssembly goals · Wiki · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/wikis/WebAssembly-goals)
+
+Asteriusのマージ。
+
+`foreign import/export javascript` のないHaskellコードをビルドしたものはJavaScriptのない実行環境でも（WASIを使って）動作できるようにする予定。
 
 ## 限定継続のプリミティブ
 
