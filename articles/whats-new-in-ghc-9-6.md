@@ -6,7 +6,7 @@ topics: ["haskell"]
 published: false
 ---
 
-GHC 9.6.1は2023年の初め頃にリリースされる予定です。
+【GHC 9.6.1は2023年の初め頃にリリースされる予定です】
 
 この記事では、GHC 9.6の新機能を確認していきます。過去の類似の記事は
 
@@ -20,22 +20,22 @@ GHC 9.6.1は2023年の初め頃にリリースされる予定です。
 
 ## JavaScriptバックエンド
 
-まだマージされていません。
+【まだマージされていません】
 
 * [javascript backend · Wiki · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/wikis/javascript-backend)
 
-GHCJSのマージ。
+GHCにJavaScriptバックエンドを追加します。実質的にGHCJSのマージです。
 
 ## WebAssemblyバックエンド
 
-まだマージされていません。
+【まだマージされていません】
 
 * [WebAssembly backend · Wiki · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/wikis/WebAssembly-backend)
 * [WebAssembly goals · Wiki · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/wikis/WebAssembly-goals)
 
-Asteriusのマージ。
+GHCにWebAssemblyバックエンドを追加します。実質的にAsteriusのマージです。
 
-`foreign import/export javascript` のないHaskellコードをビルドしたものはJavaScriptのない実行環境でも（WASIを使って）動作できるようにする予定。
+WebAssemblyに対してはWASIとか策定されていますが、WebAssemblyバックエンドはそういう「JavaScriptを前提としない」実行環境でも使えるのか、気になるところです。その点についてはご関心ください。JavaScriptの連携機能 `foreign import/export javascript` を使わないHaskellコードをビルドしたものはJavaScriptのない実行環境でも（WASIを使って）動作できるようになる予定です。
 
 ## 限定継続のプリミティブ
 
@@ -144,3 +144,22 @@ type List = []
 最終的には `[]` や `()` が型を表さなくなる拡張 `NoListTuplePuns` が導入される予定です。
 
 とりあえずGHC 9.6に `List` 型が入るのは確定です。タプルの名前や `NoListTuplePuns` は執筆段階では未実装です。
+
+## ビルドシステムがHadrianのみになる
+
+従来はGHCをビルドする方法は二つありました：
+
+* 伝統的なmake
+* Haskell/Shakeで書かれたHadrian
+
+ですが今回、伝統的なmakeベースのビルドシステムは削除されました。
+
+Hadrianを使ってビルドするには
+
+```sh
+$ ./boot
+$ ./configure
+$ hadrian/build -j
+```
+
+みたいな感じのコマンドを使います。詳しくはhadrian/README.mdとか `hadrian/build --help` を見てください。
