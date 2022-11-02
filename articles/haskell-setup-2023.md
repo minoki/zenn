@@ -8,6 +8,8 @@ published: false
 
 この記事では、2022年12月時点のHaskellの環境構築手順を紹介します。多分2023年になっても通用します。
 
+# 対象とする環境
+
 対象とする環境は以下の通りです：
 
 * Unix系
@@ -16,11 +18,17 @@ published: false
         * WSL2を含む（WSL1は不具合があった気がするので避けてください）
 * Windows (x64)
 
-TODO: 32ビットArmの場合 / 64ビットArmでGHC 9.0以前を使いたい場合は「LLVMバックエンド」のセクションに誘導する
+Arm系CPU搭載のコンピューターを使っている場合は、別途LLVMが必要になる場合があります。以下のいずれかに当てはまる場合は、「補遺：LLVMバックエンドを使う」も読んでください：
+
+* 32ビットArm（Raspberry Pi OSの32ビット版など）を使う場合
+* 64ビットArm（Apple Silicon Macや、Raspberry Pi OSの64ビット版など）で、GHC 8.10系またはGHC 9.0系を使う場合
+    * 執筆時点（2022年11月2日）ではStackのデフォルト（LTS）ではGHC 9.0.2が使われるので、Stackユーザーは要注意です。
 
 # Stackか、GHCup+Cabalか
 
-Haskellの環境構築をするには、大きく分けて**Stack**と**GHCup+Cabal**の2通りがあります。それぞれ何をするツールなのかと言うと、
+Haskellの環境構築をするには、大きく分けて**Stack**と**GHCup+Cabal**の2通りがあります。そのほかにOS固有のパッケージマネージャーを使うという方法もありますが、ここでは紹介しません。
+
+StackとGHCup, Cabalがそれぞれ何をするツールなのかと言うと、
 
 * Stack: GHCのインストールおよび、プロジェクトのビルドを行う
 * GHCup: GHCや周辺ツール (Cabal/HLS/Stack) のインストールを行う
@@ -30,7 +38,7 @@ Haskellの環境構築をするには、大きく分けて**Stack**と**GHCup+Ca
 
 となります。役割が被っているために対立して語られるわけです。
 
-ですが、後述する設定をすればStackの「GHCのインストール」の部分をGHCupに任せることができます。また、プロジェクトファイルの形式はStackとCabalである程度互換性があります[^project-file]。なので、本稿では **GHCup, Cabal, Stackを全部インストールしてしまえ！** というヨクバリな方針を取ります。
+ですが、後述する設定をすればStackの「GHCのインストール」の部分をGHCupに任せることができます。また、プロジェクトファイルの形式はStackとCabalである程度互換性があります[^project-file]。なので、本稿では **GHCup, Cabal, Stackを全部インストールしてしまえ！** という欲張りな方針を取ります。
 
 [^project-file]: Cabalでは `.cabal` ファイルが使われ、Stackでは通常 `package.yaml` ファイルが使われますが、Stackでも `.cabal` ファイルを使うことができますし、Hpackというツールで後者から前者へ変換することができます。
 
@@ -61,15 +69,11 @@ GHCupのインストール方法は、[公式ページ](https://www.haskell.org/
 
 HLSとstackは後からインストールすることもできるので、この段階でインストールしなくても問題ありません。
 
-2022年11月1日の時点では、デフォルトでGHC 9.2.4とCabal 3.6.2.0がインストールされました。
-
-TODO: そのうち9.2.5が出る。
-
 Unixの場合、GHCupでインストールした諸々のファイルは `~/.ghcup` 以下に保存されます。`ghcup` コマンドは `~/.ghcup/bin/ghcup` という具合です。`~/.ghcup/bin` にPATHを通すようにしておいてください。GHCupを削除したくなった場合は、 `~/.ghcup` を丸ごと削除すればOKです。
 
 Windowsの場合、GHCupがインストールする諸々のファイルは `C:\ghcup` 以下に保存されます。Cabalのディレクトリーは `C:\cabal` となります。環境変数の設定やデスクトップへのショートカットの設置も行われるようです。
 
-セットアップができたら早速 `ghcup` コマンドを使ってみましょう。まず、引数を何も与えずに `ghcup` コマンドを実行するとオプションの一覧みたいなものが出力されます。
+セットアップができたら早速 `ghcup` コマンドを使ってみましょう。まず、引数を何も与えずに `ghcup` コマンドを実行するとオプションの一覧が出力されます。
 
 ```sh
 ghcup
@@ -83,17 +87,78 @@ ghcup list
 
 という具合です。
 
-# GHCの管理
+# GHCを使う
 
-TODO: GHCの簡単な使い方を解説した方が良い？
-
-まず、デフォルトではGHCupのインストール時に「それなりに新しくてしかも安定している」バージョンのGHCがインストールされます。この記事の執筆時点では9.2.4がインストールされました。実際のバージョンは次のコマンドで確認できます：
+デフォルトではGHCupのインストール時に「それなりに新しくてしかも安定している」バージョンのGHCがインストールされます。この記事の執筆時点では9.2.4がインストールされました。実際のバージョンは次のコマンドで確認できます：
 
 ```sh
 ghc --version
 ```
 
-しかし、時と場合により最新版のGHCを使ったり、あえて古いバージョンのGHCを使ったりしたいことがあります。そんな時のために、GHCupでは複数のGHCを管理できます。
+## 対話環境を試す
+
+対話環境を起動してみましょう。端末に `ghci` もしくは `ghc --interactive` と打ち込みます：
+
+```sh
+ghci
+```
+
+すると、 `ghci>` というプロンプトが表示されて入力待ちになります。
+
+```
+GHCi, version 9.2.4: https://www.haskell.org/ghc/  :? for help
+ghci> 
+```
+
+5の階乗を計算してみましょう。プロンプトに `product [1..5]` と打ち込んでみます：
+
+```
+ghci> product [1..5]
+120
+```
+
+無事計算できました。
+
+`:quit` と打ち込むと対話環境が終了します。
+
+## プログラムをコンパイル・実行する
+
+今度はファイルに記述したHaskellプログラムをコンパイルしてみましょう。テキストエディタで `Hello.hs` というファイルを作って、以下の内容で保存します：
+
+```haskell
+main = do { putStrLn "Hello world!"; print (product [1..5]) }
+```
+
+端末で `Hello.hs` を保存したディレクトリに移動して、次のコマンドを打ち込みます：
+
+```sh
+ghc Hello.hs
+```
+
+何事もなければ `Hello` （Windowsの場合は `Hello.exe`）という名前の実行ファイルが生成されます。実行してみましょう：
+
+```sh
+./Hello
+```
+
+以下の内容が表示されれば成功です：
+
+```
+Hello world!
+120
+```
+
+簡単なプログラムの場合は、 `runghc` コマンド[^runhaskell]で直接実行することもできます：
+
+[^runhaskell]: `runhaskell` という別名もあります。
+
+```sh
+runghc Hello.hs
+```
+
+## GHCの管理
+
+GHCupが自動でインストールしたGHCではなく、最新版のGHCを使ったり、あえて古いバージョンのGHCを使ったりしたいことがあります。そんな時のために、GHCupでは複数のGHCを管理できます。
 
 まず、特定のバージョンのGHCをインストールするコマンドは次の形です：
 
@@ -115,7 +180,7 @@ ghc-9.4.2 --version
 
 という具合です。
 
-バージョン番号がつかない `ghc` コマンドが指すものを変更するには、 `ghcup set` コマンドを使います。
+デフォルトのGHC（バージョン番号がつかない `ghc` コマンドが指すもの）を変更するには、 `ghcup set` コマンドを使います。
 
 ```sh
 ghcup set ghc <バージョン>
@@ -125,7 +190,7 @@ ghcup set ghc <バージョン>
 
 ```sh
 ghcup set ghc 9.4.2
-ghc --version  # →The Glorious Glasgow Haskell Compilation System, version 9.4.2
+ghc --version  # The Glorious Glasgow Haskell Compilation System, version 9.4.2
 ```
 
 GHCの新しいバージョンがリリースされた場合など、古いバージョンが不要になることがあります。その場合は、
@@ -166,6 +231,8 @@ ghcup rm cabal <バージョン>
 
 # Stackを使う
 
+## Stackとは
+
 まず、Stackとはどういうものなのか説明します。
 
 StackはHaskellのライブラリーやプログラムをビルドするほか、GHCの管理もできるツールです。ただ、「GHCの管理」の部分は今回はGHCupに譲るというのは既に説明しました。
@@ -179,13 +246,15 @@ StackはHaskellのライブラリーやプログラムをビルドするほか�
 
 もう少し詳しく説明します。まず、Stackageについて。
 
-HaskellのパッケージはHackageというサイトにアップロードされますが、個々のパッケージの作者が好きなタイミングで最新版をアップロードすると、パッケージ間の食い合わせが悪くて動作しない場合があります。そこで、Stackageという「主要パッケージの、動作確認されたバージョンの組み合わせ」を集めるデータベースができました。この「組み合わせ」のことをresolverと呼び、安定したバージョンであるLTS (long term support)系列と、より新しいが不安定なnightly系列があります。
+Haskellのパッケージは[Hackage](https://hackage.haskell.org/)というサイトにアップロードされますが、個々のパッケージの作者が好きなタイミングで最新版をアップロードすると、パッケージ間の食い合わせが悪くて動作しない場合があります。そこで、Stackageという「主要パッケージの、動作確認されたバージョンの組み合わせ」を集めるデータベースができました。この「組み合わせ」のことをresolverと呼びます。Stackageで提供されるresolverには、安定したバージョンであるLTS (long term support)系列と、より新しいが不安定なnightly系列があります。
 
-Stackageのresolverは主要パッケージのバージョンだけでなく、GHCのバージョンも指定します。`lts-19.31` ならばGHC 9.0.2という具合です。
+Stackageのresolverは主要パッケージのバージョンだけでなく、GHCのバージョンも固定します。`lts-19.31` ならばGHC 9.0.2という具合です。
 
 このStackageの利用が容易であるというのがStackの特徴の一つです[^cabal-stackage]。というか、Stackを使って開発をする際は常に何らかのresolverが使われます。
 
 [^cabal-stackage]: CabalからStackageを利用することもできます。
+
+<!-- ghc-<バージョン> という、「GHC+付属ライブラリー」のみが付属するresolverも指定できます。 -->
 
 もう一つの特徴である、YAMLを使ったプロジェクトファイルの記述について。
 
@@ -214,7 +283,7 @@ Stack自身のインストーラーを使った場合は `stack` コマンドは
 
 GHCupを使ってインストールした場合、 `stack upgrade` は使えないので注意してください。Stackのアップグレードにも `ghcup` コマンドを使うことになります。
 
-Stack関連のファイル（`stack` コマンド自身を除く）は `~/.stack/` （Unixの場合）または `%APPDATA%\stack\` （Windowsの場合）に保存されます。Stackを削除したくなった場合は、 `~/.stack` を丸ごと削除すればOKです。
+Stack関連のファイル（`stack` コマンド自身を除く）は `~/.stack/` （Unixの場合）または `%APPDATA%\stack\` （Windowsの場合）に保存されます。Stackを削除したくなった場合は、Unix系であれば `~/.stack` を丸ごと削除すればOKです。
 
 このままでは、Stackを使おうとするとGHCupとは独立にGHCがインストールされてしまいます。ディスクが余っている場合はそれでも構わないのですが、筆者のようにSSDがカツカツな場合は困るので、次の設定を行います。
 
@@ -238,9 +307,13 @@ system-ghc: true
 
 と書き込みます。
 
-これで、GHCupでインストールしたGHCをStackが使うようになります。
+これで、GHCupでインストールしたGHCをStackが使うようになります。ちなみに、Stackは使用するGHCのバージョンをresolverに基づいて独自に決定するので、 `ghcup set ghc` の結果はStackには影響しません。
 
-注意点として、素のStackにあった「未インストールのバージョンのGHCを要求されたらその場でインストールする」という機能が `install-ghc: false` で無効になります。未インストールのGHCが必要になったら手動でGHCupを実行しましょう。
+注意点として、素のStackにあった「未インストールのバージョンのGHCを要求されたらその場でインストールする」という機能が `install-ghc: false` で無効になります。適宜、手動でGHCupを実行しましょう。
+
+なお、Stackで未インストールのGHCが必要になった時にGHCupを使うように連携する機能が実験中のようです。この機能は `system-ghc: true` の場合は無効になります。将来的には `system-ghc: true` を使わないやり方が主流になるかもしれません。
+
+* [GHC installation customisation](https://docs.haskellstack.org/en/stable/yaml_configuration/#ghc-installation-customisation)
 
 # Haskell Language Serverを使う
 
@@ -273,7 +346,7 @@ Cabalで特定のバージョンのGHCを使いたい場合は、 `-w` オプシ
 Stackの場合はパッケージの指定には `--package` オプションを使います。
 
 ```sh
-stack repl --package vector
+stack repl --resolver lts --package vector
 ```
 
 Stackで特定のバージョンのGHCを使いたい場合は、 `--resolver` や `--with-ghc` などのオプションも指定すると良いでしょう。例：`--with-ghc ghc-9.2.4`
@@ -314,11 +387,18 @@ Stackで入れた実行コマンドは、デフォルトでは `~/.local/bin/` �
 
 * [The stack install command and copy-bins option](https://docs.haskellstack.org/en/stable/GUIDE/#the-stack-install-command-and-copy-bins-option)
 
-# おまけ：LLVMバックエンドを使う
+# 補遺：LLVMバックエンドを使う
 
 GHCはネイティブコードを生成できるコンパイラーですが、ネイティブコードの生成方法としてGHC自身のNCG (native code generator) バックエンドとLLVMバックエンドの2種類を持っています。
 
-普通はNCGで良いのですが、「GHC 9.0またはそれ以前で64ビットArm向けコードを生成したい」「NCGとLLVMの最適化を比較したい」「SIMDなど、LLVMバックエンドでしか対応してない機能を使いたい」などの場合はLLVMバックエンドも使えるようにしておく必要があります。**LLVMバックエンドを使わない場合はこのセクションは飛ばしてください。**
+普通はNCGで良いのですが、
+
+* GHC 9.0またはそれ以前で64ビットArm向けコードを生成したい
+* 32ビットArm向けコードを生成したい
+* NCGとLLVMの最適化を比較したい
+* SIMDなど、LLVMバックエンドでしか対応してない機能を使いたい
+
+などの場合はLLVMバックエンドも使えるようにしておく必要があります。**LLVMバックエンドを使わない場合はこのセクションは飛ばして構いません。**
 
 まず、システムのパッケージマネージャーでLLVMをインストールします。GHCごとに対応するLLVMのバージョンが決まっているので、むやみに新しいLLVMを入れればいいというものではありません。具体的には、対応関係は次のようになります：
 
@@ -335,7 +415,7 @@ Macユーザーの方は、Homebrewの場合は `brew install llvm@12` を、Mac
 
 Ubuntuユーザーの場合は `sudo apt install llvm-12` とすれば良いでしょう。
 
-GHCにとって重要なのは、インストール時にLLVMの `opt` コマンドと `llc` コマンドが見えることです。Ubuntuのように `opt-12`, `llc-12` コマンドにPATHが通っていれば自動検出されます。
+GHCにとって重要なのは、インストール時にLLVMの `opt` コマンドと `llc` コマンドが見えることです。Ubuntuのように、PATHの通った場所に `opt-12`, `llc-12` コマンドがあれば自動検出されます。
 
 ```sh
 sudo apt install llvm-12
@@ -362,9 +442,15 @@ OPT=/opt/local/bin/opt-mp-12 LLC=/opt/local/bin/llc-mp-12 ghcup install ghc 9.0.
 
 ちなみに、ここで設定した `OPT` と `LLC` の値は `~/.ghcup/ghc/9.0.2/lib/ghc-9.0.2/settings` というファイルに記録されます。
 
+Stackで使うGHCをStack自身に管理させている場合は、次のコマンドを適切な `OPT`, `LLC` の下で実行してください：
+
+```sh
+OPT=... LLC=... stack setup 9.0.2 --reinstall
+```
+
 LLVMバックエンドを実際に使うにはGHCオプションとして `-fllvm` を指定します。
 
-# おまけ：アルファ版・ベータ版のGHCを使う
+# 補遺：アルファ版・ベータ版のGHCを使う
 
 * [(Pre-)Release channels](https://www.haskell.org/ghcup/guide/#pre-release-channels)
 * [Installing custom bindists](https://www.haskell.org/ghcup/guide/#installing-custom-bindists)
