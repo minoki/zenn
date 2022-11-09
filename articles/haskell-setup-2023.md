@@ -24,6 +24,8 @@ Arm系CPU搭載のコンピューターを使っている場合は、別途LLVM�
 * 64ビットArm（Apple Silicon Macや、Raspberry Pi OSの64ビット版など）で、GHC 8.10系またはGHC 9.0系を使う場合
     * 執筆時点（2022年11月2日）ではStackのデフォルト（LTS）ではGHC 9.0.2が使われるので、Stackユーザーは要注意です。
 
+Apple Silicon Macに関しては[Apple Silicon MacでのHaskell/GHCの現状・2022年3月編](https://qiita.com/mod_poppo/items/1abc155b5a5265d7dc45)も参考になるかもしれません。
+
 # Stackか、GHCup+Cabalか
 
 Haskellの環境構築をするには、大きく分けて**Stack**と**GHCup+Cabal**の2通りがあります。そのほかにOS固有のパッケージマネージャーを使うという方法もありますが、ここでは紹介しません。
@@ -38,7 +40,7 @@ StackとGHCup, Cabalがそれぞれ何をするツールなのかと言うと、
 
 となります。役割が被っているために対立して語られるわけです。
 
-ですが、後述する設定をすればStackの「GHCのインストール」の部分をGHCupに任せることができます。また、プロジェクトファイルの形式はStackとCabalである程度互換性があります[^project-file]。なので、本稿では **GHCup, Cabal, Stackを全部インストールしてしまえ！** という欲張りな方針を取ります。
+ですが、後述する設定をすればStackの「GHCのインストール」の部分をGHCupに任せることができます。また、プロジェクトファイルの形式はStackとCabalで互換性があります[^project-file]。なので、本稿では **GHCup, Cabal, Stackを全部インストールしてしまえ！** という欲張りな方針を取ります。
 
 [^project-file]: Cabalでは `.cabal` ファイルが使われ、Stackでは通常 `package.yaml` ファイルが使われますが、Stackでも `.cabal` ファイルを使うことができますし、Hpackというツールで後者から前者へ変換することができます。
 
@@ -89,7 +91,7 @@ ghcup list
 
 # GHCを使う
 
-デフォルトではGHCupのインストール時に「それなりに新しくてしかも安定している」バージョンのGHCがインストールされます。この記事の執筆時点では9.2.4がインストールされました。実際のバージョンは次のコマンドで確認できます：
+デフォルトではGHCupのインストール時に「それなりに新しくてしかも安定している」バージョンのGHCがインストールされます。この記事の執筆時点では9.2.5がインストールされました。実際のバージョンは次のコマンドで確認できます：
 
 ```sh
 ghc --version
@@ -106,7 +108,7 @@ ghci
 すると、 `ghci>` というプロンプトが表示されて入力待ちになります。
 
 ```
-GHCi, version 9.2.4: https://www.haskell.org/ghc/  :? for help
+GHCi, version 9.2.5: https://www.haskell.org/ghc/  :? for help
 ghci> 
 ```
 
@@ -166,16 +168,16 @@ GHCupが自動でインストールしたGHCではなく、最新版のGHCを使
 ghcup install ghc <バージョン>
 ```
 
-例えば、GHC 9.4.2を入れるには次のコマンドを実行します：
+例えば、GHC 9.4.3を入れるには次のコマンドを実行します：
 
 ```sh
-ghcup install ghc 9.4.2
+ghcup install ghc 9.4.3
 ```
 
-新しくインストールされたGHCのコマンド名は `ghc-<バージョン>` となります。9.4.2であれば
+新しくインストールされたGHCのコマンド名は `ghc-<バージョン>` となります。9.4.3であれば
 
 ```sh
-ghc-9.4.2 --version
+ghc-9.4.3 --version
 ```
 
 という具合です。
@@ -189,8 +191,8 @@ ghcup set ghc <バージョン>
 例：
 
 ```sh
-ghcup set ghc 9.4.2
-ghc --version  # The Glorious Glasgow Haskell Compilation System, version 9.4.2
+ghcup set ghc 9.4.3
+ghc --version  # The Glorious Glasgow Haskell Compilation System, version 9.4.3
 ```
 
 GHCの新しいバージョンがリリースされた場合など、古いバージョンが不要になることがあります。その場合は、
@@ -264,7 +266,7 @@ HpackをCabalで使うには手動で `hpack` コマンドを使って `.cabal` 
 
 なお、Stackでも `.cabal` ファイルを利用できます。また、最近のCabal形式は便利になってきたのでHpackの優位性は昔ほどではないかもしれません。
 
-逆に、Stackが不利な状況も挙げておきます。Stackはresolverを固定する状況（アプリケーションを書く場合など）には強い一方で、複数のGHCでテストしたい状況（汎用的なライブラリーなど）には不便です。また、最新のGHCへの対応が遅れる傾向にあるため、新しい物好きの人は直接GHC+Cabalを使った方が良いかもしれません。
+逆に、Stackが不利な状況も挙げておきます。Stackはresolverを固定する状況（アプリケーションを書く場合など）には強い一方で、複数のGHCを試したい状況（汎用的なライブラリーなど）には不便です。また、最新のGHCへの対応が遅れる傾向にあるため、新しい物好きの人は直接GHC+Cabalを使った方が良いかもしれません。
 
 StackとCabalの比較についてさらに興味のある人のための資料を紹介しておきます：
 
@@ -291,7 +293,7 @@ Stack関連のファイル（`stack` コマンド自身を除く）は `~/.stack
 
 StackのデフォルトではシステムのGHCとは独立に、 `~/.stack/programs/` （Unixの場合）または `%LOCALAPPDATA%\Programs\stack\` （Windowsの場合）以下にGHCがインストールされます。ですが、すでにGHCupでGHCをインストールした場合はこれは無駄なので、StackでもシステムのGHCを使う設定を行います。**大容量のストレージを使っていて重複が気にならない場合はこのセクションは飛ばして構いません。**
 
-次のコマンドを実行します：
+この設定をするには次のコマンドを実行します：
 
 ```sh
 stack config set install-ghc false --global
@@ -341,21 +343,23 @@ Cabalの場合は、 `--build-depends` オプションで依存するパッケ�
 cabal repl --build-depends vector
 ```
 
-Cabalで特定のバージョンのGHCを使いたい場合は、 `-w` オプションを指定すると良いでしょう。例：`-w ghc-9.2.4`
+Cabalで特定のバージョンのGHCを使いたい場合は、 `-w` オプションを指定すると良いでしょう。例：`-w ghc-9.2.5`
 
-Stackの場合はパッケージの指定には `--package` オプションを使います。
+Stackの場合はパッケージの指定には `--package` オプションを使います。また、resolverを指定するには `--resolver` オプションを使いますが、コマンドラインで指定する場合は単に `lts` と指定すれば最新のLTSを使ってくれます。
 
 ```sh
 stack repl --resolver lts --package vector
 ```
 
-Stackで特定のバージョンのGHCを使いたい場合は、 `--resolver` や `--with-ghc` などのオプションも指定すると良いでしょう。例：`--with-ghc ghc-9.2.4`
+Stackで特定のバージョンのGHCを使いたい場合は、そういうresolverを指定するか、 `--with-ghc` オプションを指定すると良いでしょう。例：`--with-ghc ghc-9.2.5`
 
 ## 書き捨てスクリプトでライブラリーを使う
 
 TODO: cabal script / stack script
 
 [Haskellでちょっとしたスクリプトを書く](https://zenn.dev/mod_poppo/scraps/e2891dbebb235d)
+
+複数のファイルからなるプログラムをコンパイルしたい場合は、おとなしくプロジェクトを作ってください。
 
 # Haskell製ツールをインストールする
 
@@ -375,7 +379,13 @@ Cabalで入れた実行コマンドは、デフォルトでは `~/.cabal/bin/` �
 
 * [5.2.14. cabal install](https://cabal.readthedocs.io/en/stable/cabal-commands.html#cabal-install)
 
-TODO: 特定のバージョンをインストールするやり方、`--program-suffix`
+ツールのバージョン間に互換性がなく、複数のバージョンを導入しなければならないことがあります。その場合は、 `--constraint` によるバージョン指定と、 `--program-suffix` による実行ファイル名のサフィックス付加を指定しましょう。
+
+Happy 1.19を入れる例：
+
+```sh
+cabal install --program-suffix=-1.19 --constraint="happy==1.19.*" happy
+```
 
 Stackでツールをインストールすることもできます。そのためには `stack install <パッケージ名>` を実行します。例：
 
@@ -383,7 +393,7 @@ Stackでツールをインストールすることもできます。そのため
 stack install stylish-haskell
 ```
 
-Stackで入れた実行コマンドは、デフォルトでは `~/.local/bin/` （Unixの場合）または `%APPDATA%\local\bin\` （Windowsの場合）にインストールされます。適宜PATHを通しましょう。実際のパスは `stack path --local-bin` で確認できます。
+Stackで入れた実行コマンドは、デフォルトでは `~/.local/bin/` （Unixの場合）または `%APPDATA%\local\bin\` （Windowsの場合）にインストールされます。適宜PATHを通しましょう。インストール先のパスは `stack path --local-bin` でも確認できます。
 
 * [The stack install command and copy-bins option](https://docs.haskellstack.org/en/stable/GUIDE/#the-stack-install-command-and-copy-bins-option)
 
@@ -415,6 +425,8 @@ Macユーザーの方は、Homebrewの場合は `brew install llvm@12` を、Mac
 
 Ubuntuユーザーの場合は `sudo apt install llvm-12` とすれば良いでしょう。
 
+<!-- TODO: Windowsの場合 -->
+
 GHCにとって重要なのは、インストール時にLLVMの `opt` コマンドと `llc` コマンドが見えることです。Ubuntuのように、PATHの通った場所に `opt-12`, `llc-12` コマンドがあれば自動検出されます。
 
 ```sh
@@ -445,12 +457,19 @@ OPT=/opt/local/bin/opt-mp-12 LLC=/opt/local/bin/llc-mp-12 ghcup install ghc 9.0.
 Stackで使うGHCをStack自身に管理させている場合は、次のコマンドを適切な `OPT`, `LLC` の下で実行してください：
 
 ```sh
-OPT=... LLC=... stack setup 9.0.2 --reinstall
+OPT=ほにゃらら LLC=ほにゃらら stack setup 9.0.2 --reinstall
 ```
 
 LLVMバックエンドを実際に使うにはGHCオプションとして `-fllvm` を指定します。
 
 # 補遺：アルファ版・ベータ版のGHCを使う
 
+新しいGHCのメジャーバージョンがリリースされる前にはアルファ版やベータ版が出るのが通例です。9.4系の場合はalpha1, alpha2, alpha3, rc1が出ました。
+
+GHCupではprerelease channelというものを登録することによってそういう正式リリース前のバージョンを入れることができます。詳しくはGHCupのマニュアルを参照してください：
+
 * [(Pre-)Release channels](https://www.haskell.org/ghcup/guide/#pre-release-channels)
+
+アルファ版が出てからprerelease channelに登録されるまで若干タイムラグがある場合があります。待ちきれない場合は「Installing custom bindists」の手順で独自にインストールするという手があるかもしれません：
+
 * [Installing custom bindists](https://www.haskell.org/ghcup/guide/#installing-custom-bindists)
