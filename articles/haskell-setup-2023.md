@@ -21,7 +21,7 @@ published: false
 Arm系CPU搭載のコンピューターを使っている場合は、別途LLVMが必要になる場合があります。以下のいずれかに当てはまる場合は、「補遺：LLVMバックエンドを使う」も読んでください：
 
 * 32ビットArm（Raspberry Pi OSの32ビット版など）を使う場合
-* 64ビットArm（Apple Silicon Macや、Raspberry Pi OSの64ビット版など）で、GHC 8.10系またはGHC 9.0系を使う場合
+* 64ビットArm（Apple Silicon Macや、Raspberry Pi OSの64ビット版など）で、GHC 9.2よりも前のバージョンを使う場合
 
 Apple Silicon Macに関しては[Apple Silicon MacでのHaskell/GHCの現状・2022年3月編](https://qiita.com/mod_poppo/items/1abc155b5a5265d7dc45)も参考になるかもしれません。
 
@@ -201,7 +201,7 @@ ghci> product [1..5]
 main = do { putStrLn "Hello world!"; print (product [1..5]) }
 ```
 
-端末で `Hello.hs` を保存したディレクトリに移動して、次のコマンドを打ち込みます：
+端末で `Hello.hs` を保存したディレクトリーに移動して、次のコマンドを打ち込みます：
 
 ```sh
 ghc Hello.hs
@@ -421,7 +421,11 @@ Haskellプロジェクトからライブラリーを使いたい場合は、プ�
 
 次に、対話環境や書き捨てスクリプトでライブラリーを使いたい場合です。この場合、グローバルな環境にインストールするという手がありますが、筆者的にはお勧めできません。グローバルな状態というのは、いずれ管理しきれなくなることが目に見えているからです。
 
-ここでは、その場その場で依存ライブラリーを明示するやり方を紹介します。
+ここでは、その場その場で依存ライブラリーを明示する、またはグローバルな環境を汚さないやり方を紹介します。
+
+:::message
+ちなみに、GHCに付属するライブラリー（bytestringやtextなど）は素のGHCで使えます。
+:::
 
 ## 対話環境でライブラリーを使う
 
@@ -449,11 +453,39 @@ Stackで特定のバージョンのGHCを使いたい場合は、そういうres
 
 詳しくは
 
-* [Haskellでちょっとしたスクリプトを書く](https://zenn.dev/mod_poppo/scraps/e2891dbebb235d)
+* [Haskellでちょっとしたスクリプトを書く](haskell-script)
 
 を参照してください。
 
-複数のファイルからなるプログラムをコンパイルしたい場合は、おとなしくプロジェクトを作ってください。
+## 複数のファイルからなるプログラムでライブラリーを使う
+
+複数のファイルからなるプログラムをコンパイルしたい場合は、おとなしくプロジェクトを作ってください。……と言いたいところですが、一応やり方を紹介しておきます。
+
+Cabalでライブラリーを「インストール」するには `--lib` オプション付きで `install` コマンドを使います。ただ、デフォルトだとグローバルな環境にインストールされて後々訳が分からなくなると思われるので、 `--package-env` オプションで「環境」の場所を指定します。
+
+例：
+
+```sh
+cabal install --lib vector --package-env .
+```
+
+この例では `--package-env .` でカレントディレクトリーに環境を保存しています。このディレクトリーでGHCを起動すると最初に
+
+```
+Loaded package environment from ほにゃらら/.ghc.environment.ほにゃらら
+```
+
+というようなメッセージが出力され、インストールしたパッケージが使えるようになります。「環境」の実体は `.ghc.environment.` から始まる名前のファイルです。
+
+詳しくはCabalのマニュアルを見てください：
+
+* [5.2.18.1. Adding libraries to GHC package environments](https://cabal.readthedocs.io/en/3.8/cabal-commands.html#adding-libraries-to-ghc-package-environments)
+
+Stackの場合はプロジェクトの外でパッケージをインストール[^stack-build-library]しようとするとグローバル環境にインストールされてしまう[^stack-global-packages]ので、大人しくプロジェクトを作りましょう。
+
+[^stack-build-library]: `stack build <パッケージ名>` でグローバル環境にインストールできます。よく似たコマンドに `stack install` がありますが、これは「`stack build` + `~/.local/bin` に実行ファイルをコピー」の意味で、ライブラリーに使うコマンドではありません。
+
+[^stack-global-packages]: `stack exec -- ghc-pkg list` でグローバルにインストールされたパッケージの一覧を見ることができます。
 
 # Haskell製ツールをインストールする
 
@@ -461,18 +493,17 @@ HackageではHaskellで書かれたツールも色々公開されています。
 
 ツールの例：Alex, Happy, Hpack, stylish-haskell, cabal-fmt, Pandoc
 
-TODO: 執筆時点ではstylish-haskellが素直にインストールできない。別の例を使うべきか？
-
 Cabalでツールをインストールするには、 `cabal install <パッケージ名>` を実行します。例：
 
 ```sh
-cabal install stylish-haskell
+cabal install cabal-fmt
 ```
 
 Cabalで入れた実行コマンドは、デフォルトでは `~/.cabal/bin/` （Unixの場合）または `C:\cabal\bin\` （Windowsの場合）にインストールされます。適宜PATHを通しましょう。
 
 * [5.2.14. cabal install](https://cabal.readthedocs.io/en/stable/cabal-commands.html#cabal-install)
 
+:::message
 ツールのバージョン間に互換性がなく、複数のバージョンを導入しなければならないことがあります。その場合は、 `--constraint` によるバージョン指定と、 `--program-suffix` による実行ファイル名のサフィックス付加を指定しましょう。
 
 Happy 1.19を入れる例：
@@ -480,11 +511,12 @@ Happy 1.19を入れる例：
 ```sh
 cabal install --program-suffix=-1.19 --constraint="happy==1.19.*" happy
 ```
+:::
 
 Stackでツールをインストールすることもできます。そのためには `stack install <パッケージ名>` を実行します。例：
 
 ```sh
-stack install stylish-haskell
+stack install alex
 ```
 
 Stackで入れた実行コマンドは、デフォルトでは `~/.local/bin/` （Unixの場合）または `%APPDATA%\local\bin\` （Windowsの場合）にインストールされます。適宜PATHを通しましょう。インストール先のパスは `stack path --local-bin` でも確認できます。
