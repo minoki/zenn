@@ -1,5 +1,5 @@
 ---
-title: "Haskellの環境構築 2023年版"
+title: "Haskellの環境構築2023"
 emoji: "🏗"
 type: "tech" # tech: 技術記事 / idea: アイデア
 topics: ["haskell"]
@@ -22,7 +22,6 @@ Arm系CPU搭載のコンピューターを使っている場合は、別途LLVM�
 
 * 32ビットArm（Raspberry Pi OSの32ビット版など）を使う場合
 * 64ビットArm（Apple Silicon Macや、Raspberry Pi OSの64ビット版など）で、GHC 8.10系またはGHC 9.0系を使う場合
-    * 執筆時点（2022年11月2日）ではStackのデフォルト（LTS）ではGHC 9.0.2が使われるので、Stackユーザーは要注意です。
 
 Apple Silicon Macに関しては[Apple Silicon MacでのHaskell/GHCの現状・2022年3月編](https://qiita.com/mod_poppo/items/1abc155b5a5265d7dc45)も参考になるかもしれません。
 
@@ -61,19 +60,82 @@ GHCupのインストール方法は、[公式ページ](https://www.haskell.org/
 
 * GHC
 * Cabal
+* Stack（Unixの場合自動でインストールされる。Windowsでは選択制）
 
 がインストールされ、選択次第で以下のツールもインストールできます：
 
 * HLS (Haskell Language Server)
-* stack
-* （Windowsの場合）msys2
-    * msys2はWindows上でUnixライクなツール群（bashなど）を提供するソフトウェアで、ビルド時にconfigureを使うHaskellパッケージのために必要となります。
+* （Windowsの場合）MSYS2
+    * MSYS2はWindows上でUnixライクなツール群（bashなど）を提供するソフトウェアで、ビルド時にconfigureを使うHaskellパッケージのために必要となります。
+    * すでにMSYS2を導入している場合はそれを使うことができるようです。
 
-HLSとstackは後からインストールすることもできるので、この段階でインストールしなくても問題ありません。
+StackやHLSは後からインストールすることもできるので、この段階でインストールしなくても問題ありません。
 
-Unixの場合、GHCupでインストールした諸々のファイルは `~/.ghcup` 以下に保存されます。`ghcup` コマンドは `~/.ghcup/bin/ghcup` という具合です。`~/.ghcup/bin` にPATHを通すようにしておいてください。GHCupを削除したくなった場合は、 `~/.ghcup` を丸ごと削除すればOKです。
+## Unixの場合
 
-Windowsの場合、GHCupがインストールする諸々のファイルは `C:\ghcup` 以下に保存されます。Cabalのディレクトリーは `C:\cabal` となります。環境変数の設定やデスクトップへのショートカットの設置も行われるようです。
+Unixの場合の選択項目は、主に3つです：
+
+一つ目。
+
+```
+Detected bash shell on your system...
+Do you want ghcup to automatically add the required PATH variable to "$HOME/.bashrc"?
+
+[P] Yes, prepend  [A] Yes, append  [N] No  [?] Help (default is "P").
+```
+
+→環境変数を自動で設定するか聞かれます。よくわからなければデフォルトの `P` を、勝手にいじられたくない場合は `N` を選ぶと良いでしょう。追記される内容は
+
+```
+[ -f "$HOME/.ghcup/env" ] && source "$HOME/.ghcup/env"
+```
+
+で、 `$HOME/.ghcup/env` の中では `$HOME/.ghcup/bin` と `$HOME/.cabal/bin` をPATHに追加しています。
+
+二つ目。
+
+```
+Do you want to install haskell-language-server (HLS)?
+HLS is a language-server that provides IDE-like functionality
+and can integrate with different editors, such as Vim, Emacs, VS Code, Atom, ...
+Also see https://haskell-language-server.readthedocs.io/en/stable/
+
+[Y] Yes  [N] No  [?] Help (default is "N").
+```
+
+→Haskell Language Serverを入れるか聞かれます。後から入れることもできるので、この段階ではどちらでも構いません。
+
+三つ目。
+
+```
+Do you want to enable better integration of stack with GHCup?
+This means that stack won't install its own GHC versions, but uses GHCup's.
+For more information see:
+  https://docs.haskellstack.org/en/stable/yaml_configuration/#ghc-installation-customisation-experimental
+If you want to keep stacks vanilla behavior, answer 'No'.
+
+[Y] Yes  [N] No  [?] Help (default is "Y").
+```
+
+→StackでGHCをインストールする際にGHCupを使うような連携機能を有効にするか聞かれます。これは後から選択をやり直すことはできません。
+
+GHCのインストール時にCコンパイラーが見つからないようなことを言われた場合は、Cコンパイラーをインストール（Ubuntuの場合は `sudo apt install build-essential`）してやり直してください。
+
+GHCupでインストールした諸々のファイルは `~/.ghcup/` 以下に保存されます。`ghcup` コマンドは `~/.ghcup/bin/ghcup` という具合です。そのため、`~/.ghcup/bin` にPATHを通す必要がありますが、すでに書いたようにインストール時の選択次第で `.bashrc` を自動でアップデートさせることができます。
+
+`.bashrc` の変更後、シェルを立ち上げ直せば環境変数の設定が反映されます。シェルの再起動が面倒な場合は、 `source ~/.ghcup/env` すれば良いでしょう。
+
+GHCupを削除したくなった場合は、 `~/.ghcup/` を丸ごと削除して、シェルの設定ファイルを元に戻せばOKです。
+
+## Windowsの場合
+
+Windowsの場合、GHCupがインストールする諸々のファイルは `C:\ghcup\` 以下に保存されます。Cabalのディレクトリーは `C:\cabal\` となります。
+
+環境変数の設定やデスクトップへのショートカットの設置も行われるようです。
+
+GHCupのインストールが終わったら、環境変数を反映させるためにコマンドプロンプト／PowerShellを再起動してください。
+
+## GHCupを使ってみる
 
 セットアップができたら早速 `ghcup` コマンドを使ってみましょう。まず、引数を何も与えずに `ghcup` コマンドを実行するとオプションの一覧が出力されます。
 
@@ -88,6 +150,14 @@ ghcup list
 ```
 
 という具合です。
+
+コマンドをカチャカチャ打つのが面倒な人は
+
+```sh
+ghcup tui
+```
+
+で対話的なテキストユーザーインターフェースを起動することもできます（現時点ではUnix版のみ）。
 
 # GHCを使う
 
@@ -250,13 +320,13 @@ StackはHaskellのライブラリーやプログラムをビルドするほか�
 
 Haskellのパッケージは[Hackage](https://hackage.haskell.org/)というサイトにアップロードされますが、個々のパッケージの作者が好きなタイミングで最新版をアップロードすると、パッケージ間の食い合わせが悪くて動作しない場合があります。そこで、Stackageという「主要パッケージの、動作確認されたバージョンの組み合わせ」を集めるデータベースができました。この「組み合わせ」のことをresolverと呼びます。Stackageで提供されるresolverには、安定したバージョンであるLTS (long term support)系列と、より新しいが不安定なnightly系列があります。
 
-Stackageのresolverは主要パッケージのバージョンだけでなく、GHCのバージョンも固定します。`lts-19.31` ならばGHC 9.0.2という具合です。
+Stackageのresolverは主要パッケージのバージョンだけでなく、GHCのバージョンも固定します。`lts-20.0` ならばGHC 9.2.5という具合です。
 
-このStackageの利用が容易であるというのがStackの特徴の一つです[^cabal-stackage]。というか、Stackを使って開発をする際は常に何らかのresolverが使われます。
+このStackageの利用が容易であるというのがStackの特徴の一つです[^cabal-stackage]。というか、Stackを使って開発をする際は常に何らかのresolverが使われます[^ghc-resolver]。
 
 [^cabal-stackage]: CabalからStackageを利用することもできます。
 
-<!-- ghc-<バージョン> という、「GHC+付属ライブラリー」のみが付属するresolverも指定できます。 -->
+[^ghc-resolver]: `ghc-<バージョン>` という、「GHC+付属ライブラリー」のみが含まれるresolverも指定できます。
 
 もう一つの特徴である、YAMLを使ったプロジェクトファイルの記述について。
 
@@ -264,9 +334,9 @@ Cabalでは拡張子 `.cabal` を持つ独自の形式でプロジェクトの�
 
 HpackをCabalで使うには手動で `hpack` コマンドを使って `.cabal` ファイルを生成する必要がありますが、StackはこのHpackを組み込んでいるので、 `stack` の各コマンドを実行するだけで `package.yaml` の内容が反映されます。
 
-なお、Stackでも `.cabal` ファイルを利用できます。また、最近のCabal形式は便利になってきたのでHpackの優位性は昔ほどではないかもしれません。
+なお、Stackでも `.cabal` ファイルを利用できます。また、最近のCabal形式は便利になってきましたし、cabal-fmtのようなツールも登場しているので、Hpackの優位性は昔ほどではないかもしれません。
 
-逆に、Stackが不利な状況も挙げておきます。Stackはresolverを固定する状況（アプリケーションを書く場合など）には強い一方で、複数のGHCを試したい状況（汎用的なライブラリーなど）には不便です。また、最新のGHCへの対応が遅れる傾向にあるため、新しい物好きの人は直接GHC+Cabalを使った方が良いかもしれません。
+逆に、Stackが不利な状況も挙げておきます。Stackはresolverを固定する状況（アプリケーションを書く場合など）には強い一方で、複数のGHCを試したい状況（汎用的なライブラリーなど）には不便です。また、最新のGHCへ対応するまでタイムラグがあるため、新しい物好きの人は直接GHC+Cabalを使った方が良いかもしれません。
 
 StackとCabalの比較についてさらに興味のある人のための資料を紹介しておきます：
 
@@ -285,7 +355,7 @@ Stack自身のインストーラーを使った場合は `stack` コマンドは
 
 GHCupを使ってインストールした場合、 `stack upgrade` は使えないので注意してください。Stackのアップグレードにも `ghcup` コマンドを使うことになります。
 
-Stack関連のファイル（`stack` コマンド自身を除く）は `~/.stack/` （Unixの場合）または `%APPDATA%\stack\` （Windowsの場合）に保存されます。Stackを削除したくなった場合は、Unix系であれば `~/.stack` を丸ごと削除すればOKです。
+Stack関連のファイル（`stack` コマンド自身を除く）は `~/.stack/` （Unixの場合）または `%APPDATA%\stack\` （Windowsの場合）に保存されます。Stackを削除したくなった場合は、Unix系であれば `~/.stack/` を丸ごと削除すればOKです。
 
 このままでは、Stackを使おうとするとGHCupとは独立にGHCがインストールされてしまいます。ディスクが余っている場合はそれでも構わないのですが、筆者のようにSSDがカツカツな場合は困るので、次の設定を行います。
 
@@ -309,17 +379,37 @@ system-ghc: true
 
 と書き込みます。
 
-これで、GHCupでインストールしたGHCをStackが使うようになります。ちなみに、Stackは使用するGHCのバージョンをresolverに基づいて独自に決定するので、 `ghcup set ghc` の結果はStackには影響しません。
+これで、GHCupでインストールしたGHCをStackが使うようになります。
+
+ちなみに、Stackは使用するGHCのバージョンをresolverに基づいて独自に決定し、 `ghc-<バージョン>` の名前のコマンドがあればそれを使うので、 `ghcup set ghc` の結果は基本的にはStackには影響しません。
 
 注意点として、素のStackにあった「未インストールのバージョンのGHCを要求されたらその場でインストールする」という機能が `install-ghc: false` で無効になります。適宜、手動でGHCupを実行しましょう。
 
-なお、Stackで未インストールのGHCが必要になった時にGHCupを使うように連携する機能が実験中のようです。この機能は `system-ghc: true` の場合は無効になります。将来的には `system-ghc: true` を使わないやり方が主流になるかもしれません。
+なお、Stackで未インストールのGHCが必要になった時にGHCupを使ってその場でインストールするように連携する機能が実験中のようです。この機能は `system-ghc: true` の場合は無効になります。将来的には `system-ghc: true` を使わないやり方が主流になるかもしれません。
 
 * [GHC installation customisation](https://docs.haskellstack.org/en/stable/yaml_configuration/#ghc-installation-customisation)
 
-# Haskell Language Serverを使う
+# Haskell Language Serverを使う（執筆中）
 
-TODO
+```
+ghcup install hls
+```
+
+## Visual Studio Codeから使う（執筆中）
+
+Visual Studio Codeの場合は「Haskell」拡張を入れてください。
+
+* [Haskell - Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=haskell.haskell)
+
+HLS (Haskell Language Server)の管理方法を聞かれた場合は「Automatically via GHCup」を選んでください。
+
+Windowsの場合は設定のGhcup Executable Pathを手動で `C:\ghcup\bin\ghcup.exe` と指定しなければいけないかもしれません。
+
+GHCupのインストール時にHLSを入れなかった場合はここでHaskell Language Serverをインストールする必要があります。ターミナルに `ghcup install hls` と打ち込むか、VS CodeのGUIからインストールしましょう。
+
+HLSは最新のGHCに対応していない場合があります。その場合はGHCのバージョンを下げるのも手かもしれません。
+
+うまく動かない場合は、View > OutputからHaskell拡張のログを見ると良いです。
 
 # Haskell製ライブラリーをインストールする
 
@@ -343,7 +433,7 @@ Cabalの場合は、 `--build-depends` オプションで依存するパッケ�
 cabal repl --build-depends vector
 ```
 
-Cabalで特定のバージョンのGHCを使いたい場合は、 `-w` オプションを指定すると良いでしょう。例：`-w ghc-9.2.5`
+Cabalで特定のバージョンのGHCを使いたい場合は、 `-w` オプションを指定します。例：`-w ghc-9.2.5`
 
 Stackの場合はパッケージの指定には `--package` オプションを使います。また、resolverを指定するには `--resolver` オプションを使いますが、コマンドラインで指定する場合は単に `lts` と指定すれば最新のLTSを使ってくれます。
 
@@ -355,9 +445,13 @@ Stackで特定のバージョンのGHCを使いたい場合は、そういうres
 
 ## 書き捨てスクリプトでライブラリーを使う
 
-TODO: cabal script / stack script
+単独のファイルからなるプログラムを動かす場合、依存関係を特定の形式のコメントとして書いて `cabal run` コマンドあるいは `stack` コマンドで動かせばライブラリーが利用できます。cabal scriptあるいはstack scriptと呼ばれます。
 
-[Haskellでちょっとしたスクリプトを書く](https://zenn.dev/mod_poppo/scraps/e2891dbebb235d)
+詳しくは
+
+* [Haskellでちょっとしたスクリプトを書く](https://zenn.dev/mod_poppo/scraps/e2891dbebb235d)
+
+を参照してください。
 
 複数のファイルからなるプログラムをコンパイルしたい場合は、おとなしくプロジェクトを作ってください。
 
@@ -365,7 +459,7 @@ TODO: cabal script / stack script
 
 HackageではHaskellで書かれたツールも色々公開されています。CabalやStackを使うとそれらを簡単にインストールすることができます。
 
-ツールの例：Alex, Happy, Hpack, stylish-haskell, Pandoc
+ツールの例：Alex, Happy, Hpack, stylish-haskell, cabal-fmt, Pandoc
 
 TODO: 執筆時点ではstylish-haskellが素直にインストールできない。別の例を使うべきか？
 
@@ -406,7 +500,7 @@ GHCはネイティブコードを生成できるコンパイラーですが、�
 * GHC 9.0またはそれ以前で64ビットArm向けコードを生成したい
 * 32ビットArm向けコードを生成したい
 * NCGとLLVMの最適化を比較したい
-* SIMDなど、LLVMバックエンドでしか対応してない機能を使いたい
+* SIMDなど、LLVMバックエンドしか対応してない機能を使いたい
 
 などの場合はLLVMバックエンドも使えるようにしておく必要があります。**LLVMバックエンドを使わない場合はこのセクションは飛ばして構いません。**
 
@@ -419,15 +513,21 @@ GHCはネイティブコードを生成できるコンパイラーですが、�
 | GHC 9.2 | LLVM 9以上12以下 |
 | GHC 9.4 | LLVM 10以上13以下 |
 
-ここではGHC 9.0.2 / LLVM 12を例とします。
+ここではGHC 9.0.2 + LLVM 12を例とします。
 
 Macユーザーの方は、Homebrewの場合は `brew install llvm@12` を、MacPortsの場合は `sudo port install llvm-12` を実行してLLVMをインストールします。
 
-Ubuntuユーザーの場合は `sudo apt install llvm-12` とすれば良いでしょう。
+Ubuntuユーザーの場合は `sudo apt install llvm-12` とすれば良いでしょう。他のLinuxディストリビューションを使っている場合は各自調べてください。
 
-<!-- TODO: Windowsの場合 -->
+何であれ重要なのは、LLVMの `opt` コマンドと `llc` コマンドがGHCから見えることです。
 
-GHCにとって重要なのは、インストール時にLLVMの `opt` コマンドと `llc` コマンドが見えることです。Ubuntuのように、PATHの通った場所に `opt-12`, `llc-12` コマンドがあれば自動検出されます。
+厄介なのがWindowsで、LLVMのWindows向け公式バイナリーに `opt.exe` と `llc.exe` が含まれません。Chocolateyは公式バイナリーを使っているので、Chocolateyを使ってLLVMを入れても意味がありません。どうしてもLLVMバックエンドを使いたい場合はMSYS2を使って `opt.exe` と `llc.exe` を入手すると良いでしょう。なお、GHC 9.4以降には `opt.exe` と `llc.exe` が付属する[^opt-llc-in-ghc-9-4]ようなので、将来的には（GHC 9.6以降？）それがデフォルトで利用できるようになるかもしれません[^llvm-on-windows]。
+
+[^opt-llc-in-ghc-9-4]: 場所は `C:\ghcup\ghc\9.4.3\mingw\bin\{opt.exe,llc.exe}` という感じです。設定ファイル `C:\ghcup\ghc\9.4.3\lib\settings` を書き換えるか `-pgmlo` / `-pgmlc` オプションで指定してやると使えると思います（未確認）。
+
+[^llvm-on-windows]: [Use bundled llc/opt on Windows (#22438) · Issues · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/issues/22438)
+
+次にGHC側の設定方法ですが、Ubuntuのように、PATHの通った場所に `opt-12`, `llc-12` コマンドがあればGHCのインストール時に自動検出されます。
 
 ```sh
 sudo apt install llvm-12
@@ -446,7 +546,7 @@ OPT=/opt/homebrew/opt/llvm@12/bin/opt LLC=/opt/homebrew/opt/llvm@12/bin/llc ghcu
 OPT=/usr/local/opt/llvm@12/bin/opt LLC=/usr/local/opt/llvm@12/bin/llc ghcup install ghc 9.0.2 --force
 ```
 
-MacPortsの場合は `opt` コマンドと `llc` コマンドの名前に `-mp-` が含まれているので、次のように `ghcup` を実行すれば良いでしょう：
+MacPortsの場合は `opt` コマンドと `llc` コマンドの名前に `mp` が含まれているので、次のように `ghcup` を実行すれば良いでしょう：
 
 ```sh
 OPT=/opt/local/bin/opt-mp-12 LLC=/opt/local/bin/llc-mp-12 ghcup install ghc 9.0.2 --force
