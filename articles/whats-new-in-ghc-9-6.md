@@ -28,23 +28,34 @@ GHCにJavaScriptバックエンドを追加します。実質的にGHCJSのマ�
 
 ## WebAssemblyバックエンド
 
-【まだマージされていません】
-
 * [WebAssembly backend · Wiki · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/wikis/WebAssembly-backend)
 * [WebAssembly goals · Wiki · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/wikis/WebAssembly-goals)
+* [WebAssembly backend merged into GHC - Tweag](https://www.tweag.io/blog/2022-11-22-wasm-backend-merged-in-ghc/)
 
 GHCにWebAssemblyバックエンドを追加します。実質的にAsteriusのマージです。
 
-WebAssemblyに対してはWASIとか策定されていますが、WebAssemblyバックエンドはそういう「JavaScriptを前提としない」実行環境でも使えるのか、気になるところです。その点についてはご関心ください。JavaScriptの連携機能 `foreign import/export javascript` を使わないHaskellコードをビルドしたものはJavaScriptのない実行環境でも（WASIを使って）動作できるようになる予定です。
+WebAssemblyに対してはWASIとか策定されていますが、WebAssemblyバックエンドはそういう「JavaScriptを前提としない」実行環境でも使えるのか、気になるところです。その点についてはご安心ください。JavaScriptの連携機能 `foreign import/export javascript` を使わないHaskellコードをビルドしたものはJavaScriptのない実行環境でも（WASIを使って）動作できるようになる予定です。
 
 ## 限定継続のプリミティブ
 
 * [Delimited continuation primops](https://github.com/ghc-proposals/ghc-proposals/blob/master/proposals/0313-delimited-continuation-primops.rst)
 
-```haskell
-type PromptTag# (a :: Type)
+限定継続については浅井先生の
 
-newPromptTag# :: forall (a :: Type). State# RealWorld -> (State# RealWorld, PromptTag# a)
+* [shift/reset プログラミング入門](http://pllab.is.ocha.ac.jp/~asai/cw2011tutorial/main-j.pdf)
+
+や私の記事
+
+* [限定継続いろいろ | 雑記帳](https://blog.miz-ar.info/2022/10/delimited-continuations/)
+
+を見てください。
+
+以下の型と関数が `GHC.Exts` モジュールから使えるようになります：
+
+```haskell
+type PromptTag# :: Type -> UnliftedType
+
+newPromptTag# :: forall (a :: Type). State# RealWorld -> (# State# RealWorld, PromptTag# a #)
 
 prompt#
   :: forall (a :: Type)
@@ -61,10 +72,30 @@ control0#
   -> State# RealWorld -> (# State# RealWorld, b #)
 ```
 
+型が分かりにくいですが、 `State# RealWorld -> (# State# RealWorld, a #)` を `IO a` と思って読み替えると
+
+```haskell
+newPromptTag :: IO (PromptTag# a)
+prompt# :: PromptTag# a -> IO a -> IO a
+control0# :: PromptTag# a -> ((IO b -> IO a) -> IO a) -> IO b
+```
+
+となります。ただ、既存の `withFile` 等のリソース管理と限定継続の兼ね合いが微妙なので `IO` でラップしたものは標準ライブラリーからは提供されません。
+
+限定継続の操作は副作用なのでHaskellで使うにはモナドを使う必要があります。
+
+限定継続プリミティブを利用した拡張可能エフェクトのライブラリーが開発中のようです：
+
+* [hasura/eff: 🚧 a work in progress effect system for Haskell 🚧](https://github.com/hasura/eff)
+
 ## データ構築子を伴わない型・カインド定義： `TypeData` 拡張
 
 * [Define Kinds Without Promotion](https://github.com/ghc-proposals/ghc-proposals/blob/master/proposals/0106-type-data.rst)
 * [Allow defining kinds alone, without a datatype (#6024) · Issues · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/issues/6024)
+
+`DataKind` 拡張を使うと、型をカインドに、データ構築子を型レベルに持ち上げることができます。むしろ、データ型は要らないけど独自のカインドと型を定義するために `data` 宣言を使う、という場面があります。
+
+`TypeData` 拡張を使うと、型・データ構築子を定義することなくカインドと型を定義することができるようになります。
 
 ```haskell
 type data T = MkT
@@ -143,7 +174,7 @@ type List = []
 
 最終的には `[]` や `()` が型を表さなくなる拡張 `NoListTuplePuns` が導入される予定です。
 
-とりあえずGHC 9.6に `List` 型が入るのは確定です。タプルの名前や `NoListTuplePuns` は執筆段階では未実装です。
+とりあえずGHC 9.6に `List` 型が入るのと `Solo` が `MkSolo` に改名されるのは確定です。タプルの名前や `NoListTuplePuns` は執筆段階では未実装です。
 
 ## ビルドシステムがHadrianのみになる
 
@@ -157,7 +188,7 @@ type List = []
 Hadrianを使ってビルドするには
 
 ```sh
-$ ./boot
+$ ./boot # Gitから取ってきたソースをビルドする場合
 $ ./configure
 $ hadrian/build -j
 ```
