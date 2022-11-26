@@ -6,6 +6,10 @@ topics: ["haskell"]
 published: false
 ---
 
+この記事は[Haskell Advent Calendar 2022](https://qiita.com/advent-calendar/2022/haskell)の1日目の記事です。
+
+---
+
 この記事では、2022年12月時点のHaskellの環境構築手順を紹介します。多分2023年になっても通用します。
 
 # 対象とする環境
@@ -14,14 +18,14 @@ published: false
 
 * Unix系
     * macOS (Intel / Apple Silicon)
-    * Linux (x86\_64 / arm / aarch64)
+    * Linux (x86\_64 / aarch64)
         * WSL2を含む（WSL1は不具合があった気がするので避けてください）
 * Windows (x64)
 
-Arm系CPU搭載のコンピューターを使っている場合は、別途LLVMが必要になる場合があります。以下のいずれかに当てはまる場合は、「補遺：LLVMバックエンドを使う」も読んでください：
+Arm系CPU搭載のコンピューターを使っている場合は、別途LLVMが必要になる場合があります。以下に当てはまる場合は、「補遺：LLVMバックエンドを使う」も読んでください：
 
-* 32ビットArm（Raspberry Pi OSの32ビット版など）を使う場合
-* 64ビットArm（Apple Silicon Macや、Raspberry Pi OSの64ビット版など）で、GHC 9.2よりも前のバージョンを使う場合
+<!-- * 32ビットArm（Raspberry Pi OSの32ビット版など）を使う場合 -->
+* 64ビットArm（Apple Silicon Macや、Raspberry Pi OSの64ビット版など）で、GHC 9.0またはそれ以前のバージョンを使う場合
 
 Apple Silicon Macに関しては[Apple Silicon MacでのHaskell/GHCの現状・2022年3月編](https://qiita.com/mod_poppo/items/1abc155b5a5265d7dc45)も参考になるかもしれません。
 
@@ -86,7 +90,7 @@ Do you want ghcup to automatically add the required PATH variable to "$HOME/.bas
 
 →環境変数を自動で設定するか聞かれます。よくわからなければデフォルトの `P` を、勝手にいじられたくない場合は `N` を選ぶと良いでしょう。追記される内容は
 
-```
+```sh
 [ -f "$HOME/.ghcup/env" ] && source "$HOME/.ghcup/env"
 ```
 
@@ -117,7 +121,7 @@ If you want to keep stacks vanilla behavior, answer 'No'.
 [Y] Yes  [N] No  [?] Help (default is "Y").
 ```
 
-→StackでGHCをインストールする際にGHCupを使うような連携機能を有効にするか聞かれます。これは後から選択をやり直すことはできません。
+→StackでGHCをインストールする際にGHCupを使うような連携機能を有効にするか聞かれます。これは後から選択をやり直すことはできません。まあ後で欲しくなったらGHCupのインストーラーを再度実行すれば良いだけですが。
 
 GHCのインストール時にCコンパイラーが見つからないようなことを言われた場合は、Cコンパイラーをインストール（Ubuntuの場合は `sudo apt install build-essential`）してやり直してください。
 
@@ -129,9 +133,52 @@ GHCupを削除したくなった場合は、 `~/.ghcup/` を丸ごと削除し�
 
 ## Windowsの場合
 
+Windowsの場合の質問事項はUnixとちょっと違います。
+
+```
+Where to install to (this should be a short Path, preferably a Drive like 'C:\')?
+If you accept this path, binaries will be installed into 'C:\ghcup\bin' and msys2 into 'C:\ghcup\msys64'.
+Press enter to accept the default [C:\]:
+```
+
+→GHCupのインストール先を聞かれます。そのままEnterを押せばデフォルトの `C:\` が選択され、 `C:\ghcup\` に諸々のファイルが入ります。
+
+```
+Specify Cabal directory (this is where haskell packages end up)
+Press enter to accept the default [C:\\cabal]:
+```
+
+→Cabalのインストール先を聞かれます。そのままEnterを押せばデフォルトの `C:\cabal` が選択されます。
+
+```
+Install HLS
+Do you want to install the haskell-language-server (HLS) for development purposes as well?
+[Y] Yes  [N] No  [A] Abort  [?] Help (default is "N"):
+```
+
+→Haskell Language Serverを入れるか聞かれます。後から入れることもできるので、この段階ではどちらでも構いません。
+
+```
+Install stack
+Do you want to install stack as well?
+[Y] Yes  [N] No  [A] Abort  [?] Help (default is "N"): 
+```
+
+→Stackを入れるか聞かれます。後から入れることもできるので、この段階ではどちらでも構いません。
+
+```
+Install MSys2
+Do you want GHCup to install a default MSys2 toolchain (recommended)?
+[Y] Yes  [N] No  [?] Help (default is "Y"):
+```
+
+→MSYS2を入れるか聞かれます。Noを選択するとインストール済みのMSYS2の場所を要求されます。
+
+一通り選択肢を選び終わると、MSYS2のインストールが始まります（未インストールの場合）。それが終わると、PowerShellとは別にMSYS2のターミナルが立ち上がってGHC等のインストールが行われます。
+
 Windowsの場合、GHCupがインストールする諸々のファイルは `C:\ghcup\` 以下に保存されます。Cabalのディレクトリーは `C:\cabal\` となります。
 
-環境変数の設定やデスクトップへのショートカットの設置も行われるようです。
+インストーラーによって環境変数の設定やデスクトップへのショートカットの設置も行われるようです。
 
 GHCupのインストールが終わったら、環境変数を反映させるためにコマンドプロンプト／PowerShellを再起動してください。
 
@@ -301,6 +348,12 @@ ghcup rm cabal <バージョン>
 
 で削除ができます。
 
+Cabalを使ってプロジェクトを作るやり方はここでは扱いません。2年前の記事ですが
+
+* [おすすめHaskellプロジェクト作成方法(ほぼ)2021年版](https://zenn.dev/autotaker/articles/haskell-setup-2021)
+
+などを参考にしてください。
+
 # Stackを使う
 
 ## Stackとは
@@ -389,13 +442,15 @@ system-ghc: true
 
 * [GHC installation customisation](https://docs.haskellstack.org/en/stable/yaml_configuration/#ghc-installation-customisation)
 
-# Haskell Language Serverを使う（執筆中）
+# Haskell Language Serverを使う
 
-```
+GHCupでHaskell Language Serverをインストールするには次のコマンドを実行します：
+
+```sh
 ghcup install hls
 ```
 
-## Visual Studio Codeから使う（執筆中）
+## Visual Studio Codeから使う
 
 Visual Studio Codeの場合は「Haskell」拡張を入れてください。
 
@@ -421,71 +476,11 @@ Haskellプロジェクトからライブラリーを使いたい場合は、プ�
 
 次に、対話環境や書き捨てスクリプトでライブラリーを使いたい場合です。この場合、グローバルな環境にインストールするという手がありますが、筆者的にはお勧めできません。グローバルな状態というのは、いずれ管理しきれなくなることが目に見えているからです。
 
-ここでは、その場その場で依存ライブラリーを明示する、またはグローバルな環境を汚さないやり方を紹介します。
+というわけで、プロジェクトを作ることなく、なおかつグローバルな環境を汚さずにライブラリーを使うことができると便利です。詳しくは
 
-:::message
-ちなみに、GHCに付属するライブラリー（bytestringやtextなど）は素のGHCで使えます。
-:::
+* [プロジェクトを作らずにHaskellをやる](haskell-without-project)
 
-## 対話環境でライブラリーを使う
-
-まず対話環境についてですが、 `ghci` の代わりに `cabal repl` や `stack repl` を使います。
-
-Cabalの場合は、 `--build-depends` オプションで依存するパッケージを指定します。例：
-
-```sh
-cabal repl --build-depends vector
-```
-
-Cabalで特定のバージョンのGHCを使いたい場合は、 `-w` オプションを指定します。例：`-w ghc-9.2.5`
-
-Stackの場合はパッケージの指定には `--package` オプションを使います。また、resolverを指定するには `--resolver` オプションを使いますが、コマンドラインで指定する場合は単に `lts` と指定すれば最新のLTSを使ってくれます。
-
-```sh
-stack repl --resolver lts --package vector
-```
-
-Stackで特定のバージョンのGHCを使いたい場合は、そういうresolverを指定するか、 `--with-ghc` オプションを指定すると良いでしょう。例：`--with-ghc ghc-9.2.5`
-
-## 書き捨てスクリプトでライブラリーを使う
-
-単独のファイルからなるプログラムを動かす場合、依存関係を特定の形式のコメントとして書いて `cabal run` コマンドあるいは `stack` コマンドで動かせばライブラリーが利用できます。cabal scriptあるいはstack scriptと呼ばれます。
-
-詳しくは
-
-* [Haskellでちょっとしたスクリプトを書く](haskell-script)
-
-を参照してください。
-
-## 複数のファイルからなるプログラムでライブラリーを使う
-
-複数のファイルからなるプログラムをコンパイルしたい場合は、おとなしくプロジェクトを作ってください。……と言いたいところですが、一応やり方を紹介しておきます。
-
-Cabalでライブラリーを「インストール」するには `--lib` オプション付きで `install` コマンドを使います。ただ、デフォルトだとグローバルな環境にインストールされて後々訳が分からなくなると思われるので、 `--package-env` オプションで「環境」の場所を指定します。
-
-例：
-
-```sh
-cabal install --lib vector --package-env .
-```
-
-この例では `--package-env .` でカレントディレクトリーに環境を保存しています。このディレクトリーでGHCを起動すると最初に
-
-```
-Loaded package environment from ほにゃらら/.ghc.environment.ほにゃらら
-```
-
-というようなメッセージが出力され、インストールしたパッケージが使えるようになります。「環境」の実体は `.ghc.environment.` から始まる名前のファイルです。
-
-詳しくはCabalのマニュアルを見てください：
-
-* [5.2.18.1. Adding libraries to GHC package environments](https://cabal.readthedocs.io/en/3.8/cabal-commands.html#adding-libraries-to-ghc-package-environments)
-
-Stackの場合はプロジェクトの外でパッケージをインストール[^stack-build-library]しようとするとグローバル環境にインストールされてしまう[^stack-global-packages]ので、大人しくプロジェクトを作りましょう。
-
-[^stack-build-library]: `stack build <パッケージ名>` でグローバル環境にインストールできます。よく似たコマンドに `stack install` がありますが、これは「`stack build` + `~/.local/bin` に実行ファイルをコピー」の意味で、ライブラリーに使うコマンドではありません。
-
-[^stack-global-packages]: `stack exec -- ghc-pkg list` でグローバルにインストールされたパッケージの一覧を見ることができます。
+を読んでください。
 
 # Haskell製ツールをインストールする
 
@@ -536,6 +531,8 @@ GHCはネイティブコードを生成できるコンパイラーですが、�
 
 などの場合はLLVMバックエンドも使えるようにしておく必要があります。**LLVMバックエンドを使わない場合はこのセクションは飛ばして構いません。**
 
+## LLVMのインストール
+
 まず、システムのパッケージマネージャーでLLVMをインストールします。GHCごとに対応するLLVMのバージョンが決まっているので、むやみに新しいLLVMを入れればいいというものではありません。具体的には、対応関係は次のようになります：
 
 | GHC | LLVM |
@@ -553,11 +550,13 @@ Ubuntuユーザーの場合は `sudo apt install llvm-12` とすれば良いで�
 
 何であれ重要なのは、LLVMの `opt` コマンドと `llc` コマンドがGHCから見えることです。
 
-厄介なのがWindowsで、LLVMのWindows向け公式バイナリーに `opt.exe` と `llc.exe` が含まれません。Chocolateyは公式バイナリーを使っているので、Chocolateyを使ってLLVMを入れても意味がありません。どうしてもLLVMバックエンドを使いたい場合はMSYS2を使って `opt.exe` と `llc.exe` を入手すると良いでしょう。なお、GHC 9.4以降には `opt.exe` と `llc.exe` が付属する[^opt-llc-in-ghc-9-4]ようなので、将来的には（GHC 9.6以降？）それがデフォルトで利用できるようになるかもしれません[^llvm-on-windows]。
+厄介なのがWindowsで、LLVMのWindows向け公式バイナリーには `opt.exe` と `llc.exe` が含まれません。Chocolateyは公式バイナリーを使っているので、Chocolateyを使ってLLVMを入れても意味がありません。どうしてもLLVMバックエンドを使いたい場合はMSYS2を使って `opt.exe` と `llc.exe` を入手すると良いでしょう。なお、GHC 9.4以降には `opt.exe` と `llc.exe` が付属する[^opt-llc-in-ghc-9-4]ようなので、将来的には（GHC 9.6以降？）それがデフォルトで利用できるようになるかもしれません[^llvm-on-windows]。
 
 [^opt-llc-in-ghc-9-4]: 場所は `C:\ghcup\ghc\9.4.3\mingw\bin\{opt.exe,llc.exe}` という感じです。設定ファイル `C:\ghcup\ghc\9.4.3\lib\settings` を書き換えるか `-pgmlo` / `-pgmlc` オプションで指定してやると使えると思います（未確認）。
 
 [^llvm-on-windows]: [Use bundled llc/opt on Windows (#22438) · Issues · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/issues/22438)
+
+## GHC側の設定
 
 次にGHC側の設定方法ですが、Ubuntuのように、PATHの通った場所に `opt-12`, `llc-12` コマンドがあればGHCのインストール時に自動検出されます。
 
