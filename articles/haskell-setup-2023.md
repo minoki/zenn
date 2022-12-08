@@ -462,9 +462,17 @@ Windowsの場合は設定のGhcup Executable Pathを手動で `C:\ghcup\bin\ghcu
 
 GHCupのインストール時にHLSを入れなかった場合はここでHaskell Language Serverをインストールする必要があります。ターミナルに `ghcup install hls` と打ち込むか、VS CodeのGUIからインストールしましょう。
 
+うまく動かない場合は、View > OutputからHaskell拡張のログを見ると良いです。
+
+## HLSが最新のGHCに対応していない場合
+
 HLSは最新のGHCに対応していない場合があります。その場合はGHCのバージョンを下げるのも手かもしれません。
 
-うまく動かない場合は、View > OutputからHaskell拡張のログを見ると良いです。
+別の方法として、HLSを自分でコンパイルするという手もあります。筆者がGHC 9.2.5 + HLS 1.8.0.0で試した時はstylish-haskell関係のプラグインとhlint関係のプラグインでビルドエラーが出たので、その2つを無効化する必要がありました：
+
+```sh
+ghcup compile hls --version 1.8.0.0 --ghc 9.2.5 -- --constraint "haskell-language-server -stylishhaskell -hlint"
+```
 
 # Haskell製ライブラリーをインストールする
 
