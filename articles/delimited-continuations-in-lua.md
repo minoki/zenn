@@ -8,6 +8,8 @@ published: true
 
 これは[言語実装 Advent Calendar 2022](https://qiita.com/advent-calendar/2022/lang_dev)の9日目の記事です。Luaをターゲットとする言語を実装する際に役立つかもしれない情報です。
 
+後付けですが[Lua Advent Calendar 2022](https://qiita.com/advent-calendar/2022/lua)にも登録させていただきました。
+
 ---
 
 私が作っているStandard ML処理系LunarMLでは限定継続を提供しています。限定継続についての話はブログの方に何回か書きました：
