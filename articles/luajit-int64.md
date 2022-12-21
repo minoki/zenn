@@ -95,7 +95,7 @@ LuaJITの64ビット整数は通常の数値 (`number`) と異なりボックス
 ```lua
 > = (-1) % 2 -- Lua標準の動作（LuaJITでもこれは同じ）
 1
-> = (-1LL) / 2 -- LuaJITの64ビット整数の余り
+> = (-1LL) / 2 -- LuaJITの64ビット整数の商
 0LL
 > = (-1LL) % 2 -- LuaJITの64ビット整数の余り
 -1LL
@@ -116,7 +116,7 @@ function int64_pow(x, k)
     elseif x == 1LL then
       return 1LL
     elseif x == -1LL then
-      return (-1LL) ^ (2 + k % 2) -- 1LL or -1LL
+      return int64_t((-1) ^ tonumber(k % 2)) -- 1LL or -1LL
     else -- |x| > 0
       return 0LL
     end
