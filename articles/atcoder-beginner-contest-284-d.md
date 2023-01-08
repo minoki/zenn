@@ -325,7 +325,7 @@ $$
 \sqrt{1-\varepsilon/2}\cdot p-\left(p-2^{i-1}\varepsilon\right)
 &>2^{i-1}\varepsilon\left(1-\frac{1}{2}\cdot\frac{p}{2^i}-\frac{\varepsilon p}{8\cdot 2^i}\right) \\
 &\ge 2^{i-1}\varepsilon\left(1-\frac{2-\varepsilon}{2}-\frac{\varepsilon p}{8\cdot 2^i}\right) \\
-&\ge 2^{i-4}\varepsilon^2\left(4-\frac{p}{2^i}\right) \\
+&= 2^{i-4}\varepsilon^2\left(4-\frac{p}{2^i}\right) \\
 &>0
 \end{aligned}
 $$
