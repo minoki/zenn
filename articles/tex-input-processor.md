@@ -239,6 +239,8 @@ data State = State { lines :: [Text] -- 末尾の半角空白は除去済みと�
 
 なお、カテゴリーコード9 (ignored) の文字に遭遇しても `LineState` は変わりません。
 
+字句解析の処理は次のようになります：
+
 ```haskell
 parToken, spaceToken :: Token
 parToken = TCommandName (ControlSeq "par")
@@ -350,7 +352,7 @@ TeXは命令の実行によって字句解析器のパラメーター（`\catcod
 % 従って\message{HELLO}が実行される。
 ```
 
-ちなみに、pdfTeXでは `\partokenname` によって空行に挿入されるトークン（通常は `\par`）をカスタマイズできるらしいです。
+ちなみに、TeX Live 2022以降のpdfTeXや互換エンジン（e-(u)pTeX, XeTeX, LuaTeXを含む）では `\partokenname` によって空行に挿入されるトークン（通常は `\par`）をカスタマイズできるらしいです。
 
 # 日本語TeX
 
@@ -431,12 +433,12 @@ defaultCatcodeMap = Map.fromList [('\\', CCEscape) -- IniTeX
                                  ,('}', CCEndGroup)
                                  ,('$', CCMathShift)
                                  ,('&', CCAlignmentTab)
-                                 ,('\r', CCEndLine)
+                                 ,('\r', CCEndLine) -- IniTeX
                                  ,('#', CCParam)
                                  ,('^', CCSup)
                                  ,('_', CCSub)
-                                 ,('\NUL', CCIgnored)
-                                 ,(' ', CCSpace)
+                                 ,('\NUL', CCIgnored) -- IniTeX
+                                 ,(' ', CCSpace) -- IniTeX
                                  ,('~', CCActive)
                                  ,('%', CCComment) -- IniTeX
                                  ,('\DEL', CCInvalid) -- IniTeX
@@ -460,14 +462,15 @@ getCatcode m c = case Map.lookup c m of
                                 CCOther
 
 isLowerHexDigit :: Char -> Bool
-isLowerHexDigit c = ('0' <= c && c <= '9') && ('a' <= c && c <= 'f')
+isLowerHexDigit c = ('0' <= c && c <= '9') || ('a' <= c && c <= 'f')
 
 newState :: Env -> [Text] -> State
-newState (Env { endlinechar }) lines = State { lines = case lines of
-                                                         l : ls -> appendEndlinechar l endlinechar : ls
-                                                         [] -> []
-                                             , lineState = NewLine
-                                             }
+newState (Env { endlinechar }) lines
+  = State { lines = case lines of
+                      l : ls -> appendEndlinechar l endlinechar : ls
+                      [] -> []
+          , lineState = NewLine
+          }
 
 main :: IO ()
 main = do
