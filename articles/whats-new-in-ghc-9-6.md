@@ -16,15 +16,19 @@ published: false
 
 です。
 
+* [9.6.1 · Milestones · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/milestones/375#tab-issues)
+* [GHC 9.6.x Migration Guide](https://gitlab.haskell.org/ghc/ghc/-/wikis/migration/9.6)
+
 # GHC 9.6に入る機能
 
 ## JavaScriptバックエンド
 
-【まだマージされていません】
-
 * [javascript backend · Wiki · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/wikis/javascript-backend)
+* [JavaScript backend merged into GHC | IOG Engineering](https://engineering.iog.io/2022-12-13-ghc-js-backend-merged/)
 
 GHCにJavaScriptバックエンドを追加します。実質的にGHCJSのマージです。
+
+現段階ではTemplate Haskellやforeign exportなど、色々欠けているようです。今後に期待しましょう。
 
 ## WebAssemblyバックエンド
 
@@ -34,7 +38,13 @@ GHCにJavaScriptバックエンドを追加します。実質的にGHCJSのマ�
 
 GHCにWebAssemblyバックエンドを追加します。実質的にAsteriusのマージです。
 
-WebAssemblyに対してはWASIとか策定されていますが、WebAssemblyバックエンドはそういう「JavaScriptを前提としない」実行環境でも使えるのか、気になるところです。その点についてはご安心ください。JavaScriptの連携機能 `foreign import/export javascript` を使わないHaskellコードをビルドしたものはJavaScriptのない実行環境でも（WASIを使って）動作できるようになる予定です。
+WebAssemblyといえばWebですが、GHC 9.6の段階ではWASI専用のようです。将来的には `foreign import/export javascript` でJavaScriptとやりとりできるようになるでしょう。
+
+GHC 9.6の段階ではGHCは「実行時のオプションでターゲットを切り替えられる」ようにはなっていないので、普通のGHCではなく、wasmをターゲットとするクロスコンパイラーとしてビルドされたGHCが必要になります。
+
+HaskellのDiscourseにGHC WebAssembly Weekly Updateが投稿されています：
+
+* [Haskell Community - Haskell](https://discourse.haskell.org/)
 
 ## 限定継続のプリミティブ
 
@@ -75,18 +85,31 @@ control0#
 型が分かりにくいですが、 `State# RealWorld -> (# State# RealWorld, a #)` を `IO a` と思って読み替えると
 
 ```haskell
-newPromptTag :: IO (PromptTag# a)
-prompt# :: PromptTag# a -> IO a -> IO a
-control0# :: PromptTag# a -> ((IO b -> IO a) -> IO a) -> IO b
+newPromptTag :: IO (PromptTag a)
+prompt :: PromptTag a -> IO a -> IO a
+control0 :: PromptTag a -> ((IO b -> IO a) -> IO a) -> IO b
 ```
 
 となります。ただ、既存の `withFile` 等のリソース管理と限定継続の兼ね合いが微妙なので `IO` でラップしたものは標準ライブラリーからは提供されません。
 
-限定継続の操作は副作用なのでHaskellで使うにはモナドを使う必要があります。
+限定継続の操作は副作用なので、Haskellで使うにはモナドを使う必要があります。
 
 限定継続プリミティブを利用した拡張可能エフェクトのライブラリーが開発中のようです：
 
 * [hasura/eff: 🚧 a work in progress effect system for Haskell 🚧](https://github.com/hasura/eff)
+
+限定継続を使ってalgebraic effectをやる記事も出ています：
+
+* [Lysxia - From delimited continuations to algebraic effects in Haskell](https://blog.poisson.chat/posts/2023-01-02-del-cont-examples.html)
+
+## Haskell Error Indexへの対応
+
+* [The Haskell Error Index — Haskell Error Index](https://errors.haskell.org/)
+* [Announcing the Haskell Error Index - Haskell Foundation - Haskell Community](https://discourse.haskell.org/t/announcing-the-haskell-error-index/5195)
+
+GHCや周辺ツールがエラーメッセージに `[GHC-12345]` のようなコードを割り振って、オンラインで関連情報を参照できるようにしようという取り組みが始まりました。というわけで、GHC 9.6からエラーに番号がつくようになります。
+
+Rustの同様の仕組みにインスパイアされたらしいです。
 
 ## データ構築子を伴わない型・カインド定義： `TypeData` 拡張
 
@@ -101,14 +124,26 @@ control0# :: PromptTag# a -> ((IO b -> IO a) -> IO a) -> IO b
 type data T = MkT
 ```
 
+例：
+
+```haskell
+ghci> :set -XTypeData
+ghci> type data T = MkT
+ghci> :type MkT
+
+<interactive>:1:1: error: [GHC-31891]
+    • Illegal term-level use of the type constructor or class ‘MkT’
+    • defined at <interactive>:2:15
+    • In the expression: MkT
+ghci> :kind MkT
+MkT :: T
+```
+
 ## `OverloadedLabels` のラベル名の制限の緩和
 
 * [Unrestricted Overloaded Labels](https://github.com/ghc-proposals/ghc-proposals/blob/master/proposals/0170-unrestricted-overloadedlabels.rst)
 
-## ライブラリーの変化
-
-* `Applicative` クラスの `liftA2` が `Prelude` からエクスポートされる
-* `GHC.TypeLits`/`GHC.TypeNats` が `natSing`, `symbolSing`, `charSing` をエクスポートする。`SNat`, `SSymbol`, `SChar` 型もエクスポートされる。
+これまでは `#` の後に識別子が来る必要がありましたが、これからは `#3` とか `#"Foo"` とか色々書けるようになります。
 
 ## リスト型に紛らわしくない名前を与える：`List` 型
 
@@ -174,7 +209,15 @@ type List = []
 
 最終的には `[]` や `()` が型を表さなくなる拡張 `NoListTuplePuns` が導入される予定です。
 
-とりあえずGHC 9.6に `List` 型が入るのと `Solo` が `MkSolo` に改名されるのは確定です。タプルの名前や `NoListTuplePuns` は執筆段階では未実装です。
+とりあえずGHC 9.6に `List` 型が入るのと `Solo` が `MkSolo` に改名されるのは確定です。タプルの名前や `NoListTuplePuns` はもう少し先になりそうです。
+
+## ライブラリーの変化
+
+* `Applicative` クラスの `liftA2` が `Prelude` からエクスポートされる
+* `GHC.TypeLits`/`GHC.TypeNats` の `Known` 系の型クラスから `natSing`, `symbolSing`, `charSing` をエクスポートする。`SNat`, `SSymbol`, `SChar` 型もエクスポートされる。
+    * [Expose `KnownSymbol`'s method and `SSymbol` · Issue #85 · haskell/core-libraries-committee](https://github.com/haskell/core-libraries-committee/issues/85)
+    * [Export symbolSing, SSymbol, and friends (CLC#85) (!9064) · Merge requests · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/merge_requests/9064)
+    * `withDict` をこれらの型クラスに対して使えるようにする関係です。
 
 ## ビルドシステムがHadrianのみになる
 
