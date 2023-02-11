@@ -152,6 +152,12 @@ end
 
 コード例では、同符号かどうかの確認は `n * d >= 0` で行いました。
 
+# おまけ：FMAが有効な場合
+
+$q=\lfloor n/d\rfloor$として$n-q\cdot d$の計算にFMA (fused multiply add; この場合はfused multiply subtract)が使われた場合は乗算の際の丸めが起こらないので正しい答えが得られます。
+
+具体的な環境の例を挙げると、AArch64（最初からFMAがある）のGCC（積極的にFMAを使う）でコンパイルされたLua 5.1は整数の `%` を正しく計算します。
+
 # 関連記事
 
 * [整数除算を浮動小数点演算でエミュレートできるか](https://blog.miz-ar.info/2023/01/emulating-integer-division-with-floating-point-division/)
