@@ -17,7 +17,7 @@ a % b == a - math.floor(a/b)*b
 * [2.5.1 – Arithmetic Operators - Lua 5.1 Reference Manual](http://www.lua.org/manual/5.1/manual.html#2.5.1)
 * [3.4.1 – Arithmetic Operators - Lua 5.2 Reference Manual](http://www.lua.org/manual/5.2/manual.html#3.4.1)
 
-これはおおよそflooring divisionに対する剰余を返します。[整数除算の二つの流儀](integer-divison)で言うところのmodです。
+これはおおよそflooring divisionに対する剰余を返します。[整数除算の二つの流儀](integer-division)で言うところのmodです。
 
 しかし、この定義は `math.floor` という語彙を使っていることから察せられるように、浮動小数点数演算を使っています。その結果、整数同士の剰余
 
@@ -136,7 +136,7 @@ $\lvert d\rvert$が2の累乗$d=2^k$である場合は「$d$倍」は正確に�
 
 一般の場合は、`%` 演算子を安全に使うことはできません。そこで、別の方法で剰余を計算することを考えます。
 
-Luaの場合はtruncating divisionに関する剰余（[整数除算の二つの流儀](integer-divison)でいうrem）が `math.fmod` で利用できるので、[整数除算の二つの流儀](integer-divison)に書いた方法でmodをエミュレートすれば良いです。コード例を以下に載せます：
+Luaの場合はtruncating divisionに関する剰余（[整数除算の二つの流儀](integer-division)でいうrem）が `math.fmod` で利用できるので、[整数除算の二つの流儀](integer-division)に書いた方法でmodをエミュレートすれば良いです。コード例を以下に載せます：
 
 ```lua
 function mod(n, d)
@@ -161,5 +161,5 @@ $q=\lfloor n/d\rfloor$として$n-q\cdot d$の計算にFMA (fused multiply add; 
 # 関連記事
 
 * [整数除算を浮動小数点演算でエミュレートできるか](https://blog.miz-ar.info/2023/01/emulating-integer-division-with-floating-point-division/)
-* [整数除算の二つの流儀](integer-divison)
+* [整数除算の二つの流儀](integer-division)
 * [Luaの数値型](lua-number-types)
