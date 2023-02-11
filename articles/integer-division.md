@@ -8,7 +8,7 @@ published: true
 
 # 整数除算の流儀
 
-整数除算には商を0に向かって切り捨てるものと、$-\infty$に向かって切り下げるものの2種類があります。この記事ではこれらの関係を見ていきます。
+整数除算は割り切れなかった時の商の扱い方によって何種類かに分類でき、商を0に向かって切り捨てるものと、$-\infty$に向かって切り下げる（床関数）ものの2種類がよく使われます。この記事ではこれらの関係を見ていきます。
 
 ここではquot, rem, div, modを次のように定めます。ただし、$\mathrm{trunc}(x)$は$x$と同じ符号を持ち、絶対値が$\lvert x\rvert$を超えない最大の整数であるような整数です。
 
@@ -106,3 +106,17 @@ def quotRem(n: int, d: int) -> tuple[int, int]:
     else:
         return q + 1, r - d
 ```
+
+# 他の流儀
+
+ここでは商を0に向かって切り捨てるものと床関数で計算するものを扱いましたが、他にも「$+\infty$に向かって切り上げる（天井関数）」、「最も近い整数に丸める（最近接偶数丸め）」などのバリエーションが考えられます。さらに、以下の論文
+
+* Raymond T. Boute. 1992. The Euclidean definition of the functions div and mod. ACM Trans. Program. Lang. Syst. 14, 2 (April 1992), 127–144. https://doi.org/10.1145/128861.128862
+
+では「余りの絶対値が常に非負になるようにする」流儀をユークリッド除算 (Euclidean division) と呼んで、それを推しています。
+
+Scheme界隈の
+
+* [SRFI 141: Integer division](https://srfi.schemers.org/srfi-141/srfi-141.html)
+
+では、上記の5つの他に、「余りが$-\lvert d/2\rvert\le r<\lvert d/2\rvert$を満たす」流儀（「商を最も近い整数に丸め」つつ、等距離の場合に余りを負に取る）を提案しています。
