@@ -113,7 +113,7 @@ def quotRem(n: int, d: int) -> tuple[int, int]:
 
 * Raymond T. Boute. 1992. The Euclidean definition of the functions div and mod. ACM Trans. Program. Lang. Syst. 14, 2 (April 1992), 127–144. https://doi.org/10.1145/128861.128862
 
-では「余りの絶対値が常に非負になるようにする」流儀をユークリッド除算 (Euclidean division) と呼んで、それを推しています。
+では「余りが常に非負になるようにする」流儀をユークリッド除算 (Euclidean division) と呼んで、それを推しています。
 
 Scheme界隈の
 
