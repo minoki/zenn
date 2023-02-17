@@ -30,6 +30,12 @@ GHCにJavaScriptバックエンドを追加します。実質的にGHCJSのマ�
 
 現段階ではTemplate Haskellやforeign exportなど、色々欠けているようです。今後に期待しましょう。
 
+GHC 9.6の段階ではGHCは「実行時のオプションでターゲットを切り替えられる」ようにはなっていないので、普通のGHCではなく、JSをターゲットとするクロスコンパイラーとしてビルドされたGHCが必要になります。ビルド手順は
+
+* [building · Wiki · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/wikis/javascript-backend/building)
+
+あたりを参考にすると良いでしょう。
+
 ## WebAssemblyバックエンド
 
 * [WebAssembly backend · Wiki · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/wikis/WebAssembly-backend)
@@ -40,7 +46,7 @@ GHCにWebAssemblyバックエンドを追加します。実質的にAsteriusの�
 
 WebAssemblyといえばWebですが、GHC 9.6の段階ではWASI専用のようです。将来的には `foreign import/export javascript` でJavaScriptとやりとりできるようになるでしょう。
 
-GHC 9.6の段階ではGHCは「実行時のオプションでターゲットを切り替えられる」ようにはなっていないので、普通のGHCではなく、wasmをターゲットとするクロスコンパイラーとしてビルドされたGHCが必要になります。
+GHC 9.6の段階ではGHCは「実行時のオプションでターゲットを切り替えられる」ようにはなっていないので、普通のGHCではなく、wasmをターゲットとするクロスコンパイラーとしてビルドされたGHCが必要になります。Nixを使うと簡単にインストールできそうです（筆者はまだ試していません）。
 
 HaskellのDiscourseにGHC WebAssembly Weekly Updateが投稿されています：
 
@@ -92,7 +98,7 @@ control0 :: PromptTag a -> ((IO b -> IO a) -> IO a) -> IO b
 
 となります。ただ、既存の `withFile` 等のリソース管理と限定継続の兼ね合いが微妙なので `IO` でラップしたものは標準ライブラリーからは提供されません。
 
-限定継続の操作は副作用なので、Haskellで使うにはモナドを使う必要があります。
+限定継続の操作は副作用なので、Haskellで使うには何らかのモナドを使う必要があります。したがって、他の言語での継続のサンプルコードを移植すると書き心地が悪く感じるかもしれません。
 
 限定継続プリミティブを利用した拡張可能エフェクトのライブラリーが開発中のようです：
 
@@ -187,9 +193,11 @@ ghci> :kind '[Int]
 '[Int] :: [Type]
 ```
 
-一方、項レベルの式の中に型を混在させたい時はどうなるでしょうか。将来のHaskellでは関数の引数に `@` なしで直接型を渡せるようになる（ような言語拡張が追加される）見込みです：
+一方、項レベルの式の中に型を混在させたい時はどうなるでしょうか。将来のHaskellでは関数の引数に `@` なしで直接型を渡せるようになる（ような[言語拡張 `RequiredTypeArguments` が追加される](https://github.com/ghc-proposals/ghc-proposals/blob/master/proposals/0281-visible-forall.rst)）見込みです：
 
 ```haskell
+{-# LANGUAGE RequiredTypeArguments #-}
+
 sizeOf :: forall a -> Sized a => Int
 
 main = print (sizeOf Int)
@@ -202,14 +210,17 @@ main = print (sizeOf Int)
 というわけで、常にリスト型を表す名前として `List` が導入されます。以下の定義が組み込まれると思って構いません：
 
 ```haskell
+module GHC.Exts where
+
+-- 本当は型エイリアスではない（TypeSynonymInstances/FlexibleInstancesなしでもインスタンスを定義できる）
 type List = []
 ```
 
-タプルについても同じことが言えて、常にタプル型を表す名前として `Unit`, `Tuple<n>` などが導入されます。1要素タプル `Solo` はデータ構築子が `MkSolo` に改名されます。
+タプルについても同じことが言えて、常にタプル型を表す名前として `Unit`, `Tuple<n>` などが導入される予定です。1要素タプル `Solo` はデータ構築子が `MkSolo` に改名されます。
 
-最終的には `[]` や `()` が型を表さなくなる拡張 `NoListTuplePuns` が導入される予定です。
+最終的には `[]` や `()` が型を表さなくなる拡張 `NoListTuplePuns` が導入される計画です。
 
-とりあえずGHC 9.6に `List` 型が入るのと `Solo` が `MkSolo` に改名されるのは確定です。タプルの名前や `NoListTuplePuns` はもう少し先になりそうです。
+とりあえずGHC 9.6には `List` 型が入り、 `Solo :: a -> Solo a` が `MkSolo` に改名されます。タプルの名前や `NoListTuplePuns` はもう少し先になりそうです。
 
 ## ライブラリーの変化
 
