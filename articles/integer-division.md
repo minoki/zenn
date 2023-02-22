@@ -79,6 +79,7 @@ div_t divMod(int n, int d)
 {
     assert(d != 0);
     assert(n != INT_MIN || d != -1); // 2の補数表現の場合、オーバーフローを起こす可能性がある
+    // ちなみにC言語では2の補数表現の場合、 INT_MIN / (-1) だけでなく INT_MIN % (-1) もUBです
     int q = n / d;
     int r = n % d;
     if ((n >= 0 && d > 0) || (n <= 0 && d < 0) || r == 0) {
