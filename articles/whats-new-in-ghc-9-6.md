@@ -3,10 +3,12 @@ title: "GHC 9.6の新機能"
 emoji: "🙆"
 type: "tech" # tech: 技術記事 / idea: アイデア
 topics: ["haskell"]
-published: false
+published: true
 ---
 
-【GHC 9.6.1は2023年の初め頃にリリースされる予定です】
+GHC 9.6.1が2023年3月12日にリリースされました。
+
+* [GHC 9.6.1 is now available - Announcements - Haskell Community](https://discourse.haskell.org/t/ghc-9-6-1-is-now-available/5972)
 
 この記事では、GHC 9.6の新機能を確認していきます。過去の類似の記事は
 
@@ -16,7 +18,10 @@ published: false
 
 です。
 
-* [9.6.1 · Milestones · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/milestones/375#tab-issues)
+この記事は網羅的な紹介記事とはなっていません。是非公式のリリースノート類も参照してください：
+
+* [2.1. Version 9.6.1 — Glasgow Haskell Compiler 9.6.1 User's Guide](https://downloads.haskell.org/ghc/9.6.1/docs/users_guide/9.6.1-notes.html)
+* [Changelog for base-4.18.0.0 | Hackage](https://hackage.haskell.org/package/base-4.18.0.0/changelog)
 * [GHC 9.6.x Migration Guide](https://gitlab.haskell.org/ghc/ghc/-/wikis/migration/9.6)
 
 # GHC 9.6に入る機能
@@ -36,6 +41,10 @@ GHC 9.6の段階ではGHCは「実行時のオプションでターゲットを�
 
 あたりを参考にすると良いでしょう。
 
+手前味噌ですが、私が書いたDockerfileを以下で公開しています：
+
+* [minoki/ghc-docker: Dockerfile(s) for GHC](https://github.com/minoki/ghc-docker)
+
 ## WebAssemblyバックエンド
 
 * [WebAssembly backend · Wiki · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/wikis/WebAssembly-backend)
@@ -46,7 +55,13 @@ GHCにWebAssemblyバックエンドを追加します。実質的にAsteriusの�
 
 WebAssemblyといえばWebですが、GHC 9.6の段階ではWASI専用のようです。将来的には `foreign import/export javascript` でJavaScriptとやりとりできるようになるでしょう。
 
-GHC 9.6の段階ではGHCは「実行時のオプションでターゲットを切り替えられる」ようにはなっていないので、普通のGHCではなく、wasmをターゲットとするクロスコンパイラーとしてビルドされたGHCが必要になります。Nixを使うと簡単にインストールできそうです（筆者はまだ試していません）。
+GHC 9.6の段階ではGHCは「実行時のオプションでターゲットを切り替えられる」ようにはなっていないので、普通のGHCではなく、wasmをターゲットとするクロスコンパイラーとしてビルドされたGHCが必要になります。
+
+手元で試したい方は、以下にNixでバイナリーを入れる手順やビルド手順が載っています：
+
+* [Glasgow Haskell Compiler / ghc-wasm-meta · GitLab](https://gitlab.haskell.org/ghc/ghc-wasm-meta)
+
+私もDockerfileを用意するつもりです。
 
 HaskellのDiscourseにGHC WebAssembly Weekly Updateが投稿されています：
 
@@ -100,7 +115,7 @@ control0 :: PromptTag a -> ((IO b -> IO a) -> IO a) -> IO b
 
 限定継続の操作は副作用なので、Haskellで使うには何らかのモナドを使う必要があります。したがって、他の言語での継続のサンプルコードを移植すると書き心地が悪く感じるかもしれません。
 
-限定継続プリミティブを利用した拡張可能エフェクトのライブラリーが開発中のようです：
+限定継続プリミティブを利用した拡張可能エフェクトのライブラリーが開発中のようです（最終更新が2020年なのでちょっと怪しいですが）：
 
 * [hasura/eff: 🚧 a work in progress effect system for Haskell 🚧](https://github.com/hasura/eff)
 
@@ -124,7 +139,7 @@ Rustの同様の仕組みにインスパイアされたらしいです。
 
 `DataKind` 拡張を使うと、型をカインドに、データ構築子を型レベルに持ち上げることができます。むしろ、データ型は要らないけど独自のカインドと型を定義するために `data` 宣言を使う、という場面があります。
 
-`TypeData` 拡張を使うと、型・データ構築子を定義することなくカインドと型を定義することができるようになります。
+`TypeData` 拡張を使うと、型・データ構築子を定義することなくカインドと型を定義することができるようになります。構文はこんな感じです：
 
 ```haskell
 type data T = MkT
@@ -150,6 +165,17 @@ MkT :: T
 * [Unrestricted Overloaded Labels](https://github.com/ghc-proposals/ghc-proposals/blob/master/proposals/0170-unrestricted-overloadedlabels.rst)
 
 これまでは `#` の後に識別子が来る必要がありましたが、これからは `#3` とか `#"Foo"` とか色々書けるようになります。
+
+## CApiFFIのための `ConstPtr` 型
+
+* [#22043: CApiFFI does not account for const qualifier · Issues · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/issues/22043)
+* [Foreign.C.ConstPtr](https://hackage.haskell.org/package/base-4.18.0.0/docs/Foreign-C-ConstPtr.html)
+
+`capi` 擬似呼び出し規約を使うと、CのマクロやAArch64 Darwinの可変長引数関数など、普通のC FFIが対応していない関数っぽいものを呼び出すことができます。これは仲介役となるCコードをGHCが出力し、Cコンパイラーにコンパイルさせることで実現されています。
+
+この際、Cの型注釈はHaskellの型注釈を基に決定されますが、`const` 修飾されたポインターはHaskell側で記述できないためCの型が合わないという問題がありました。
+
+この問題を解決するために、今回、`const` 修飾されたポインターを表す `ConstPtr` 型が追加されました。
 
 ## リスト型に紛らわしくない名前を与える：`List` 型
 
@@ -222,9 +248,11 @@ type List = []
 
 とりあえずGHC 9.6には `List` 型が入り、 `Solo :: a -> Solo a` が `MkSolo` に改名されます。タプルの名前や `NoListTuplePuns` はもう少し先になりそうです。
 
-## ライブラリーの変化
+## ライブラリーのその他の変化
 
 * `Applicative` クラスの `liftA2` が `Prelude` からエクスポートされる
+* `Data.Char.isUpperCase`/`isLowerCase`
+    * 既存のものとはUnicode的な性質がちょっと違うらしいです。
 * `GHC.TypeLits`/`GHC.TypeNats` の `Known` 系の型クラスから `natSing`, `symbolSing`, `charSing` をエクスポートする。`SNat`, `SSymbol`, `SChar` 型もエクスポートされる。
     * [Expose `KnownSymbol`'s method and `SSymbol` · Issue #85 · haskell/core-libraries-committee](https://github.com/haskell/core-libraries-committee/issues/85)
     * [Export symbolSing, SSymbol, and friends (CLC#85) (!9064) · Merge requests · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/merge_requests/9064)
