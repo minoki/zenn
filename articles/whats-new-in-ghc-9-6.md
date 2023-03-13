@@ -61,7 +61,7 @@ GHC 9.6の段階ではGHCは「実行時のオプションでターゲットを�
 
 * [Glasgow Haskell Compiler / ghc-wasm-meta · GitLab](https://gitlab.haskell.org/ghc/ghc-wasm-meta)
 
-私もDockerfileを用意するつもりです。
+~~私もDockerfileを用意するつもりです。~~ 上に書いたリポジトリーにwasm32-wasi向けのGHCをビルドするDockerfileを置きました。GHCだけでなくLLVMのビルドも含まれますが、試してみたい方はどうぞ。AArch64のマシンで動作確認しています。
 
 HaskellのDiscourseにGHC WebAssembly Weekly Updateが投稿されています：
 
