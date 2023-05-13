@@ -613,3 +613,26 @@ GHCupではprerelease channelというものを登録することによってそ
 アルファ版が出てからprerelease channelに登録されるまで若干タイムラグがある場合があります。待ちきれない場合は「Installing custom bindists」の手順で独自にインストールするという手があるかもしれません：
 
 * [Installing custom bindists](https://www.haskell.org/ghcup/guide/#installing-custom-bindists)
+
+# 追記：macOSで `<ffi.h>` が見つからないと言われる場合
+
+macOSのアップグレード後に `<ffi.h>` が見つからないというエラーが出ることがあるようです。
+
+その場合、 `/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk` が存在するか確認してください。存在しない場合は、
+
+```
+xcode-select --install
+```
+
+を実行すると直るかもしれません。
+
+参考：
+
+* [#22595: fatal error: 'ffi.h' file not found strikes back · Issues · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/issues/22595)
+* ["fatal error: 'ffi.h' file not found" when trying to install hashable via cabal · Issue #814 · haskell/ghcup-hs](https://github.com/haskell/ghcup-hs/issues/814)
+
+<!--
+```
+cabal user-config update --augment="extra-include-dirs: $(xcrun --sdk macosx --show-sdk-path)/usr/include/ffi" --augment="extra-lib-dirs: $(xcrun --sdk macosx --show-sdk-path)/usr/lib"
+```
+-->
