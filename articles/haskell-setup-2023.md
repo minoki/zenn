@@ -559,7 +559,7 @@ Ubuntuユーザーの場合は `sudo apt install llvm-12` とすれば良いで�
 
 何であれ重要なのは、LLVMの `opt` コマンドと `llc` コマンドがGHCから見えることです。
 
-厄介なのがWindowsで、LLVMのWindows向け公式バイナリーには `opt.exe` と `llc.exe` が含まれません。Chocolateyは公式バイナリーを使っているので、Chocolateyを使ってLLVMを入れても意味がありません。どうしてもLLVMバックエンドを使いたい場合はMSYS2を使って `opt.exe` と `llc.exe` を入手すると良いでしょう。なお、GHC 9.4以降には `opt.exe` と `llc.exe` が付属する[^opt-llc-in-ghc-9-4]ようなので、将来的には（GHC 9.6以降？）それがデフォルトで利用できるようになるかもしれません[^llvm-on-windows]。
+厄介なのがWindowsで、LLVMのWindows向け公式バイナリーには `opt.exe` と `llc.exe` が含まれません。Chocolateyは公式バイナリーを使っているので、Chocolateyを使ってLLVMを入れても意味がありません。どうしてもLLVMバックエンドを使いたい場合はMSYS2を使って `opt.exe` と `llc.exe` を入手すると良いでしょう。なお、GHC 9.4以降には `opt.exe` と `llc.exe` が付属する[^opt-llc-in-ghc-9-4]ようなので、将来的にはそれがデフォルトで利用できるようになるかもしれません[^llvm-on-windows]。
 
 [^opt-llc-in-ghc-9-4]: 場所は `C:\ghcup\ghc\9.4.3\mingw\bin\{opt.exe,llc.exe}` という感じです。設定ファイル `C:\ghcup\ghc\9.4.3\lib\settings` を書き換えるか `-pgmlo` / `-pgmlc` オプションで指定してやると使えると思います（未確認）。
 
@@ -632,7 +632,7 @@ xcode-select --install
 * ["fatal error: 'ffi.h' file not found" when trying to install hashable via cabal · Issue #814 · haskell/ghcup-hs](https://github.com/haskell/ghcup-hs/issues/814)
 
 <!--
-```
-cabal user-config update --augment="extra-include-dirs: $(xcrun --sdk macosx --show-sdk-path)/usr/include/ffi" --augment="extra-lib-dirs: $(xcrun --sdk macosx --show-sdk-path)/usr/lib"
-```
+ ```
+ cabal user-config update --augment="extra-include-dirs: $(xcrun --sdk macosx --show-sdk-path)/usr/include/ffi" --augment="extra-lib-dirs: $(xcrun --sdk macosx --show-sdk-path)/usr/lib"
+ ```
 -->
