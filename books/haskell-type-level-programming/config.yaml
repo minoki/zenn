@@ -8,6 +8,7 @@ chapters:
   - preface
   - types-and-kinds
   - phantom-types-and-proxy
+  - kind-polymorphism
   - datatype-promotion
   - type-families
   - type-classes
