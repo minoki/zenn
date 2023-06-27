@@ -18,3 +18,4 @@ chapters:
   - theorem-proving
   - constraint-kinds
   - ghc-typenats
+  - typeable
