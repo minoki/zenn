@@ -169,3 +169,30 @@ class Typeable2 (f :: * -> * -> *)
 という風にカインドごとにクラスが分かれていて大変だったようです。
 
 なお、`Typeable` クラスのインスタンスはGHCによって自動で導出され、ユーザーが独自に定義することはできません。GHC拡張にDeriveDataTypeableというものがあるので、昔は手動でのderivingが必要だったのかもしれません。
+
+`Typeable` クラスを使うと、「何でも格納できるany型」のようなものを作れます。つまり、任意の型の値を格納でき、中身の型と期待する型が合致すれば安全に取り出せるようなデータ型です。
+
+* [Data.Dynamic](https://hackage.haskell.org/package/base-4.18.0.0/docs/Data-Dynamic.html)
+
+```haskell
+module Data.Dynamic where
+
+data Dynamic where
+  Dynamic :: forall a. TypeRep a -> a -> Dynamic
+
+toDyn :: Typeable a => a -> Dynamic
+fromDynamic :: Typeable a => Dynamic -> Maybe a
+```
+
+この `Dynamic` 型を制限して、いくつかの型のうちのいずれかが入るような匿名のunion型を実装したライブラリーが[open-unionパッケージ](https://hackage.haskell.org/package/open-union)です。格納できる型の集合は型レベルリストを使って指定します。
+
+```haskell
+{-# LANGUAGE DataKinds #-}
+import Data.OpenUnion
+
+-- Int, String, Charのいずれかを格納できる型
+type MyUnion = Union '[Int, String, Char]
+
+someList :: [MyUnion]
+someList = [liftUnion "Hello", liftUnion 'x', liftUnion (42 :: Int)]
+```
