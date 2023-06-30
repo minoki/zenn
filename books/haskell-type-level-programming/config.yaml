@@ -18,4 +18,5 @@ chapters:
   - theorem-proving
   - constraint-kinds
   - ghc-typenats
+  - symbol
   - typeable
