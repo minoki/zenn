@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="500"
+   height="700"
+   viewBox="0 0 132.29166 185.20833"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.2.2 (b0a8486, 2022-12-01)"
+   sodipodi:docname="cover.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     showgrid="false"
+     showguides="true"
+     inkscape:zoom="0.70843849"
+     inkscape:cx="59.991094"
+     inkscape:cy="320.42302"
+     inkscape:window-width="1440"
+     inkscape:window-height="900"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="layer2" />
+  <defs
+     id="defs2" />
+  <g
+     inkscape:groupmode="layer"
+     id="layer2"
+     inkscape:label="Layer 2">
+    <rect
+       style="fill:#ffe6d5;fill-opacity:1;stroke-width:0.264999"
+       id="rect1877"
+       width="52.659828"
+       height="86.272476"
+       x="-96.731659"
+       y="104.25795"
+       transform="rotate(-21.926194)" />
+    <rect
+       style="fill:#ffff71;fill-opacity:1;stroke-width:0.265471"
+       id="rect350"
+       width="303.00357"
+       height="39.193169"
+       x="-20.341663"
+       y="-45.913101"
+       ry="0"
+       transform="matrix(0.46117823,0.88730752,-0.92300912,0.38477807,0,0)" />
+    <rect
+       style="fill:#ffdddd;fill-opacity:1;stroke-width:0.264999"
+       id="rect468"
+       width="348.24326"
+       height="27.802414"
+       x="-119.60377"
+       y="44.523659"
+       transform="rotate(-7.8613978)" />
+    <rect
+       style="fill:#bfffff;fill-opacity:1;stroke-width:0.264999"
+       id="rect574"
+       width="322.68149"
+       height="28.757494"
+       x="-145.88576"
+       y="127.63116"
+       transform="rotate(-8.1703252)" />
+  </g>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <text
+       xml:space="preserve"
+       style="font-size:10.5833px;line-height:1.25;font-family:'Source Code Pro';-inkscape-font-specification:'Source Code Pro';stroke-width:0.264583"
+       x="65.839607"
+       y="27.513842"
+       id="text113"><tspan
+         sodipodi:role="line"
+         id="tspan111"
+         style="text-align:center;text-anchor:middle;stroke-width:0.264583"
+         x="65.839607"
+         y="27.513842"><tspan
+           style="font-size:22.5778px;text-align:center;text-anchor:middle;fill:#000080"
+           id="tspan175">Haskell</tspan><tspan
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.1111px;font-family:'Hiragino Maru Gothic Pro';-inkscape-font-specification:'Hiragino Maru Gothic Pro';text-align:center;text-anchor:middle"
+           id="tspan183">での</tspan></tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:16.9333px;line-height:1.25;font-family:'Source Code Pro';-inkscape-font-specification:'Source Code Pro';stroke-width:0.264583"
+       x="66.128883"
+       y="56.862591"
+       id="text167"><tspan
+         sodipodi:role="line"
+         id="tspan165"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16.9333px;font-family:'Hiragino Maru Gothic Pro';-inkscape-font-specification:'Hiragino Maru Gothic Pro';text-align:center;text-anchor:middle;fill:#d40000;stroke-width:0.264583"
+         x="66.128883"
+         y="56.862591">型レベル</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:14.1111px;line-height:1.25;font-family:'Source Code Pro';-inkscape-font-specification:'Source Code Pro';stroke-width:0.264583"
+       x="65.588432"
+       y="85.341148"
+       id="text171"><tspan
+         sodipodi:role="line"
+         id="tspan169"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.1111px;font-family:'Hiragino Maru Gothic Pro';-inkscape-font-specification:'Hiragino Maru Gothic Pro';text-align:center;text-anchor:middle;stroke-width:0.264583"
+         x="65.588432"
+         y="85.341148">プログラミング</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:19.7556px;line-height:1.25;font-family:'Source Code Pro';-inkscape-font-specification:'Source Code Pro';fill:#b3b3b3;stroke-width:0.264583"
+       x="3.6411352"
+       y="116.80468"
+       id="text406"><tspan
+         sodipodi:role="line"
+         id="tspan404"
+         style="font-size:19.7556px;fill:#b3b3b3;stroke-width:0.264583"
+         x="3.6411352"
+         y="116.80468">Type</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:19.7556px;line-height:1.25;font-family:'Source Code Pro';-inkscape-font-specification:'Source Code Pro';fill:#cccccc;stroke-width:0.264583"
+       x="26.143177"
+       y="143.04053"
+       id="text410"><tspan
+         sodipodi:role="line"
+         id="tspan408"
+         style="font-size:19.7556px;fill:#cccccc;stroke-width:0.264583"
+         x="26.143177"
+         y="143.04053">::</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:19.7556px;line-height:1.25;font-family:'Source Code Pro';-inkscape-font-specification:'Source Code Pro';fill:#cccccc;stroke-width:0.264583"
+       x="41.082134"
+       y="167.6898"
+       id="text414"><tspan
+         sodipodi:role="line"
+         id="tspan412"
+         style="font-size:19.7556px;fill:#cccccc;stroke-width:0.264583"
+         x="41.082134"
+         y="167.6898">Type</tspan></text>
+  </g>
+</svg>
