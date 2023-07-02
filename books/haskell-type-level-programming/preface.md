@@ -27,7 +27,7 @@ Haskellで型レベルプログラミングを使用する場面をいくつか�
 * 応用：Constraintカインド
 * 応用：GHCの型レベル自然数（Natカインド）
 * 応用：GHCの型レベル文字列（Symbolカインド）
-* 応用：GHC.Generics（未執筆）
+* 応用：GHC.Generics
 * 応用：実行時型情報（Typeable）
 
 本文やサンプルコードの記述は、**GHC 9.2以降**を前提とします。

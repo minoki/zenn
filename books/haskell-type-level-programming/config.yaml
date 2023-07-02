@@ -19,4 +19,5 @@ chapters:
   - constraint-kinds
   - ghc-typenats
   - symbol
+  - ghc-generics
   - typeable
