@@ -550,6 +550,7 @@ GHCはネイティブコードを生成できるコンパイラーですが、�
 | GHC 9.2 | LLVM 9以上12以下 |
 | GHC 9.4 | LLVM 10以上13以下 |
 | GHC 9.6 | LLVM 11以上15以下 |
+| GHC 9.8 | LLVM 11以上15以下 |
 
 ここではGHC 9.0.2 + LLVM 12を例とします。
 
@@ -631,8 +632,4 @@ xcode-select --install
 * [#22595: fatal error: 'ffi.h' file not found strikes back · Issues · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/issues/22595)
 * ["fatal error: 'ffi.h' file not found" when trying to install hashable via cabal · Issue #814 · haskell/ghcup-hs](https://github.com/haskell/ghcup-hs/issues/814)
 
-<!--
- ```
- cabal user-config update --augment="extra-include-dirs: $(xcrun --sdk macosx --show-sdk-path)/usr/include/ffi" --augment="extra-lib-dirs: $(xcrun --sdk macosx --show-sdk-path)/usr/lib"
- ```
--->
+<!-- cabal user-config update --augment="extra-include-dirs: $(xcrun --sdk macosx --show-sdk-path)/usr/include/ffi" --augment="extra-lib-dirs: $(xcrun --sdk macosx --show-sdk-path)/usr/lib" -->
