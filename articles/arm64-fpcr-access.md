@@ -39,6 +39,8 @@ void set_fpcr(uint64_t x)
 
 FPSRにも同様の方法でアクセスできます。
 
+【追記】[ACLE](https://arm-software.github.io/acle/main/acle.html#aarch64-system-register)を改めて読んだところ、 `"fpcr"` という名前での指定は「できる」とは書かれていない気がしてきました。Clangで動くのでヨシ！なのかもしれませんが、どう解釈するべきなんですかね。
+
 # GCC
 
 現在のGCCはACLEの対応が部分的で、特に `__arm_rsr64`, `__arm_wsr64` には対応していません。代わりに、FPCRやFPSRにアクセスするための組み込み関数を提供しています。
