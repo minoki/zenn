@@ -201,6 +201,9 @@ Haskellでのビット論理和とビット論理積はそれぞれ `(.|.)` と 
 
 * Windows上でClangベースのツールチェインを使う
 * `Semigroup`, `Monoid` をderiveするのに便利な `Generically`, `Generically1`
+    * [Haskellでの型レベルプログラミング](https://zenn.dev/mod_poppo/books/haskell-type-level-programming)の「応用：GHC.Generics」により詳しい説明を書きました。
 * multiple home packages
+* `system-cxx-std-lib` 疑似パッケージ
+* `-dlint` オプション
 
 などなど新機能がありますが、今回の記事はこの辺にしておきます。
