@@ -155,6 +155,8 @@ if(impl(ghc >= 9.2))
 
 あるいは、CIでcabalを呼び出す際に `--ghc-options="-dlint -fcheck-prim-bounds -fno-ignore-asserts"` などのオプションを指定すると良いでしょう。
 
+ベンチマークを含むプロジェクトの場合は、`cabal.project` に書いてしまうと邪魔かもしれません。どこでオプションを有効化するか、適宜判断してください。
+
 ## その他
 
 最小限のメンテナンスコストで長く使われるパッケージを作りたいなら、 `-Werror` を `.cabal` に書くのはやめた方が良いでしょう。書くなら `cabal.project` とかCIの設定にしましょう。
