@@ -3,8 +3,14 @@ title: "GHC 9.8の新機能"
 emoji: "👌"
 type: "tech" # tech: 技術記事 / idea: アイデア
 topics: ["haskell"]
-published: false
+published: true
 ---
+
+この記事の公開時点では、GHC 9.8.1-alpha2が出ています。試す方法は
+
+* [Haskellの環境構築2023 > 補遺：アルファ版・ベータ版のGHCを使う](https://zenn.dev/mod_poppo/articles/haskell-setup-2023#%E8%A3%9C%E9%81%BA%EF%BC%9A%E3%82%A2%E3%83%AB%E3%83%95%E3%82%A1%E7%89%88%E3%83%BB%E3%83%99%E3%83%BC%E3%82%BF%E7%89%88%E3%81%AEghc%E3%82%92%E4%BD%BF%E3%81%86)
+
+を参考にしてください。
 
 この記事では、GHC 9.8の新機能を確認していきます。過去の類似の記事は
 
@@ -17,7 +23,7 @@ published: false
 
 この記事は網羅的な紹介記事とはなっていません。是非、公式のリリースノート類も参照してください：
 
-* [2.1. Version 9.8.1 — Glasgow Haskell Compiler 9.8.0.20230727 User's Guide](https://downloads.haskell.org/ghc/9.8.1-alpha1/docs/users_guide/9.8.1-notes.html)
+* [2.1. Version 9.8.1 — Glasgow Haskell Compiler 9.8.0.20230809 User's Guide](https://downloads.haskell.org/ghc/9.8.0.20230809/docs/users_guide/9.8.1-notes.html)
     * [docs/users_guide/9.8.1-notes.rst · ghc-9.8 · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/blob/ghc-9.8/docs/users_guide/9.8.1-notes.rst)
 <!-- * [Changelog for base-4.19.0.0 | Hackage](https://hackage.haskell.org/package/base-4.19.0.0/changelog) -->
 * [libraries/base/changelog.md · master · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/blob/ghc-9.8/libraries/base/changelog.md)
@@ -42,13 +48,43 @@ ghci> :t 42#Int8
 
 * [ghc-proposals/proposals/0425-decl-invis-binders.rst at master · ghc-proposals/ghc-proposals](https://github.com/ghc-proposals/ghc-proposals/blob/master/proposals/0425-decl-invis-binders.rst)
 
-非互換注意
+現在のHaskellでは、多相なカインドを持つ型の宣言で、カインド変数を宣言せずに使うことができます。
+
+```haskell
+class Foo (a :: k)
+type family Bar (a :: k)
+```
+
+参考までに、これらのカインドは次のようになります。
+
+```haskell
+type Foo :: forall k. k -> Constraint
+type Bar :: forall k. k -> Type
+```
+
+`TypeAbstractions` 拡張では、`forall k.` のカインド変数を型定義中で束縛できるようになります。構文は型適用（カインド適用）のものを流用して、
+
+```haskell
+type Foo :: forall k. k -> Constraint
+class Foo @k (a :: k)
+
+type Bar :: forall k. k -> Type
+type family Bar @k (a :: k)
+```
+
+となります。
+
+GHC Proposalには書かれていませんが、実際に実装されたものはstandalone kind signatureの使用が必要なようです。詳しくは実装の際の議論
+
+* <https://gitlab.haskell.org/ghc/ghc/-/issues/22560#note_476799>
+
+を参照してください。
 
 ## `Unsatisfiable` クラス
 
 * [ghc-proposals/proposals/0433-unsatisfiable.rst at master · ghc-proposals/ghc-proposals](https://github.com/ghc-proposals/ghc-proposals/blob/master/proposals/0433-unsatisfiable.rst)
 
-GHCで独自の型エラーを出す方法としては、`TypeError` 型族がありました。しかし、`TypeError` は型族として実装されていることによる使いづらさがありました。詳しくはProposalを読んでください。
+ライブラリーが独自の型エラーを出す方法としては、`TypeError` 型族がありました。しかし、`TypeError` は型族として実装されていることによる使いづらさがありました。詳しくはProposalを読んでください。
 
 次の型クラスと関数が追加されます：
 
@@ -88,9 +124,24 @@ cabal build -j --semaphore
 
 ## 書き換え規則の強化
 
+書き換え規則である種の高階マッチングができるようになります。例えば、次の書き換え規則が使えるようになります：
+
+```haskell
+foo :: (Int -> Int -> Int) -> Int
+foo f = f 42 44 + 1
+{-# NOINLINE foo #-}
+{-# RULES
+"foo" forall f. foo (\x y -> f y x) = 777
+ #-}
+
+main = do
+  print $ foo (\x y -> x + 2 * y)
+  print $ foo (\x y -> 2 * x + y)
+```
+
 ## Fused multiply-add
 
-* [Fused multiply-add operations](https://downloads.haskell.org/ghc/9.8.1-alpha1/docs/libraries/ghc-prim-0.11.0-3709/GHC-Prim.html#g:17)
+* [Fused multiply-add operations](https://downloads.haskell.org/ghc/9.8.0.20230809/docs/libraries/ghc-prim-0.11.0-e3bc/GHC-Prim.html#g:17)
 
 最近のCPUは融合積和 (fused multiply-add; FMA) を計算する命令を持つものが多いです。FMAについては前に書いた記事
 
@@ -98,7 +149,7 @@ cabal build -j --semaphore
 
 を参照してください。
 
-これまでGHCにFMA命令を出力させる方法はなく、FFIを使うしかありませんでしたが、今回FMA命令に対応するプリミティブが追加されました。追加されたのは以下の8つです：
+これまでGHCにFMA命令を出力させる方法はなく、FFIを使うしかありませんでしたが、今回FMA命令に対応するプリミティブ関数が追加されました。追加されたのは以下の8つです：
 
 ```haskell
 module GHC.Exts where
@@ -114,9 +165,9 @@ fnmaddDouble# :: Double# -> Double# -> Double# -> Double# -- - x * y + z
 fnmsubDouble# :: Double# -> Double# -> Double# -> Double# -- - x * y - z
 ```
 
-注意点として、FMAがサポートされているとは限らないアーキテクチャーではlibcのFMAを呼び出すため、libcのFMAがバグっているプラットフォーム（具体的にはx86系のWindows）では正しい答えが計算できない場合があります。
+注意点として、FMAがサポートされているとは限らないアーキテクチャーではlibcの `fma` 関数を呼び出すため、libcのFMAがバグっているプラットフォーム（具体的にはx86系のWindows）では正しい答えが計算できない場合があります。
 
-私の作っているパッケージfp-ieeeでもFMAを提供していますが、GHC 9.8以降でFMAがバグっていない環境であればFMAのプリミティブを使うようにしてみようかと思っています。
+私の作っているパッケージfp-ieeeでは以前からFMAを提供していますが、GHC 9.8以降でFMAがバグっていない環境であればFMAのプリミティブを使うようにしてみようかと思っています。
 
 ## `head` / `tail` に警告が出る
 
@@ -141,7 +192,9 @@ ghci> tail "foo"
 
 この警告は `-Wno-x-partial` オプションで抑制できます。
 
-個人的にはそこまでする必要ある？と思いますが。
+一方、同様に部分関数である `init` / `last` には警告は出ないようです。
+
+純粋関数原理主義者には喜ばしい変更かもしれませんが、個人的にはそこまでする必要ある？と思います。
 
 ## その他のライブラリーの機能追加
 
@@ -162,4 +215,4 @@ Data.Functor.unzip :: Functor f => f (a, b) -> (f a, f b)
 
 ## その他
 
-* `-Wterm-variable-capture`: `RequiredTypeArguments` 拡張への地ならし
+* [`-Wterm-variable-capture`](https://downloads.haskell.org/ghc/9.8.0.20230809/docs/users_guide/using-warnings.html#ghc-flag--Wterm-variable-capture): 将来導入される `RequiredTypeArguments` 拡張では、型変数と同名の項レベルの変数があった時、暗黙の量化が起こりません。`-Wterm-variable-capture` は、型変数の暗黙の量化が起こるときに同名の項レベルの変数があったら警告を発します。
