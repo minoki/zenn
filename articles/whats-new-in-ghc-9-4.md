@@ -205,5 +205,6 @@ Haskellでのビット論理和とビット論理積はそれぞれ `(.|.)` と 
 * multiple home packages
 * `system-cxx-std-lib` 疑似パッケージ
 * `-dlint` オプション
+* `OPAQUE` プラグマ
 
 などなど新機能がありますが、今回の記事はこの辺にしておきます。
