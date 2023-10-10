@@ -6,11 +6,7 @@ topics: ["haskell"]
 published: true
 ---
 
-この記事の公開時点では、GHC 9.8.1-alpha2が出ています。試す方法は
-
-* [Haskellの環境構築2023 > 補遺：アルファ版・ベータ版のGHCを使う](https://zenn.dev/mod_poppo/articles/haskell-setup-2023#%E8%A3%9C%E9%81%BA%EF%BC%9A%E3%82%A2%E3%83%AB%E3%83%95%E3%82%A1%E7%89%88%E3%83%BB%E3%83%99%E3%83%BC%E3%82%BF%E7%89%88%E3%81%AEghc%E3%82%92%E4%BD%BF%E3%81%86)
-
-を参考にしてください。
+GHC 9.8.1が2023年10月10日にリリースされました。
 
 この記事では、GHC 9.8の新機能を確認していきます。過去の類似の記事は
 
@@ -23,10 +19,10 @@ published: true
 
 この記事は網羅的な紹介記事とはなっていません。是非、公式のリリースノート類も参照してください：
 
-* [2.1. Version 9.8.1 — Glasgow Haskell Compiler 9.8.0.20230809 User's Guide](https://downloads.haskell.org/ghc/9.8.0.20230809/docs/users_guide/9.8.1-notes.html)
+* [2.1. Version 9.8.1 — Glasgow Haskell Compiler 9.8.1 User's Guide](https://downloads.haskell.org/ghc/9.8.1/docs/users_guide/9.8.1-notes.html)
     * [docs/users_guide/9.8.1-notes.rst · ghc-9.8 · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/blob/ghc-9.8/docs/users_guide/9.8.1-notes.rst)
-<!-- * [Changelog for base-4.19.0.0 | Hackage](https://hackage.haskell.org/package/base-4.19.0.0/changelog) -->
-* [libraries/base/changelog.md · master · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/blob/ghc-9.8/libraries/base/changelog.md)
+* [Changelog for base-4.19.0.0 | Hackage](https://hackage.haskell.org/package/base-4.19.0.0/changelog)
+    * [libraries/base/changelog.md · master · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/blob/ghc-9.8/libraries/base/changelog.md)
 * [GHC 9.8.x Migration Guide](https://gitlab.haskell.org/ghc/ghc/-/wikis/migration/9.8)
 
 # GHC 9.8に入る機能
