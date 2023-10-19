@@ -403,7 +403,9 @@ retは最初に説明した通り、C3でエンコードされます。movは説
 書き込みが終わったら、GCCの組み込み関数 `__builtin___clear_cache` を呼び出します。アーキテクチャーによっては実行時にコード生成をする際にこういう特殊な関数を呼び出す必要があったりするのですが、実のところx86ではこういう操作は必須ではありません。しかし、コンパイラーの最適化を抑止する意味もあって、一応呼び出しておいた方が良いかもしれません。Windowsには同様の目的の関数として `FlushInstructionCache` があります。
 
 ```c
-#include <assert.h>
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h> // mmap, mprotect, munmap
 #include <unistd.h>
@@ -411,7 +413,11 @@ retは最初に説明した通り、C3でエンコードされます。movは説
 typeof(int (*)(int)) adder(int y)
 {
     void *mem = mmap(NULL, getpagesize(), PROT_READ | PROT_WRITE | PROT_EXEC, MAP_ANON | MAP_PRIVATE, -1, 0);
-    assert(mem != NULL);
+    if (mem == MAP_FAILED) {
+        int e = errno;
+        fprintf(stderr, "mmap: %s (%d)\n", strerror(e), e);
+        abort();
+    }
     unsigned char *instr = mem;
     *instr++ = 0x81; *instr++ = 0xc7; // add edi, ...
     memcpy(instr, &y, 4); instr += 4; // <imm32>
@@ -426,7 +432,6 @@ typeof(int (*)(int)) adder(int y)
 呼び出す例は次のようになります：
 
 ```c
-#include <stdio.h>
 int main(void)
 {
     int (*f)(int) = adder(3);
