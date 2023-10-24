@@ -160,6 +160,8 @@ C言語でModR/MバイトとSIBバイトの値を生成するマクロを書く�
 
 最後に、r/mに `base + scale * index + displacement` の形のアドレスを指定する場合です。この場合は必ずSIBバイトが指定されます。indexとしてはrsp以外のレジスターを指定できます。
 
+* baseがrbp, r13以外の場合、SIBバイトのbaseをレジスター番号の下位3ビットとします。レジスター番号の上位1ビットはREXプリフィックスのBビットで指定します。
+* baseがrbpまたはr13の場合、SIBバイトのbaseは0b101とします。「displacementが0の場合」のmod=0b00とは組み合わせることができず、たとえdisplacementが0であっても「符号付き8ビットの場合」または「符号付き32ビットの場合」を使ってエンコードします。
 * SIBバイトのssはscaleに応じて、scale=1→ss=0b00, scale=2→ss=0b01, scale=4→ss=0b10, scale=8→ss=0b11とします。
 * indexがrsp以外の場合は、SIBバイトのindexにレジスター番号の下位3ビットを格納します。レジスター番号の上位1ビットはREXプリフィックスのXビットを使って指定します。
 * displacementが0の場合：
