@@ -36,7 +36,7 @@ C 標準には C99 で複素数型 `_Complex` が導入されました。実部�
 
 `x` がゼロの時はどうなるでしょうか。浮動小数点数のゼロには符号があります。`x = -0.0` の場合でも、`y * I` という複素数の実部が正のゼロであれば、結果の実部は正のゼロとなってしまいます（通常の丸め方法の場合）。C 言語における一部の複素関数は枝 (branch) の選択にゼロの符号を考慮するので、これは看過できない問題です。詳しくは私が昔書いた記事
 
-* [逆双曲線関数と逆三角関数の branch cut | 雑記帳](https://blog.miz-ar.info/2016/08/branch-cuts-of-inv-hyp-functions-and-inv-trig-functions/)
+* [逆双曲線関数と逆三角関数の branch cut](https://blog.miz-ar.info/2016/08/branch-cuts-of-inv-hyp-functions-and-inv-trig-functions/)（2016年8月）
 
 を参照してください。
 
