@@ -157,6 +157,16 @@ if(impl(ghc >= 9.2))
 
 ベンチマークを含むプロジェクトの場合は、`cabal.project` に書いてしまうと邪魔かもしれません。どこでオプションを有効化するか、適宜判断してください。
 
+## 依存パッケージのバージョンの下限を検証する
+
+あるパッケージが依存するパッケージのバージョン指定はなるべく広く取りたいです。依存パッケージの最新のバージョンで試すのはいいとして、バージョンの下限が正しいか試すのはなおざりになりがちです。
+
+cabal-install 3.10では、「依存パッケージのなるべく古いバージョンを試す」`--prefer-oldest` というオプションが実装されました。
+
+* [7. cabal.project Reference — Cabal 3.10.2.1 User's Guide](https://cabal.readthedocs.io/en/3.10/cabal-project.html#cfg-flag---prefer-oldest)
+
+build-dependsの範囲を決定するのに使ったり、CIのmatrixとかに追加しておくと良いかもしれません。
+
 ## その他
 
 最小限のメンテナンスコストで長く使われるパッケージを作りたいなら、 `-Werror` を `.cabal` に書くのはやめた方が良いでしょう。書くなら `cabal.project` とかCIの設定にしましょう。
