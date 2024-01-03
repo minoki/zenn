@@ -467,3 +467,7 @@ RISCなら、どこの馬の骨が書いたかもわからんこんな非公式�
 【追記】AArch64で機械語を触る話は以前ブログに書きました：
 
 * [AArch64でJITしてみる](https://blog.miz-ar.info/2021/10/jit-on-aarch64/)
+
+【追記】AVX/AVX-512編を書きました：
+
+* [x86-64機械語入門 AVX/AVX-512編](x86-64-vex-evex)
