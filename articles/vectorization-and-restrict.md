@@ -164,9 +164,9 @@ GCC/Clangの場合は `__builtin_assume_aligned` を使うことでポインタ�
 ```c
 #include <stddef.h>
 void add_aligned(size_t n, float * restrict result, const float *a, const float *b) {
-    result = __builtin_assume_aligned(result, 128);
-    a = __builtin_assume_aligned(a, 128);
-    b = __builtin_assume_aligned(b, 128);
+    result = __builtin_assume_aligned(result, 16); // 16バイトアラインされていることを仮定
+    a = __builtin_assume_aligned(a, 16);
+    b = __builtin_assume_aligned(b, 16);
     for (size_t i = 0; i < n; ++i) {
         result[i] = a[i] + b[i];
     }
@@ -178,9 +178,9 @@ void add_aligned(size_t n, float * restrict result, const float *a, const float 
 ```c
 #include <stddef.h>
 void add_aligned_vla(size_t n, float result[restrict n], const float a[n], const float b[n]) {
-    result = __builtin_assume_aligned(result, 128);
-    a = __builtin_assume_aligned(a, 128);
-    b = __builtin_assume_aligned(b, 128);
+    result = __builtin_assume_aligned(result, 16);
+    a = __builtin_assume_aligned(a, 16);
+    b = __builtin_assume_aligned(b, 16);
     for (size_t i = 0; i < n; ++i) {
         result[i] = a[i] + b[i];
     }
