@@ -609,7 +609,7 @@ LLVMバックエンドを実際に使うにはGHCオプションとして `-fllv
 
 GHCupではprerelease channelというものを登録することによってそういう正式リリース前のバージョンを入れることができます。詳しくはGHCupのマニュアルを参照してください：
 
-* [(Pre-)Release channels](https://www.haskell.org/ghcup/guide/#pre-release-channels)
+* [Metadata](https://www.haskell.org/ghcup/guide/#metadata)
 
 アルファ版が出てからprerelease channelに登録されるまで若干タイムラグがある場合があります。待ちきれない場合は「Installing custom bindists」の手順で独自にインストールするという手があるかもしれません：
 
