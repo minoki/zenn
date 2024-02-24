@@ -28,17 +28,24 @@ GHC 9.10.1が202X年XX月XX日にリリースされました。
 
 ## GHC2024
 
-DataKinds, DerivingStrategies, DisambiguateRecordFields, ExplicitNamespaces, GADTs, MonoLocalBinds, LambdaCase, RoleAnnotations
+以下の拡張が含まれます：
 
-GADTsとMonoLocalBindsが入ったのが大きいです。
+* DataKinds
+* DerivingStrategies
+* DisambiguateRecordFields
+* ExplicitNamespaces
+* GADTs
+* MonoLocalBinds
+* LambdaCase
+* RoleAnnotations
 
-現時点では、デフォルト言語はGHC2021のままです。
+GADTsとMonoLocalBindsが入ったのが大きいかもしれません。
+
+GHC 9.10の時点では、デフォルト言語はGHC2021のままです。
 
 ## RequiredTypeArguments拡張
 
-"Visible forall in types of terms" とも呼ばれます。
-
-ExplicitNamespaces拡張
+「必須の型引数」です。"Visible forall in types of terms" とも呼ばれます。
 
 従来のHaskellでは、関数に「型だけ」を渡したいときは、
 
@@ -51,23 +58,55 @@ ExplicitNamespaces拡張
 ```haskell
 sizeOf :: Storable a => a -> Int
 sizeOfProxy :: Storable a => Proxy a -> Int
-sizeOfTypeApp :: Storable a => Int
+sizeOfTypeApp :: Storable a => Int -- 要 AllowAmbiguousTypes
 
 main = do
   print $ sizeOf (undefined :: Int)
   print $ sizeOfProxy (Proxy :: Proxy Int)
-  print $ sizeOfTypeApp @Int
+  print $ sizeOfTypeApp @Int -- 要 TypeApplications
 ```
 
-今回、新たな方法が追加されました。
+今回、新たな方法が追加されました。特徴は
+
+* `forall a ->` という形の量化子を使う（これは型／カインドのレベルではすでに使えるようになっていました）
+* パターンの変数は型として使える（？）
+* 引数はそのまま（`@` なしで）型名を書ける（`type` 構文で明示することもできる）
+
+ことです。
 
 ```haskell
+-- 要 RequiredTypeArguments
 sizeOfRTA :: forall a -> Storable a => Int
 sizeOfRTA a = sizeOf (undefined :: a)
 
 main = do
   print $ sizeOfRTA Int
-  print $ sizeOfRTA (type Int)
+  print $ sizeOfRTA (type Int) -- 要 ExplicitNamespaces
+```
+
+注意点として、`[Int]` や `(Int, String)` みたいな型をそのまま渡すと、項レベルのリストや項レベルのタプルを型に昇格したものと解釈されます（型レベルで書くと `'[Int]` とか `'(Int, String)` だったやつ）。リスト型やタプル型を渡したい場合は、ExplicitNamespaces拡張を使って `(type ...)` と書くか、新しく導入された型エイリアスを使って `List Int` や `Tuple2 Int String` と書く必要があります。
+
+残念ながら、型クラスのメソッドでは「自身の型」を `forall ->` で受け取ることはできません。
+
+```haskell
+class NewStorable a where
+  sizeOf :: forall a -> Int -- できない（NewStorable のインスタンスの a と引数の a は別物になる）
+```
+
+型の等式 `~` を使ったHackは思いつきましたが、どうでしょうか（Coreレベルでは同一にならないかもしれない）。
+
+```haskell
+class NewStorable2 a where
+  sizeOf :: forall a' -> a ~ a' => Int
+```
+
+おまけですが、RequiredTypeArgumentsを使うと型注釈を新たな方法で書けるようになります：
+
+```haskell
+as :: a -> forall a' -> a ~ a' => a
+as x _ = x
+
+main = print (42 `as` Integer)
 ```
 
 ## 線形なlet/where束縛
