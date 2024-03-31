@@ -10,7 +10,7 @@ C23については[最近のC言語と、次期C標準(C23)](modern-c-language)�
 
 今回、C23入りする内容が大体固まったようなので改めて紹介します。
 
-この記事を書いている時点での最新のWorking Draftは ~~[N2912](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n2912.pdf)~~ ~~[N3047](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3047.pdf)~~ [N3054](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3054.pdf)です。
+この記事を書いている時点での最新の公開されたWorking Draftは ~~[N2912](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n2912.pdf)~~ ~~[N3047](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3047.pdf)~~ ~~[N3054](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3054.pdf)~~ [N3096](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3096.pdf)です。ただし、C2y向けの最初のドラフト[N3220](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3220.pdf)もあり、そちらの方が実際の内容に近いかもしれません。
 
 内容については会議参加者の投稿も参考にしています：
 
@@ -67,7 +67,7 @@ C23については[最近のC言語と、次期C標準(C23)](modern-c-language)�
 個々の機能についてここで詳しい説明をするといくら時間があっても足りません。いくつかについては私の書いた記事があります。
 
 * [C言語のbool型とその名前について 〜もう_Boolは嫌だ〜](boolean-in-c)
-* [C言語でのオーバーフロー検査](c-checked-int)
+* [C言語でのオーバーフロー検査](c-checked-int)（`<stdckdint.h>`）
 * [C23の新機能：高度なビット操作<stdbit.h>の紹介](c23-stdbit-h)
 
 他のいくつかについては、yohhoy氏の記事があるので紹介しておきます：
@@ -99,6 +99,7 @@ C23については[最近のC言語と、次期C標準(C23)](modern-c-language)�
 * [GCC 10 Release Series — Changes, New Features, and Fixes - GNU Project](https://gcc.gnu.org/gcc-10/changes.html#c)
 * [GCC 11 Release Series — Changes, New Features, and Fixes - GNU Project](https://gcc.gnu.org/gcc-11/changes.html#c)
 * [GCC 12 Release Series — Changes, New Features, and Fixes - GNU Project](https://gcc.gnu.org/gcc-12/changes.html#c)
+* [GCC 13 Release Series — Changes, New Features, and Fixes - GNU Project](https://gcc.gnu.org/gcc-13/changes.html#c)
 
 GCC 10では
 
@@ -115,6 +116,19 @@ GCC 10では
 
 * digit separators
 * `#elifdef`, `#elifndef`
+
+などが、GCC13では
+
+* `nullptr`
+* `enum` の拡張
+* `auto`
+* `constexpr`
+* `typeof`, `typeof_unqual`
+* `alignas`, `alignof`, `bool`, `false`, `static_assert`, `thread_local`, `true` のキーワード化
+* `[[noreturn]]` 属性
+* `= {}`
+* `unreachable()`
+* プロトタイプなし関数の削除
 
 などが実装されています。
 
