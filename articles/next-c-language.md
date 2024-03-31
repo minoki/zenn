@@ -68,6 +68,7 @@ C23については[最近のC言語と、次期C標準(C23)](modern-c-language)�
 
 * [C言語のbool型とその名前について 〜もう_Boolは嫌だ〜](boolean-in-c)
 * [C言語でのオーバーフロー検査](c-checked-int)
+* [C23の新機能：高度なビット操作<stdbit.h>の紹介](c23-stdbit-h)
 
 他のいくつかについては、yohhoy氏の記事があるので紹介しておきます：
 
