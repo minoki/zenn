@@ -298,3 +298,11 @@ glibc 2.39で `<stdbit.h>` が使えるようになったというニュース�
 
 * [N3096](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3096.pdf)（2023年4月2日）
 * [N3220](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3220.pdf)（2024年2月22日）
+
+## C23の他の新機能
+
+C23についての他の話題は
+
+* [次期C標準 (C23) の内容が固まったらしい](next-c-language)
+
+を参照してください。
