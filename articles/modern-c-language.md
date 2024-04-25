@@ -140,6 +140,8 @@ double sum1(size_t n, const double arr[n]); // 自己記述的なAPI; n が先�
 
 ## C23の新機能
 
+【追記】C23については新しい記事「[次期C標準 (C23) の内容が固まったらしい](next-c-language)」を書きました。確定した情報についてはそちらを参照してください。【追記終わり】
+
 Working Draftにすでに取り込まれたものを中心に挙げていきます。
 
 * POSIXの機能の取り込み: `strdup`, `strndup`, `memccpy`
