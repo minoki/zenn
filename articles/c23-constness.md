@@ -98,13 +98,18 @@ int main(void) {
 
 C23では、これらの関数が `const` 性を維持するようになりました。つまり、`const` な配列に対して呼び出せば `const` なポインターが返ってきて、非 `const` な配列に対して呼び出せば非 `const` なポインターが返ってきます。
 
-ただし、マクロ展開が何らかの方法で抑制された場合は、従来の（C17までの）型が露出します。この旧来の型はobsolescent feature（時代遅れになりつつある機能）扱いとなります。
+C言語には関数オーバーロードの仕組みはないため、これらの関数は典型的には関数マクロとして提供されます（実装例は後述）。ただし、マクロ展開が何らかの方法で抑制された場合は、従来の（C17までの）型が露出します。この旧来の型はobsolescent feature（時代遅れになりつつある機能）扱いとなります。
 
 ドキュメント上では、従来 `(const) char *` だった部分が `QChar *` になります。`(const) void *` は `QVoid *` に、`(const) wchar_t *` は `QWchar_t *` になります。
 
 ```c
 #include <stdlib.h>
 QVoid *bsearch(const void *key, QVoid *base, size_t nmemb, size_t size, int (*compar)(const void *, const void *));
+/* C++風に書けば
+void *bsearch(const void *key, void *base, size_t nmemb, size_t size, int (*compar)(const void *, const void *));
+const void *bsearch(const void *key, const void *base, size_t nmemb, size_t size, int (*compar)(const void *, const void *));
+となる。以下同様
+ */
 
 // Annex K
 QVoid *bsearch_s(const void *key, QVoid *base, rsize_t nmemb, rsize_t size, int (*compar)(const void *k, const void *y, void *context), void *context);
@@ -128,7 +133,16 @@ QWchar_t *wcsstr(QWchar_t *s1, const wchar_t *s2);
 QWchar_t *wmemchr(QWchar_t *s, wchar_t c, size_t n);
 ```
 
-ライブラリーで実装する場合は入力の型によって分岐を行う必要がありますが、C11の `_Generic` を使えば実装は難しくありません。
+ライブラリーで実装する場合は入力の型によって分岐を行う必要がありますが、C11の `_Generic` を使えば実装は難しくありません。例えば、`strchr` は次のように定義できるでしょう：
+
+```c
+char *strchr(const char *s, int c); // 従来の定義（マクロ展開が抑制された場合に露出する）
+
+#define strchr(s, c) \
+    _Generic((s), \
+             char *: strchr((s), (c)), \
+             const char *: (const char *)strchr((s), (c)))
+```
 
 ## 参考文献
 
