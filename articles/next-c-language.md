@@ -95,12 +95,13 @@ C23については[最近のC言語と、次期C標準(C23)](modern-c-language)�
 
 # GCCの対応状況
 
-最近のGCCでは一部の機能が `-std=c2x` で使えるようになっています。
+最近のGCCでは一部の機能が `-std=c2x` で（GCC 14以降では `-std=c23` でも）使えるようになっています。
 
 * [GCC 10 Release Series — Changes, New Features, and Fixes - GNU Project](https://gcc.gnu.org/gcc-10/changes.html#c)
 * [GCC 11 Release Series — Changes, New Features, and Fixes - GNU Project](https://gcc.gnu.org/gcc-11/changes.html#c)
 * [GCC 12 Release Series — Changes, New Features, and Fixes - GNU Project](https://gcc.gnu.org/gcc-12/changes.html#c)
 * [GCC 13 Release Series — Changes, New Features, and Fixes - GNU Project](https://gcc.gnu.org/gcc-13/changes.html#c)
+* [GCC 14 Release Series — Changes, New Features, and Fixes - GNU Project](https://gcc.gnu.org/gcc-14/changes.html#c)
 
 GCC 10では
 
@@ -130,6 +131,12 @@ GCC 10では
 * `= {}`
 * `unreachable()`
 * プロトタイプなし関数の削除
+
+などが、GCC14では
+
+* `_BitInt`
+* 内容が同じstruct, union, enumを複数回定義できる
+* `<stdckdint.h>`
 
 などが実装されています。
 
