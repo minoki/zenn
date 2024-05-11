@@ -6,7 +6,9 @@ topics: [haskell]
 published: true
 ---
 
-GHC 9.10.1-alpha1が2024年3月14日にリリースされました。正式版のリリースは4月ごろを目指しているようです（[9.10.1 · Milestones · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/milestones/380#tab-issues)）。
+GHC 9.10.1が2024年5月11日にリリースされました。
+
+* [GHC 9.10.1 is now available! - Announcements - Haskell Community](https://discourse.haskell.org/t/ghc-9-10-1-is-now-available/9523)
 
 この記事では、GHC 9.10の新機能を確認していきます。過去の類似の記事は
 
@@ -20,7 +22,7 @@ GHC 9.10.1-alpha1が2024年3月14日にリリースされました。正式版�
 
 この記事は網羅的な紹介記事とはなっていません。是非、公式のリリースノート類も参照してください：
 
-* [2.1. Version 9.10.1 — Glasgow Haskell Compiler 9.10.0.20240313 User's Guide](https://downloads.haskell.org/ghc/9.10.1-alpha1/docs/users_guide/9.10.1-notes.html)
+* [2.1. Version 9.10.1 — Glasgow Haskell Compiler 9.10.1 User's Guide](https://downloads.haskell.org/ghc/9.10.1/docs/users_guide/9.10.1-notes.html)
     * [docs/users_guide/9.10.1-notes.rst · ghc-9.10 · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/blob/ghc-9.10/docs/users_guide/9.10.1-notes.rst)
 * [libraries/base/changelog.md · ghc-9.10 · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/blob/ghc-9.10/libraries/base/changelog.md)
 * [GHC 9.10.x Migration Guide](https://gitlab.haskell.org/ghc/ghc/-/wikis/migration/9.10)
@@ -129,6 +131,8 @@ as x _ = x
 
 main = print (42 `as` Integer)
 ```
+
+追記：より詳しい記事を書いてみました→[GHC 9.10で実装された可視なforallで遊ぶ](https://zenn.dev/mod_poppo/articles/playing-with-visible-forall)
 
 ## 線形なlet/where束縛
 
