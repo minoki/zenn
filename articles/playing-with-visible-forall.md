@@ -6,6 +6,8 @@ topics: [haskell]
 published: true
 ---
 
+*English version*: [Playing with Visible Forall in GHC 9.10 - Mizuki's Blog](https://minoki.github.io/posts/2024-05-11-playing-with-visible-forall.html)
+
 本日、GHC 9.10.1がリリースされました。新機能の一つは、「可視な `forall`」（`RequiredTypeArguments` 拡張）です。この記事では、早速これを使って遊んでみたいと思います。
 
 この機能についてのオフィシャルなドキュメントは以下です：
