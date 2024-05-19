@@ -404,4 +404,5 @@ AppleのCPUが行列乗算用の専用命令（AMX）を持っていたことは
     * 現在はArchitecuter Reference ManualにマージされたのでこれはRETIRED扱い
 * ACLE: [Arm C Language Extensions](https://arm-software.github.io/acle/main/)
 * LLVM: [Support for AArch64 Scalable Matrix Extension in LLVM — LLVM 19.0.0git documentation](https://llvm.org/docs/AArch64SME.html)
+* Clang: [Attributes in Clang — Clang 19.0.0git documentation](https://clang.llvm.org/docs/AttributeReference.html#aarch64-sme-attributes)
 * QEMU: [Arm CPU Features — QEMU documentation](https://www.qemu.org/docs/master/system/arm/cpu-features.html)
