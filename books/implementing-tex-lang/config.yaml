@@ -1,0 +1,21 @@
+title: "作ってわかるTeX言語"
+summary: "TeX言語のサブセットを実装することで、TeX言語の仕組みを理解することを目指します。"
+topics: [tex]
+published: false
+price: 0 # 有料の場合200〜5000
+# 本に含めるチャプターを順番に並べましょう
+chapters:
+  - intro
+  - overview
+  - tokenize
+  - value
+  - expansion
+  - execution
+  - assignment
+  - macro
+  - total-expansion
+  - number
+  - conditional
+  - string
+  - input
+  - misc
