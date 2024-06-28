@@ -6,6 +6,14 @@ topics: [arm, aarch64]
 published: true
 ---
 
+シリーズ：
+
+* [CPUの機能を実行時に検出する：x86編](detect-processor-features-x86)
+* CPUの機能を実行時に検出する：Arm編（この記事）
+* [CPUの機能を実行時に検出する：実践編](using-processor-features)
+
+---
+
 [CPUの機能を実行時に検出する：x86編](detect-processor-features-x86)の続きです。ArmでCPUの機能を検出したい時にどうするか説明します。
 
 Armで検出したいようなオプショナルな機能で、私が過去に記事にしたものをいくつか挙げておきます：

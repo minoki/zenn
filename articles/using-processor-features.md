@@ -6,12 +6,11 @@ topics: [simd]
 published: true
 ---
 
-この記事は
+シリーズ：
 
 * [CPUの機能を実行時に検出する：x86編](detect-processor-features-x86)
 * [CPUの機能を実行時に検出する：Arm編](detect-processor-features-arm)
-
-の続きです。
+* CPUの機能を実行時に検出する：実践編（この記事）
 
 ## CPUに依存する機能を使う流れ：組み込み関数を使う場合
 
