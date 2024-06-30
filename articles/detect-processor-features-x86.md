@@ -221,3 +221,57 @@ int main(void) {
 【追記】本当にAVXを使えるか確かめたい場合はこのコードでは不十分です。先述の注意を参照してください。【/追記】
 
 なお、x86_64では `rbx` がcallee-savedなレジスターであるため、Clangの `<cpuid.h>` では `cpuid` の呼び出し前後に `rbx` の退避を行なっているようですが、私が試した感じではGCC/Clangは自前で退避しなくても関数のプロローグとエピローグで `rbx` を退避するコードを出力するようでした。私の知らない事情が絡んでいる可能性はありますが……。
+
+## macOSでAVX-512を検出するときの注意点
+
+Intel SDMによると、AVX-512の使用可否を検出するには、CPUIDのビットの他に、XCR0をチェックしてOSがAVX-512の状態を有効にしているか確認する必要があります。しかし、この方法ではmacOSにおいてAVX-512が使えるマシンでも「AVX-512が使えない」と判定してしまいます。
+
+こうなる理由はこの辺を参照してください：
+
+* <https://github.com/apple/darwin-xnu/blob/2ff845c2e033bd0ff64b5b6aa6063a1f8f65aa32/osfmk/i386/fpu.c#L174>
+
+大雑把に言うと、AVX-512を使わないプログラムでAVX-512の状態を保存しなくて良いようにするためのようです。XCR0による「AVX-512が使えない」という判断はある意味正しく、プログラムがAVX-512を使おうとすると例外が発生しますが、カーネルがその例外を捕捉してそのプログラムについてAVX-512の状態を有効化してくれる、という寸法です。
+
+とにかく、macOSでAVX-512を検出するのは通常の `cpuid` ではできないので、OS固有の方法を使う必要があります。具体的には、`sysctl` を使います。[CPUの機能を実行時に検出する：Arm編](detect-processor-features-arm)も見てください。
+
+コード例は次のようになります：
+
+```c
+#include <stdbool.h>
+#include <stdio.h>
+#include <sys/sysctl.h>
+
+bool query_cpu_feature(const char *name)
+{
+    int result = 0;
+    size_t len = sizeof(result);
+    int ok = sysctlbyname(name, &result, &len, NULL, 0);
+    // 成功時には 0 が返る
+    return ok == 0 && result != 0;
+}
+
+int main(void)
+{
+    printf("AVX512F: %d\n", (int)query_cpu_feature("hw.optional.avx512f"));
+    printf("AVX512CD: %d\n", (int)query_cpu_feature("hw.optional.avx512cd"));
+    printf("AVX512DQ: %d\n", (int)query_cpu_feature("hw.optional.avx512dq"));
+    printf("AVX512BW: %d\n", (int)query_cpu_feature("hw.optional.avx512bw"));
+    printf("AVX512VL: %d\n", (int)query_cpu_feature("hw.optional.avx512vl"));
+    printf("AVX512IFMA: %d\n", (int)query_cpu_feature("hw.optional.avx512ifma"));
+    printf("AVX512VBMI: %d\n", (int)query_cpu_feature("hw.optional.avx512vbmi"));
+}
+```
+
+出力例：
+
+```
+AVX512F: 1
+AVX512CD: 1
+AVX512DQ: 1
+AVX512BW: 1
+AVX512VL: 1
+AVX512IFMA: 1
+AVX512VBMI: 1
+```
+
+まあAVX512Fだけ `sysctl` でチェックして、残りは通常の `cpuid` で判定するので良いでしょう。
