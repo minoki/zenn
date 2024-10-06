@@ -52,6 +52,7 @@ C言語では浮動小数点演算の精度は処理系定義です（C17 5.2.4.
 環境によっては、`a * b + c` の形の式がFMAを使うようにコンパイルされる場合があります。C言語的には `#pragma STDC FP_CONTRACT OFF` でこれを抑制できることになっていますが、実際のコンパイラーがこれに対応しているかは確認する必要があります。関連記事：
 
 * [FMA (fused multiply-add) の話](https://qiita.com/mod_poppo/items/e6577df362f44a3ef8dd)
+* [C言語における浮動小数点演算の短縮 (contract) とそれに対する防衛術](./c-fp-contract)
 
 FMAの使用可否によって結果が変わる例を見てみましょう。以下のコードをGCCでコンパイルします：
 
@@ -95,7 +96,7 @@ $ gcc -O2 poly.c && ./a.out
 0x1.c28f5c28f5c29p-1
 ```
 
-現状のClangはGCCほどアグレッシブにFMAを使わないので、Clangでは環境による差は出ないかもしれません。
+~~現状のClangはGCCほどアグレッシブにFMAを使わないので、Clangでは環境による差は出ないかもしれません。~~ Clang 14以降はデフォルトでアグレッシブにFMAを使うようになりました。気をつけてください。
 
 あとは、flush to zeroが有効な環境では非正規化数が0になってしまうので、演算結果が他と変わります。flush to zeroが何かというのは「Binary Hacks Rebooted」の浮動小数点例外のところに書きました。Intelのコンパイラーだとflush to zeroが自動で有効になるようなので注意してください。他のコンパイラーでも `-ffast-math` 系のオプションを使うとflush to zeroが有効になったりします。
 
