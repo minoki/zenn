@@ -42,7 +42,7 @@ int main(void)
 
 `__arm_locally_streaming` 属性をつけた関数の内部でStreaming Modeが有効になります。`svcnt` 系の関数は従来のSVEにもあったやつで、これの値がStreaming Modeかどうかで変化します。`svcnts` 系の関数はSMEのやつで、Streaming Mode中でのベクトル長を返します。
 
-[ACLE](https://arm-software.github.io/acle/main/acle.html#changing-streaming-mode-locally)だと `__arm_locally_streaming` じゃなくて `__attribute__((arm_locally_streaming))` のようですが、実際のコンパイラーに実装されているのは `__arm_locally_streaming` です。謎です。将来変わるのかもしれません。
+~~[ACLE](https://arm-software.github.io/acle/main/acle.html#changing-streaming-mode-locally)だと `__arm_locally_streaming` じゃなくて `__attribute__((arm_locally_streaming))` のようですが、実際のコンパイラーに実装されているのは `__arm_locally_streaming` です。謎です。将来変わるのかもしれません。~~ 執筆時点のACLEだと `__attribute__` を使っていましたが、ACLE 2024 Q1で `__arm_locally_streaming` のようなキーワードを使うように改訂されたようです。コンパイラーに実装されたのは改訂後の仕様です。
 
 御託はいいので、コンパイルして実行してみましょう。
 
@@ -395,7 +395,7 @@ AppleのCPUが行列乗算用の専用命令（AMX）を持っていたことは
 
 他のプラットフォームとの比較で言うと、IntelやIBMのサーバー向けCPUはなかなか個人では手が出ませんが（逸般の誤家庭にはあるのかもしれませんが）、AppleのCPUは普通に個人でも使えます。つまり、Apple M4がMacに搭載されれば個人のパソコンでSMEプログラミングができるようになり、命令セットオタク（CPUの総合的な性能よりも命令セット星取表を重視する輩）としては楽しみです。私の手元にはIntel MacとかApple M1 Macとかが転がっていてそろそろ買い替えたい気持ちが高まっていますが、Apple M4 Macが出てくるまで待つべきかもしれません。
 
-気がかりなのは、ACLEの記述とGCC 14/Clang 18の実装に差があったことです。ここに書いたコードは将来動かなくなってしまうかもしれません。アセンブリーでゴリゴリ書く人には関係ないのかもしれませんが。
+~~気がかりなのは、ACLEの記述とGCC 14/Clang 18の実装に差があったことです。ここに書いたコードは将来動かなくなってしまうかもしれません。アセンブリーでゴリゴリ書く人には関係ないのかもしれませんが。~~ 執筆時点のACLEは古かったようですが、ここに書いたコードは改訂後の仕様に沿っているので大丈夫そうです。
 
 念の為ですが、私は行列乗算については素人ですし、ここで書いた行列乗算のコードにも間違いが含まれる可能性があります。この記事を参考にする場合はその点を頭に入れておいてください。
 
