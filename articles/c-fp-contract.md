@@ -200,7 +200,7 @@ Clangでは
 * Clang 13までは `off`
 * Clang 14以降は `on`
 
-のようです。
+のようです（参考：[Clang 14のリリースノート](https://releases.llvm.org/14.0.0/tools/clang/docs/ReleaseNotes.html#floating-point-support-in-clang)）。
 
 ## excess precisionとの関係
 
