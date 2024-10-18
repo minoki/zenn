@@ -23,7 +23,8 @@ GHC 9.12.1が2024年X月Y日にリリースされました。
 
 この記事は網羅的な紹介記事とはなっていません。是非、公式のリリースノート類も参照してください：
 
-* [docs/users_guide/9.12.1-notes.rst · ghc-9.12 · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/blob/ghc-9.12/docs/users_guide/9.12.1-notes.rst)
+* [2.1. Version 9.12.1 — Glasgow Haskell Compiler 9.12.20241014 User's Guide](https://downloads.haskell.org/~ghc/9.12.1-alpha1/docs/users_guide/9.12.1-notes.html)
+    * [docs/users_guide/9.12.1-notes.rst · ghc-9.12 · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/blob/ghc-9.12/docs/users_guide/9.12.1-notes.rst)
 * [libraries/base/changelog.md · ghc-9.12 · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/blob/ghc-9.12/libraries/base/changelog.md)
 * [9.12 · Wiki · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/wikis/migration/9.12)
 
@@ -51,7 +52,7 @@ str2 = "aaa\n\
 -- -> "aaa\nbbb\nccc\n"
 ```
 
-MultilineStrings拡張を使うと、ダブルクォート3つで複数行文字列リテラルを書けるようになります。
+一方、MultilineStrings拡張を使うと、ダブルクォート3つで複数行文字列リテラルを書けるようになります。
 
 ```haskell
 {-# LANGUAGE MultilineStrings #-}
@@ -169,7 +170,7 @@ f Bar; Baz = putStrLn "B" -- 不可
 --   f Foo = putStrLn "A"
 --   f Bar
 --   Baz = putStrLn "B"
--- と書いたのと同じことになる
+-- と書いたのと同じことになる（のでエラー）
 ```
 
 ## NamedDefaults拡張：default宣言の一般化
@@ -317,7 +318,7 @@ HasField :: k -> TYPE r_rep -> TYPE a_rep -> Constraint
 
 そして、`Int#` の例も通るようになります。
 
-ちなみに、`TYPE` を使ってunboxedな型を統一的に扱えるようにする仕組みは当初はlevity polymorphismと呼ばれていましたが、これは今はreperesentation polymorphismと呼ばれています。[GHC 9.2](https://zenn.dev/mod_poppo/articles/ghc-9-2-and-future)でlifted boxed←→unlifted boxedのみを統一的に扱う「本物の（？）levity polymorphism」（`BoxedRep`）が導入されたことによります。
+ちなみに、`TYPE` を使ってunboxedな型を統一的に扱えるようにする仕組みは当初はlevity polymorphismと呼ばれていましたが、これは今はrepresentation polymorphismと呼ばれています。[GHC 9.2](https://zenn.dev/mod_poppo/articles/ghc-9-2-and-future)でlifted boxed←→unlifted boxedのみを統一的に扱う「本物の（？）levity polymorphism」（`BoxedRep`）が導入されたことによります。
 
 ## RequiredTypeArguments拡張の強化（項の中に `->` と `=>` を書けるようになる）
 
@@ -360,7 +361,7 @@ main = do
 
 UnliftedFFITypes拡張を使うと、unliftedな型をFFIで受け渡しできます。`ByteArray#` やSIMDの型のように、UnliftedFFITypesを使わないと受け渡しできない型もあります。
 
-今回、空のタプルを引数として扱えるようになりました：
+今回、空のタプルを引数として扱えるようになりました。例：
 
 ```haskell
 foreign import ccall unsafe foo :: (# #) -> Int32#
@@ -368,13 +369,13 @@ foreign import ccall unsafe foo :: (# #) -> Int32#
 
 ## NCGバックエンドのRISC-V（64ビット）対応
 
-RISC-Vは新興の命令セットアーキテクチャーで、組み込みなどから勢力を伸ばしています。スマホやパソコンの市場を置き換えるものになるかはわかりませんが、SBC（ラズパイみたいなやつ）は色々登場しています。
+RISC-Vは新興の命令セットアーキテクチャーで、組み込み方面から勢力を伸ばしています。スマホやパソコンの市場を置き換えるものになるかはわかりませんが、SBC（ラズパイみたいなやつ）は色々登場しています。
 
 そういうわけで、GHCもRISC-Vへの対応を進めています。GHC 9.2ではLLVMバックエンドで64ビットRISC-Vに対応しました。
 
 今回、NCG (Native Code Generator) が64ビットRISC-Vに対応して、LLVMなしでもビルドできるようになります。
 
-現時点では公式からはビルド済みのRISC-V向けGHCは配布されていないので、自前でビルドすることになるでしょう。GHCをクロスコンパイラーとしてビルド・インストールする手順は次のようになります：
+現時点では公式からはビルド済みのRISC-V向けGHCは配布されていないので、RISC-V向けコード生成を試したかったら自前でビルドすることになるでしょう。GHCをクロスコンパイラーとしてビルド・インストールする手順は次のようになります：
 
 ```
 $ # 依存関係のインストール（Ubuntuの場合）
@@ -414,40 +415,135 @@ Hello world!
 
 GHCが本格的に対応ということになってくると、RISC-Vの実機が欲しくなってきますね。
 
-## x86 NCG SIMD
+## x86 NCGでのSIMDサポート
 
-GHC 7.8.1（2014年リリース）からLLVMバックエンドで対応していました。
+* 関連記事：[Haskell/GHCのSIMDについて考える](https://blog.miz-ar.info/2023/08/haskell-simd/)（2023年8月）
 
+SIMDはsingle instruction, multiple dataの略で、一つの命令で複数のデータを処理できるCPUの機能のことです。
+
+専用の命令を使うので、活用にはコンパイラー側の対応が必要です。具体的には、普通のループをコンパイラー側で書き換えてSIMD命令を活用する（自動ベクトル化）か、専用のデータ型と組み込み関数を用意してプログラマーにSIMD命令を活用させるか、です。
+
+現状のGHCでのやり方は後者で、`FloatX4#` のようなデータ型と `plusFloatX4#` のような組み込み関数が用意されています。ただ、これまではこれらに対応しているのはLLVMバックエンドに限られており、一般のライブラリーで活用するにはハードルが高い状態でした。
+
+今回、x86向けのNCGが一部のSIMDデータ型と組み込み関数に対応しました。具体的には、128ビット幅の浮動小数点数ベクトル、つまり `FloatX4#` と `DoubleX2#` です。整数とか256ビット以上には未対応です。また、LLVMではSSE2向けにコンパイルできるコードでもSSE 4.1を要求したりします。
+
+とはいえ、実装のための面倒な部分（レジスターのスタックへの退避）が今回片付いたようなので、あとはやる気のある人が手を動かせば対応状況は改善していくのではないかと思います。私も暇があれば貢献するつもりです。
 
 ## Windows上で何もしなくてもLLVMバックエンドを使える
 
-[Haskellの環境構築2023](./haskell-setup-2023)では「Windows上にLLVMのツールを用意するのは厄介だ」というようなことを書きました。
+[Haskellの環境構築2023](./haskell-setup-2023)では「Windows上にLLVMのツールを用意するのは厄介だ」というようなことを書きました。`opt.exe` と `llc.exe` が公式の配布バイナリーに含まれなかったのです。しかも、何らかの方法でこれらを用意しても、浮動小数点数を使うとリンクエラーが出たりします。
+
+今回、これらの問題が解決されて、Windows上で何もしなくてもLLVMバックエンドが使えるようになりました。つまり、`opt.exe` と `llc.exe` はGHCに付属のものが使われるようになり（実は少し前にWindows向けのGHCはClangを使うようになっており、LLVM自体は付属するようになっていたのでした）、浮動小数点数絡みのリンクエラーも解決しました。
 
 ## ライブラリー
 
-* `Data.List{.NonEmpty}.compareLength`
-* `flip` がrepresentation polymorphic
-* `read` が整数の二進表記に対応
-* `Data.List.{inits1,tails1}`
-* `Data.Bitraversable.{firstA,secondA}`
+### `Data.List{.NonEmpty}.compareLength`
+
+```haskell
+Data.List.compareLength :: [a] -> Int -> Ordering
+Data.List.NonEmpty.compareLength :: NonEmpty a -> Int -> Ordering
+```
+
+`compare (length xs) n` の安全で高速な代替物です。つまり、`xs` の要素を全て数える必要がありませんし、`xs` が無限リストでも使えます。
+
+```
+ghci> compareLength ['A','B','C'] 3
+EQ
+ghci> compareLength [0..] 3
+GT
+```
+
+### `flip` がrepresentation polymorphicになる
+
+* [Representation-polymorphic `flip` · Issue #245 · haskell/core-libraries-committee](https://github.com/haskell/core-libraries-committee/issues/245)
+
+なりました。
+
+```
+ghci> :set -fprint-explicit-runtime-reps
+ghci> :type flip
+flip
+  :: forall (repc :: GHC.Types.RuntimeRep) a b (c :: TYPE repc).
+     (a -> b -> c) -> b -> a -> c
+```
+
+### `read` が整数の二進表記に対応
+
+* [Make `read` accept binary integer notation · Issue #177 · haskell/core-libraries-committee](https://github.com/haskell/core-libraries-committee/issues/177)
+
+しました。
+
+```
+ghci> read "0b1011" :: Integer
+11
+ghci> read "0b1011" :: Int
+11
+```
+
+### `Data.List.{inits1,tails1}`
+
+* [Still more NonEmpty variants of inits & tails · Issue #252 · haskell/core-libraries-committee](https://github.com/haskell/core-libraries-committee/issues/252)
+
+```haskell
+module Data.List where
+
+inits1 :: [a] -> [NonEmpty a]
+tails1 :: [a] -> [NonEmpty a]
+```
+
+`inits1` は「前から `n` 個取って作った部分列」のリストを返します。`inits` と異なり、`n` は1以上となります。
+
+`tails1` は「前の `n` 個を取り除いて作った部分列」のリストを返します。`tails` と異なり、`n` は1以上となります。
+
+```
+ghci> inits1 ["A","B","C","D"]
+["A" :| [],"A" :| ["B"],"A" :| ["B","C"],"A" :| ["B","C","D"]]
+ghci> tails1 ["A","B","C","D"]
+["A" :| ["B","C","D"],"B" :| ["C","D"],"C" :| ["D"],"D" :| []]
+```
+
+### `Data.Bitraversable.{firstA,secondA}`
+
+* [Extend Data.Bitraversable API with firstA and secondA · Issue #172 · haskell/core-libraries-committee](https://github.com/haskell/core-libraries-committee/issues/172)
+
+```haskell
+module Data.Bitraversable where
+
+firstA :: (Bitraversable t, Applicative f) => (a -> f c) -> t a b -> f (t c b)
+secondA :: (Bitraversable t, Applicative f) => (b -> f c) -> t a b -> f (t a b)
+```
+
+`Bitraversable` は要素型が2つある `Traversable` みたいなやつです（たぶん）。標準ライブラリーの中では `Either` やタプル `(,)` がインスタンスとなります。
+
+`Bitraversable` は
+
+```haskell
+bitraverse :: (Bitraversable t, Applicative f) => (a -> f c) -> (b -> f d) -> t a b -> f (t c d)
+```
+
+というメソッドを持っており、これを特殊化したものが今回追加された `firstA` と `secondA` と言って良さそうです。
 
 # おまけ：私の貢献
 
-私（@mod_poppo）がこの期間に行なった貢献を備忘録代わりに書いておきます。x86 NCGにSIMDを実装するやつに感化された活動がちょいちょいあります。
+私（@mod_poppo）がこの期間に行なった貢献（バグ報告や修正など）を備忘録代わりに書いておきます。x86 NCGにSIMDを実装するやつに感化された活動がちょいちょいあります。
 
-* `.S` のinclude path（5月〜6月） [!12692: Set package include paths when assembling .S files · Merge requests · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/merge_requests/12692)
-    * 前に書いた「[【低レベルHaskell】Haskell (GHC) でもインラインアセンブリに肉薄したい！](https://qiita.com/mod_poppo/items/793fdb08e62591d6f3fb)」みたいなことをする人が恩恵を受けます。
-* `-mavx` とかのCPUの機能フラグの関係についてイシューを立てた（6月14日） [#24989: `-mavx` should imply `-msse4.2` (or, implications between x86 CPU feature flags) · Issues · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/issues/24989)
-    * まだ解決はしていない。
-* バグ報告（6月17日） [#24999: LLVM version detection logic in configure doesn't work on macOS · Issues · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/issues/24999)→解決済み。9.12に入る
+* プリプロセスされるアセンブリソース `.S` のinclude pathを他と揃える（5月〜6月） [!12692: Set package include paths when assembling .S files · Merge requests · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/merge_requests/12692)
+    * `.S` で `#include <ghcconfig.h>` みたいなことができるようになり、前に書いた「[【低レベルHaskell】Haskell (GHC) でもインラインアセンブリに肉薄したい！](https://qiita.com/mod_poppo/items/793fdb08e62591d6f3fb)」みたいなことをする人が恩恵を受けます。
+* macOS上でLLVMの検出がうまくいっていなかった件のバグ報告（6月17日） [#24999: LLVM version detection logic in configure doesn't work on macOS · Issues · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/issues/24999)
 * x86 NCG SIMDのnegateの実装にコメント（6月28日）
-* Windows上でのLLVMバックエンドのやつ（8月ごろ） [!13183: Fix fltused errors on Windows with LLVM · Merge requests · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/merge_requests/13183)→解決したっぽい？
-* Windows上で付属するLLVMを使ってバックエンド対応（9月ごろ）→9.12にバックポートされそう。
-* primitive string literalのドキュメント化（9月） [!13220: Document primitive string literals and desugaring of string literals · Merge requests · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/merge_requests/13220)→マージ済み。
-    * [Haskellの文字列リテラルはGHCでどのようにコンパイルされるか #ghc - Qiita](https://qiita.com/mod_poppo/items/80c442a1d95471e6ac55)
-* LLVMと `-msse4.2` （10月）
+    * 0の符号を正しく扱うようにしてもらいました。
+* Windows上でのLLVMバックエンド（8月〜9月） [!13183: Fix fltused errors on Windows with LLVM · Merge requests · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/merge_requests/13183)
+    * 主に私がやりました。
+* primitive string literalのドキュメント化（9月） [!13220: Document primitive string literals and desugaring of string literals · Merge requests · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/merge_requests/13220)
+    * [Haskellの文字列リテラルはGHCでどのようにコンパイルされるか](https://qiita.com/mod_poppo/items/80c442a1d95471e6ac55)で調査・説明した内容をGHC公式のドキュメントに書きました。
+* LLVMバックエンドで `-msse4.2` がうまく動いていなかった（10月）
+    * 状況の調査を行いました。
+* MultilineStrings拡張とCRLFについて（10月）
+    * ProposalがCRLFの挙動に関して不明瞭で、実装されたものも意図しない挙動をしているように思えたので、報告しました。
 
 これらの貢献は趣味として、無償でやっています。私を支援したいと思った方には、Zennでバッジを送る、「だめぽラボ」の同人誌を買う、GitHub Sponsorsで支援するなどの手段があります。
 
 * [同人サークル「だめぽラボ」](https://lab.miz-ar.info/)
 * [Sponsor @minoki on GitHub Sponsors](https://github.com/sponsors/minoki)
+
+自分でもGHCに貢献してみたい、という人は「[GHCへの私の貢献2023](https://blog.miz-ar.info/2023/12/my-contributions-to-ghc/)」に書いたことも参考にしてください。まずは[GitLab](https://gitlab.haskell.org/ghc/ghc)を眺めて雰囲気を掴むのが良いでしょうか。アカウント作成はスパム対策のやつがあるので人手での承認が必要なのがトリッキーでしょうか。
