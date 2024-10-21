@@ -3,12 +3,14 @@ title: "GHC 9.12の新機能"
 emoji: "📝"
 type: "tech" # tech: 技術記事 / idea: アイデア
 topics: [haskell]
-published: false
+published: true
 ---
 
-GHC 9.12.1が2024年X月Y日にリリースされました。
+GHC 9.12.1-alpha1が2024年10月16日にリリースされました。
 
-<!-- * [GHC 9.10.1 is now available! - Announcements - Haskell Community](https://discourse.haskell.org/t/ghc-9-10-1-is-now-available/9523) -->
+* [GHC 9.12.1-alpha1 is now available! - Announcements - Haskell Community](https://discourse.haskell.org/t/ghc-9-12-1-alpha1-is-now-available/10544)
+
+そのうち、GHCupのprerelease channelでも使えるようになるのではないかと思います（[Haskellの環境構築2023](haskell-setup-2023)の「補遺：アルファ版・ベータ版のGHCを使う」も参考）。
 
 この記事では、GHC 9.12の新機能を筆者の独断と偏見に基づき確認していきます。過去の類似の記事は
 
@@ -377,7 +379,7 @@ RISC-Vは新興の命令セットアーキテクチャーで、組み込み方�
 
 現時点では公式からはビルド済みのRISC-V向けGHCは配布されていないので、RISC-V向けコード生成を試したかったら自前でビルドすることになるでしょう。GHCをクロスコンパイラーとしてビルド・インストールする手順は次のようになります：
 
-```
+```sh
 $ # 依存関係のインストール（Ubuntuの場合）
 $ sudo apt install build-essential curl autoconf gcc-riscv64-linux-gnu g++-riscv64-linux-gnu
 $ sudo apt install qemu-user
@@ -404,7 +406,7 @@ $ make install
 
 実行例は次のようになります：
 
-```
+```sh
 $ echo 'main = putStrLn "Hello world!"' > hello.hs
 $ ~/ghc-rv64/bin/riscv64-linux-gnu-ghc hello.hs
 $ file hello
@@ -425,13 +427,72 @@ SIMDはsingle instruction, multiple dataの略で、一つの命令で複数の�
 
 現状のGHCでのやり方は後者で、`FloatX4#` のようなデータ型と `plusFloatX4#` のような組み込み関数が用意されています。ただ、これまではこれらに対応しているのはLLVMバックエンドに限られており、一般のライブラリーで活用するにはハードルが高い状態でした。
 
-今回、x86向けのNCGが一部のSIMDデータ型と組み込み関数に対応しました。具体的には、128ビット幅の浮動小数点数ベクトル、つまり `FloatX4#` と `DoubleX2#` です。整数とか256ビット以上には未対応です。また、LLVMではSSE2向けにコンパイルできるコードでもSSE 4.1を要求したりします。
+今回、x86向けのNCGが一部のSIMDデータ型と組み込み関数に対応しました。具体的には、128ビット幅の浮動小数点数ベクトル、つまり `FloatX4#` と `DoubleX2#` です。整数や256ビット以上には未対応です。また、LLVMではSSE2向けにコンパイルできるコードでもSSE 4.1を要求したりします。
 
 とはいえ、実装のための面倒な部分（レジスターのスタックへの退避）が今回片付いたようなので、あとはやる気のある人が手を動かせば対応状況は改善していくのではないかと思います。私も暇があれば貢献するつもりです。
 
+GHCのSIMDのサンプルコードも載せておきます。
+
+```haskell
+{-# LANGUAGE MagicHash #-}
+{-# LANGUAGE UnboxedTuples #-}
+import GHC.Exts
+
+main :: IO ()
+main = do
+  let v = packFloatX4# (# 1.1#, 2.2#, 3.3#, 4.4# #)
+      w = packFloatX4# (# 0.1#, 0.2#, 0.3#, 0.4# #)
+      x = minusFloatX4# v w
+      (# a, b, c, d #) = unpackFloatX4# x
+  print (F# a, F# b, F# c, F# d)
+```
+
+コンパイルには、今回新しく対応したx86 NCGで
+
+```
+$ ghc -msse4 simdtest.hs
+```
+
+とするか、従来から対応しているLLVMバックエンドで
+
+```
+$ ghc -fllvm simdtest.hs
+```
+
+とします。
+
+SIMDを真面目に使うには何らかのラッパーライブラリーが欲しいところですが、Hackageにあるやつ（[simd](https://hackage.haskell.org/package/simd)、[primitive-simd](https://hackage.haskell.org/package/primitive-simd)）は最終更新日時が古く、使えるか不明です。誰かが新たに作るべきかもしれません。
+
+## SIMDプリミティブの追加
+
+x86 NCGへのSIMDの実装と関連して、いくつかプリミティブが追加されました。例を挙げます：
+
+```haskell
+module GHC.Prim where
+fmaddFloatX4# :: FloatX4# -> FloatX4# -> FloatX4# -> FloatX4# -- x * y + z
+fmsubFloatX4# :: FloatX4# -> FloatX4# -> FloatX4# -> FloatX4# -- x * y - z
+fnmaddFloatX4# :: FloatX4# -> FloatX4# -> FloatX4# -> FloatX4# -- - x * y + z
+fnmsubFloatX4# :: FloatX4# -> FloatX4# -> FloatX4# -> FloatX4# -- - x * y - z
+shuffleFloatX4# :: FloatX4# -> FloatX4# -> (# Int#, Int#, Int#, Int# #) -> FloatX4#
+minFloatX4# :: FloatX4# -> FloatX4# -> FloatX4#
+maxFloatX4# :: FloatX4# -> FloatX4# -> FloatX4#
+```
+
+浮動小数点数のmin/maxも追加されました
+
+```haskell
+module GHC.Prim where
+minFloat# :: Float# -> Float# -> Float#
+maxFloat# :: Float# -> Float# -> Float#
+```
+
+が、環境によって動作が違うので、将来仕様変更されるかもしれません（[#25350: Floating-point min/max primops should have consistent behavior across platforms · Issues · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/issues/25350)）。
+
+なお、新たに追加されたプリミティブは `GHC.Exts` からはエクスポートされません。ラッパーがないと普通のHaskellユーザーには縁遠いかもしれません。
+
 ## Windows上で何もしなくてもLLVMバックエンドを使える
 
-[Haskellの環境構築2023](./haskell-setup-2023)では「Windows上にLLVMのツールを用意するのは厄介だ」というようなことを書きました。`opt.exe` と `llc.exe` が公式の配布バイナリーに含まれなかったのです。しかも、何らかの方法でこれらを用意しても、浮動小数点数を使うとリンクエラーが出たりします。
+[Haskellの環境構築2023](./haskell-setup-2023)では「Windows上にLLVMのツールを用意するのは厄介だ」というようなことを書きました。当時は `opt.exe` と `llc.exe` が公式の配布バイナリーに含まれなかったのです（今は含まれるようです）。しかも、何らかの方法でこれらを用意しても、浮動小数点数を使うとリンクエラーが出たりします。
 
 今回、これらの問題が解決されて、Windows上で何もしなくてもLLVMバックエンドが使えるようになりました。つまり、`opt.exe` と `llc.exe` はGHCに付属のものが使われるようになり（実は少し前にWindows向けのGHCはClangを使うようになっており、LLVM自体は付属するようになっていたのでした）、浮動小数点数絡みのリンクエラーも解決しました。
 
@@ -466,6 +527,8 @@ flip
   :: forall (repc :: GHC.Types.RuntimeRep) a b (c :: TYPE repc).
      (a -> b -> c) -> b -> a -> c
 ```
+
+型引数が増えた結果、 `flip` に型適用する際の挙動が変わるので注意してください。
 
 ### `read` が整数の二進表記に対応
 
@@ -525,7 +588,7 @@ bitraverse :: (Bitraversable t, Applicative f) => (a -> f c) -> (b -> f d) -> t 
 
 # おまけ：私の貢献
 
-私（@mod_poppo）がこの期間に行なった貢献（バグ報告や修正など）を備忘録代わりに書いておきます。x86 NCGにSIMDを実装するやつに感化された活動がちょいちょいあります。
+私（@mod_poppo）が行なった貢献（バグ報告や修正など）で、GHC 9.12に入るものを備忘録代わりに書いておきます。x86 NCGにSIMDを実装するやつに感化された活動がちょいちょいあります。
 
 * プリプロセスされるアセンブリソース `.S` のinclude pathを他と揃える（5月〜6月） [!12692: Set package include paths when assembling .S files · Merge requests · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/merge_requests/12692)
     * `.S` で `#include <ghcconfig.h>` みたいなことができるようになり、前に書いた「[【低レベルHaskell】Haskell (GHC) でもインラインアセンブリに肉薄したい！](https://qiita.com/mod_poppo/items/793fdb08e62591d6f3fb)」みたいなことをする人が恩恵を受けます。
@@ -533,9 +596,9 @@ bitraverse :: (Bitraversable t, Applicative f) => (a -> f c) -> (b -> f d) -> t 
 * x86 NCG SIMDのnegateの実装にコメント（6月28日）
     * 0の符号を正しく扱うようにしてもらいました。
 * Windows上でのLLVMバックエンド（8月〜9月） [!13183: Fix fltused errors on Windows with LLVM · Merge requests · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/merge_requests/13183)
-    * 主に私がやりました。
+    * 私は調査と解決法の提案をやりました。
 * primitive string literalのドキュメント化（9月） [!13220: Document primitive string literals and desugaring of string literals · Merge requests · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/merge_requests/13220)
-    * [Haskellの文字列リテラルはGHCでどのようにコンパイルされるか](https://qiita.com/mod_poppo/items/80c442a1d95471e6ac55)で調査・説明した内容をGHC公式のドキュメントに書きました。
+    * 「[Haskellの文字列リテラルはGHCでどのようにコンパイルされるか](https://qiita.com/mod_poppo/items/80c442a1d95471e6ac55)」で調査・説明した内容をGHC公式のドキュメントに書きました。本当は英語ネイティブの人に書いてほしかったところですが、4年間誰もやらなかったので……。
 * LLVMバックエンドで `-msse4.2` がうまく動いていなかった（10月）
     * 状況の調査を行いました。
 * MultilineStrings拡張とCRLFについて（10月）
@@ -546,4 +609,4 @@ bitraverse :: (Bitraversable t, Applicative f) => (a -> f c) -> (b -> f d) -> t 
 * [同人サークル「だめぽラボ」](https://lab.miz-ar.info/)
 * [Sponsor @minoki on GitHub Sponsors](https://github.com/sponsors/minoki)
 
-自分でもGHCに貢献してみたい、という人は「[GHCへの私の貢献2023](https://blog.miz-ar.info/2023/12/my-contributions-to-ghc/)」に書いたことも参考にしてください。まずは[GitLab](https://gitlab.haskell.org/ghc/ghc)を眺めて雰囲気を掴むのが良いでしょうか。アカウント作成はスパム対策のやつがあるので人手での承認が必要なのがトリッキーでしょうか。
+自分でもGHCに貢献してみたい、という人は「[GHCへの私の貢献2023](https://blog.miz-ar.info/2023/12/my-contributions-to-ghc/)」に書いたことも参考にしてください。まずは[GitLab](https://gitlab.haskell.org/ghc/ghc)を眺めて雰囲気を掴むのが良いでしょうか。アカウント作成はスパム対策の関係で人手での承認が必要なのがトリッキーです。
