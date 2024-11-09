@@ -552,6 +552,7 @@ GHCはネイティブコードを生成できるコンパイラーですが、�
 | GHC 9.6 | LLVM 11以上15以下 |
 | GHC 9.8 | LLVM 11以上15以下 |
 | GHC 9.10 | LLVM 13以上15以下 |
+| GHC 9.12 | LLVM 13以上19以下 |
 
 ここではGHC 9.0.2 + LLVM 12を例とします。
 
@@ -578,14 +579,10 @@ ghcup install ghc 9.0.2 --force  # --forceにより、GHC 9.0.2がインスト�
 
 HomebrewやMacPortsの場合は一工夫必要です。GHCのインストール時に `opt` コマンドと `llc` コマンドの場所を教えてやる必要があります。具体的には、環境変数 `OPT` と `LLC` を設定します。
 
-Homebrewの場合は `/opt/homebrew/opt/llvm@12/bin` （Apple Silicon Macの場合）または `/usr/local/opt/llvm@12/bin` （Intel Macの場合）以下に `opt` コマンドと `llc` コマンドが存在するので、次のように `ghcup` を実行すれば良いでしょう：
+Homebrewの場合は `/opt/homebrew/opt/llvm@12/bin` （Apple Silicon Macの場合）または `/usr/local/opt/llvm@12/bin` （Intel Macの場合）以下に `opt` コマンドと `llc` コマンドが存在します。これらのパスは `brew --prefix llvm@12` で取れるので、次のように `ghcup` を実行すれば良いでしょう：
 
 ```sh
-# Apple Silicon Macの場合
-OPT=/opt/homebrew/opt/llvm@12/bin/opt LLC=/opt/homebrew/opt/llvm@12/bin/llc ghcup install ghc 9.0.2 --force
-
-# Intel Macの場合
-OPT=/usr/local/opt/llvm@12/bin/opt LLC=/usr/local/opt/llvm@12/bin/llc ghcup install ghc 9.0.2 --force
+OPT="$(brew --prefix llvm@12)/bin/opt" LLC="$(brew --prefix llvm@12)/bin/llc" ghcup install ghc 9.0.2 --force
 ```
 
 MacPortsの場合は `opt` コマンドと `llc` コマンドの名前に `mp` が含まれているので、次のように `ghcup` を実行すれば良いでしょう：
