@@ -212,3 +212,4 @@ Data.Functor.unzip :: Functor f => f (a, b) -> (f a, f b)
 ## その他
 
 * [`-Wterm-variable-capture`](https://downloads.haskell.org/ghc/9.8.0.20230809/docs/users_guide/using-warnings.html#ghc-flag--Wterm-variable-capture): 将来導入される `RequiredTypeArguments` 拡張では、型変数と同名の項レベルの変数があった時、暗黙の量化が起こりません。`-Wterm-variable-capture` は、型変数の暗黙の量化が起こるときに同名の項レベルの変数があったら警告を発します。
+* AArch64向けのLLVMバックエンドで、128ビット幅のSIMDプリミティブが使えるようになりました（私の貢献です）。
