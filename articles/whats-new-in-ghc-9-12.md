@@ -252,6 +252,32 @@ main = print ['a']
 
 というコードは型推論の都合か何かでうまくいきません。
 
+## 型宣言におけるワイルドカード `_`
+
+* [ghc-proposals/proposals/0425-decl-invis-binders.rst at master · ghc-proposals/ghc-proposals](https://github.com/ghc-proposals/ghc-proposals/blob/master/proposals/0425-decl-invis-binders.rst)
+
+Haskellでは、項レベルの関数が引数を受け取らない場合、変数名の代わりにワイルドカード `_` を利用できます。
+
+```haskell
+const :: a -> b -> a
+const x _ = x
+```
+
+一方、これまでのGHCでは型レベル関数の引数には全て名前を与える必要がありました。
+
+```haskell
+type Const x y = x -- OK
+-- type Const x _ = x -- 不可
+```
+
+GHC 9.12ではTypeAbstractions拡張の一環で型レベル関数の引数にワイルドカード `_` を使用できるようになります。
+
+```haskell
+{-# LANGUAGE TypeAbstractions #-}
+
+type Const x _ = x -- OK
+```
+
 ## `HasField` クラスとrepresentation polymorphism
 
 GHCは、`HasField` クラスでレコードのフィールドにアクセスできる仕組みを持っています。例えば、GHC 9.2で追加されたOverloadedRecordDot拡張は、`HasField` クラスを使ってドット記法を脱糖しています。
