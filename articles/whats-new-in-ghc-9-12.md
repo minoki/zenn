@@ -23,7 +23,7 @@ GHC 9.12.1-alpha1が2024年10月16日にリリースされました。
 
 です。
 
-この記事は網羅的な紹介記事とはなっていません。是非、公式のリリースノート類も参照してください：
+この記事は網羅的な紹介記事とはなっていません。特に、筆者が詳しくないRTSやTemplate Haskell周りはカバーできていません。是非、公式のリリースノート類も参照してください：
 
 * [2.1. Version 9.12.1 — Glasgow Haskell Compiler 9.12.20241014 User's Guide](https://downloads.haskell.org/~ghc/9.12.1-alpha1/docs/users_guide/9.12.1-notes.html)
     * [docs/users_guide/9.12.1-notes.rst · ghc-9.12 · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/blob/ghc-9.12/docs/users_guide/9.12.1-notes.rst)
