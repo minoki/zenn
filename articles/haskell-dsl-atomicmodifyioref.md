@@ -1,8 +1,8 @@
 ---
-title: "HaskellでEDSLを作る・atomicModifyIORef編"
+title: "HaskellでEDSLを作る：atomicModifyIORef編"
 emoji: "🐙"
 type: "tech" # tech: 技術記事 / idea: アイデア
-topics: [haskell]
+topics: [haskell, 自動微分]
 published: false
 ---
 
@@ -16,11 +16,11 @@ HaskellはEDSLを作るのに適した言語です。例えば、**モナド**�
 
 この記事では、HaskellでEDSLを作る**モナド以外の**テクニックを紹介します。
 
-そういうテクニックはいくつかありますが、今回は、`atomicModifyIORef'` を使う例を紹介します。
+そういうテクニックはいくつかありますが、今回は、`unsafePerformIO` と `atomicModifyIORef'` を使う例を紹介します。
 
-## 題材；自動微分
+## 題材：自動微分
 
-ざっくりと自動微分の説明をします。題材として使いたいだけなので、駆け足で説明します。
+この記事では自動微分を題材とするので、ざっくりと自動微分の説明をします。題材として使いたいだけなので、駆け足で説明します。
 
 ある関数を実装する際に、その導関数も一緒に欲しいことがたまにあります。例えば、CGの方の応用では、曲線を表す関数と一緒に接線も欲しいかもしれません。別の例として、ディープラーニングではモデルを学習させるために、（確率的）勾配降下法を使いますが、そこではモデルを含む関数の勾配が必要になります。
 
@@ -28,7 +28,7 @@ HaskellはEDSLを作るのに適した言語です。例えば、**モナド**�
 
 しかし、プログラムとして書かれた関数を数式で表すのは必ずしも容易ではありません。例えば、条件分岐が何段にも重なっていたら厄介です。
 
-微分の近似値を数値的に得る方法（数値微分）もあります。つまり、小さいが0ではない$h$に対し、$(f(x+h)-f(x))/h$（あるいは$(f(x+h/2)-f(x-h/2))/h$）を計算するのです。この方法はプログラムが複雑でも対応できます。デメリットしては、浮動小数点演算を使うことによる誤差のほか、微分を差分で近似する誤差も考慮する必要が出てきます。また、関数の実行回数が増えることもデメリットで、変数の個数が増えると大変です。
+微分の近似値を数値的に得る方法（数値微分）もあります。つまり、小さいが0ではない$h$に対し、$(f(x+h)-f(x))/h$（あるいは$(f(x+h/2)-f(x-h/2))/h$）を計算するのです。この方法はプログラムが複雑でも対応できます。デメリットしては、浮動小数点演算を使うことによる誤差に加えて、微分を差分で近似することによる誤差も考慮する必要が出てきます。また、関数の実行回数が増えることもデメリットで、変数の個数が増えると大変です。
 
 数値微分の例を載せておきます。
 
@@ -46,7 +46,7 @@ ghci> f' 1 :: Double
 
 手法があり、**自動微分** (automatic differentiation) と呼ばれています。
 
-自動微分にはいくつかの実装方式があります。代表的なものは**フォワードモード**と**リバースモード**です。いずれも「複雑な関数も基本的な演算（四則演算や初等関数）の組み合わせに還元でき、基本的な演算の微分は既知である」という考えに基づき、「微分が既知の関数の組み合わせで複雑な関数の微分を組み立て」ます。
+自動微分にはいくつかの実装方式があります。代表的なものは**フォワードモード**と**リバースモード**です。いずれも「複雑な関数も基本的な演算（四則演算や初等関数）の組み合わせに還元でき、基本的な演算の微分は既知である」という考えに基づき、「微分が既知な関数の組み合わせで複雑な関数の微分を組み立て」ます。
 
 ### フォワードモード
 
@@ -97,7 +97,7 @@ ghci> f' 1 :: Double
 5120.0
 ```
 
-導関数の正確な値を、誤差なく計算できました。もちろん、浮動小数点数で正確に表現できない場合はそれに由来する誤差が出ます。
+導関数の正確な値を、誤差なく計算できました。もちろん、結果を浮動小数点数で正確に表現できない場合はそれに由来する誤差が出ます。
 
 Haskellでフォワードモードをやるには、普通に直積のようなデータ型を定義して各種演算子をオーバーロード（型クラスのインスタンスの実装）してやれば良いです。例えば、adパッケージに実装があります。
 
@@ -221,9 +221,9 @@ ghci> f' 1
 
 この記事では、リバースモード自動微分を演算子オーバーロードで書くためのテクニックを紹介します。
 
-## Wengert listとIOモナドを使ったリバースモード自動微分の実装
+## Wengert listとSTモナドを使ったリバースモード自動微分の実装
 
-発想としては、順方向の計算では計算手順（実際に必要なのは導関数の計算方法）をリストなどのデータ構造に保管しておいて、導関数を計算したくなったときに逆順に再生します。
+発想としては、順方向の計算では計算手順（実際に必要なのは導関数の計算方法）をリストなどのデータ構造（Wengert listやtapeと呼ばれる）に保管しておいて、導関数を計算したくなったときに逆順に再生します。
 
 Haskellでの実装例を以下に載せます。計算手順はリストの `STRef` に溜めておきます。
 
@@ -239,15 +239,19 @@ import Control.Monad
 import Control.Monad.Reader
 import Control.Monad.ST
 
+-- 基本的な演算
 data Node where
   InputNode :: Node
   UnaryNode :: Maybe Int -> (Double -> Double) -> Node
   BinaryNode :: Maybe Int -> Maybe Int -> (Double -> (Double, Double)) -> Node
 
+-- 計算に使った「基本的な演算」のリスト
 data Tape = Tape { currentLength :: Int, reversedNodes :: [Node] }
 
+-- 順方向の計算に使うモナド
 type M s = ReaderT (STRef s Tape) (ST s)
 
+-- 順方向の計算に使うデータ型
 data Reverse a = Reverse { primal :: a, sensitivityIndex :: Maybe Int }
 
 addNode :: Node -> M s Int
@@ -323,7 +327,348 @@ main = do
 
 * 順方向の計算でモナドを使っている。
     * 「計算手順のリスト」をSTモナドで更新するため。
-    * このリストは `Reader` で共有されており、グローバル変数に近い。
+    * このリストは `ReaderT` で共有されており、グローバル変数に近い。
 * 導関数の計算（逆方向）でもSTモナドを使っているが、これは局所的な利用で済む。
+    * 導関数自体は純粋な関数 `Double -> Double` として得られる。
 * 諸事情により要素の型は `Double` しか使えない。
-    * 任意の `Num` インスタンスに対応させようとすると `unsafeCoerce` か `Typeable` の使用が必要になり、ノイジーなので、ここでは `Double` に限定することで簡略化しました。
+    * 任意の `Num` インスタンスに対応させようとすると `unsafeCoerce` か `Typeable` の使用が必要になり、煩雑なので、ここでは `Double` に限定することで簡略化しました。
+
+この中で一番厄介なのは、「順方向の計算でモナドを使っている」という点です。`Num` クラスの演算子は `(+) :: Num a => a -> a -> a` という純粋な関数として定義されているので、このままでは `Reverse a` 型は `Num` クラスのインスタンスにはできません。
+
+## `unsafePerformIO` を使う
+
+内部的に副作用を使う計算を純粋な計算に見せかけるには何を使えばいいでしょうか？そう、`unsafePerformIO` ですね。
+
+このほか、グローバル変数の使用で `ReaderT` モナドを使っていますが、これはreflectionパッケージを使うことで代用します。
+
+* [reflection: Reifies arbitrary terms into types that can be reflected back into terms](https://hackage.haskell.org/package/reflection)
+
+というわけで、これらを使って順方向の計算から見た目上モナドを消去したプログラムが以下になります：
+
+```haskell
+{- cabal:
+build-depends: base, vector, mtl, reflection
+-}
+{-# LANGUAGE GHC2021 #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE RankNTypes #-}
+import Data.Kind
+import Data.Reflection
+import Data.IORef
+import Data.Proxy
+import qualified Data.Vector.Unboxed.Mutable as VM
+import Control.Monad
+import Control.Monad.Reader
+import Control.Monad.ST
+import System.IO.Unsafe
+
+-- 基本的な演算
+data Node where
+  InputNode :: Node
+  UnaryNode :: Maybe Int -> (Double -> Double) -> Node
+  BinaryNode :: Maybe Int -> Maybe Int -> (Double -> (Double, Double)) -> Node
+
+-- 計算に使った「基本的な演算」のリスト
+data Tape = Tape { currentLength :: Int, reversedNodes :: [Node] }
+
+type M = ReaderT (IORef Tape) IO
+
+-- 順方向の計算に使うデータ型
+type Reverse :: Type -> Type -> Type
+data Reverse s a = Reverse { primal :: !a, sensitivityIndex :: !(Maybe Int) }
+
+addNode :: Node -> M Int
+addNode n = do
+  r <- ask
+  Tape i ns <- lift $ readIORef r
+  lift $ writeIORef r (Tape (i + 1) (n : ns))
+  pure i
+
+runNode :: forall a s. Reifies s (IORef Tape) => M (Reverse s a) -> Reverse s a
+runNode action = let r = reflect (Proxy :: Proxy s)
+                 in unsafePerformIO (runReaderT action r)
+
+run :: (forall s. Reifies s (IORef Tape) => Reverse s Double -> Reverse s Double) -> (Double -> (Double, Double -> Double))
+run f x = unsafePerformIO $ do
+  r <- newIORef (Tape 0 [])
+  let action = do
+        i <- addNode InputNode
+        pure $! reify r $ \(proxy :: Proxy s) -> case f (Reverse x (Just i) :: Reverse s Double) of
+          Reverse y ys -> (y, ys)
+  (!y, ys) <- runReaderT action r
+  case ys of
+    Nothing -> pure (y, \_ys -> 0)
+    Just yi -> do
+      Tape m revNodes <- readIORef r
+      let fs ys = runST $ do
+            -- テープを逆順に再生して微分を計算する
+            v <- VM.replicate m (0 :: Double)
+            VM.write v yi ys
+            forM_ (zip [m-1,m-2..] revNodes) $ \(i,n) ->
+              case n of
+                InputNode -> pure ()
+                UnaryNode (Just j) gs -> do
+                  s <- VM.read v i
+                  VM.modify v (+ gs s) j
+                BinaryNode j k gs -> do
+                  s <- VM.read v i
+                  let (sj, sk) = gs s
+                  maybe (pure ()) (VM.modify v (+ sj)) j
+                  maybe (pure ()) (VM.modify v (+ sk)) k
+            VM.read v 0
+      pure (y, fs)
+
+constant :: a -> Reverse s a
+constant x = Reverse x Nothing
+
+add :: Reifies s (IORef Tape) => Reverse s Double -> Reverse s Double -> Reverse s Double
+add (Reverse x i) (Reverse y j) = runNode $ do
+  k <- addNode (BinaryNode i j (\s -> (s, s)))
+  pure $ Reverse (x + y) (Just k)
+
+mul :: Reifies s (IORef Tape) => Reverse s Double -> Reverse s Double -> Reverse s Double
+mul (Reverse x i) (Reverse y j) = runNode $ do
+  k <- addNode (BinaryNode i j (\s -> (y * s, x * s)))
+  pure $ Reverse (x * y) (Just k)
+
+-- 純粋な関数として書けている
+f_ :: Reifies s (IORef Tape) => Reverse s Double -> Reverse s Double
+f_ x = let y = add x (constant 1)
+           y2 = mul y y
+           y4 = mul y2 y2
+           y8 = mul y4 y4
+       in mul y8 y2
+
+f' :: Double -> (Double, Double -> Double)
+f' = run f_
+
+main :: IO ()
+main = do
+  let (y, ys) = f' 1
+  print (ys 1)
+```
+
+## `unsafePerformIO` と並列処理
+
+Haskellは並列処理もできます。Haskellの純粋な計算は、並列に評価しても同じ結果を返すべきです。先ほど書いたリバースモード自動微分はどうでしょうか。先ほどのコードを少し変えて、
+
+$$
+\sum_{k=0}^{100} x^k
+$$
+
+の微分を $x=1$ で評価するプログラムを書いてみます。これは $0+1+2+\dots+100$ なので、5050を返すべきです。
+
+```haskell
+{- cabal:
+build-depends: base, vector, mtl, reflection, parallel
+ghc-options: -threaded -rtsopts -with-rtsopts=-N8
+-}
+{-# LANGUAGE GHC2021 #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE RankNTypes #-}
+import Data.Kind
+import Data.Reflection
+import Data.IORef
+import Data.Proxy
+import qualified Data.Vector.Unboxed.Mutable as VM
+import Control.Monad
+import Control.Monad.Reader
+import Control.Monad.ST
+import Control.Parallel.Strategies
+import System.IO.Unsafe
+
+-- 中略
+
+pow :: Reifies s (IORef Tape) => Reverse s Double -> Int -> Reverse s Double
+pow x 0 = constant 1
+pow x i = case i `quotRem` 2 of
+  (j, 0) -> pow (mul x x) j
+  (j, _) -> mul x (pow (mul x x) j)
+
+f_ :: Reifies s (IORef Tape) => Reverse s Double -> Reverse s Double
+f_ x = let xs = [pow x i | i <- [0..100]] `using` parList rseq
+           -- `using` parList rseq でリストの要素を並列に評価する
+       in foldl add (constant 0) xs
+
+f' :: Double -> (Double, Double -> Double)
+f' = run f_
+
+main :: IO ()
+main = do
+  let (y, ys) = f' 1
+  print (ys 1)
+```
+
+まず、`` `using` parList rseq`` をコメントアウトして実行してみます。
+
+```
+$ cabal run revad_unsafeperformio_par.hs
+5050.0
+```
+
+5050が返ってきました。
+
+`` `using` parList rseq`` がある状態で評価してみましょう。
+
+```
+$ cabal run revad_unsafeperformio_par.hs
+25153.0
+$ cabal run revad_unsafeperformio_par.hs
+cabal-script-revad_unsafeperformio_par.hs: index out of bounds (674,657)
+CallStack (from HasCallStack):
+  error, called at src/Data/Vector/Internal/Check.hs:103:12 in vctr-0.13.1.0-2e05d1b2:Data.Vector.Internal.Check
+  checkError, called at src/Data/Vector/Internal/Check.hs:109:17 in vctr-0.13.1.0-2e05d1b2:Data.Vector.Internal.Check
+  check, called at src/Data/Vector/Internal/Check.hs:122:5 in vctr-0.13.1.0-2e05d1b2:Data.Vector.Internal.Check
+  checkIndex, called at src/Data/Vector/Generic/Mutable.hs:677:16 in vctr-0.13.1.0-2e05d1b2:Data.Vector.Generic.Mutable
+  modify, called at src/Data/Vector/Unboxed/Mutable.hs:335:10 in vctr-0.13.1.0-2e05d1b2:Data.Vector.Unboxed.Mutable
+$ cabal run revad_unsafeperformio_par.hs
+6442.0
+$ cabal run revad_unsafeperformio_par.hs
+1.142044e7
+```
+
+毎回違う結果が返ってきました！しかも、エラーになるパターンもあります。
+
+`addNode` 関数が複数のスレッドで同時に実行されたことにより、`IORef` への読み書きが競合して不整合を起こしてしまったのです。
+
+```haskell
+addNode :: Node -> M Int
+addNode n = do
+  r <- ask
+  Tape i ns <- lift $ readIORef r
+  lift $ writeIORef r (Tape (i + 1) (n : ns))
+  pure i
+```
+
+## `atomicModifyIORef` の使用
+
+`IORef` を複数のスレッドから同時に読み書きしたい。そんな願いを叶えてくれるのが、[atomicModifyIORef](https://hackage.haskell.org/package/base-4.20.0.1/docs/Data-IORef.html#v:atomicModifyIORef)です。使ってみましょう。
+
+```haskell
+addNode :: Node -> M Int
+addNode n = do
+  r <- ask
+  lift $ atomicModifyIORef' r (\(Tape i ns) -> (Tape (i + 1) (n : ns), i))
+```
+
+```
+$ cabal run revad_atomicmodifyioref.hs                      
+5050.0
+$ cabal run revad_atomicmodifyioref.hs
+5050.0
+$ cabal run revad_atomicmodifyioref.hs
+5050.0
+$ cabal run revad_atomicmodifyioref.hs
+5050.0
+$ cabal run revad_atomicmodifyioref.hs
+5050.0
+```
+
+複数スレッドで実行しても、一貫性のある結果を返すようになりました。素晴らしいですね。
+
+`atomicModifyIORef` について詳しくはドキュメントを参照してください。ここで使ったのは正格評価してくれる `atomicModifyIORef'` です。
+
+## まとめ
+
+`unsafePerformIO` やreflectionパッケージを使うと、純粋に見える計算の中でグローバル変数の読み書きを行えますが、素朴に書いたコードはマルチスレッドで破綻してしまいました。しかし、`IORef` の読み書きに `atomicModifyIORef` 関数を使うことで、マルチスレッドでも問題なく動くようになりました。
+
+`atomicModifyIORef` 万歳！
+
+## 他との比較／計算の共有
+
+adパッケージやbackpropパッケージには、ここに書いたテクニック（`unsafePerformIO`, reflection, `atomicModifyIORef`）によるリバースモード自動微分の実装が含まれます。
+
+* [ad: Automatic Differentiation](https://hackage.haskell.org/package/ad)
+* [backprop: Heterogeneous automatic differentation](https://hackage.haskell.org/package/backprop)
+
+リバースモード自動微分の実装方法としては、**限定継続**を使ったものも知られています。ad-delcontパッケージは限定継続を使っているようです。
+
+* [ad-delcont: Reverse-mode automatic differentiation with delimited continuations](https://hackage.haskell.org/package/ad-delcont)
+
+lotz氏の2018年の記事では、真っ当なHaskellでリバースモード自動微分が実装されています。演算子オーバーロードも実現できています。
+
+* [自動微分を実装して理解する（前編）](https://qiita.com/lotz/items/39c52f08cc9b5d8439ca)
+* [自動微分を実装して理解する（後編）](https://qiita.com/lotz/items/f1d4ab1d83dc13a5d81a)
+
+lotz氏の実装と、この記事で書いた難解なテクニックは何が違うのでしょうか？一つは、**計算の共有**が実現できているか、という観点が挙げられます。例えば、先ほど行った $(x+1)^{10}$ の計算は次のようなグラフで表されます：
+
+```mermaid
+graph TD
+    fx["f(x) = mul y8 y2"] --> y8
+    fx --> y2
+    y8["y8 = mul y4 y4"] --> y4
+    y8 --> y4
+    y4["y4 = mul y2 y2"] --> y2
+    y4 --> y2
+    y2["y2 = mul y y"] --> y
+    y2 --> y
+    y["y = add x k"] --> x
+    y --> k["k = constant 1"]
+```
+
+しかし、計算を素朴な構文木で表してしまうと、計算のグラフは次のようになり、同じ計算を何回も行うことになってしまいます！
+
+```mermaid
+graph TD
+    fx["f(x) = mul y8 y2"] --> y8
+    fx --> y2a
+    y8["y8 = mul y4 y4"] --> y4a
+    y8 --> y4b
+    y4a["y4 = mul y2 y2"] --> y2b
+    y4a --> y2c
+    y4b["y4 = mul y2 y2"] --> y2d
+    y4b --> y2e
+    y2a["y2 = mul y y"] --> ya
+    y2a --> yb
+    y2b["y2 = mul y y"] --> yc
+    y2b --> yd
+    y2c["y2 = mul y y"] --> ye
+    y2c --> yf
+    y2d["y2 = mul y y"] --> yg
+    y2d --> yh
+    y2e["y2 = mul y y"] --> yi
+    y2e --> yj
+    ya["y = add x k"] --> x
+    ya --> k["k = constant 1"]
+    yb["y = add x k"] --> x
+    yb --> k["k = constant 1"]
+    yc["y = add x k"] --> x
+    yc --> k["k = constant 1"]
+    yd["y = add x k"] --> x
+    yd --> k["k = constant 1"]
+    ye["y = add x k"] --> x
+    ye --> k["k = constant 1"]
+    yf["y = add x k"] --> x
+    yf --> k["k = constant 1"]
+    yg["y = add x k"] --> x
+    yg --> k["k = constant 1"]
+    yh["y = add x k"] --> x
+    yh --> k["k = constant 1"]
+    yi["y = add x k"] --> x
+    yi --> k["k = constant 1"]
+    yj["y = add x k"] --> x
+    yj --> k["k = constant 1"]
+```
+
+もちろん、自前で最適化すれば、後者の木構造を前者のグラフに変換することはできますが、コストがかかります。
+
+Haskellは純粋な言語であり、計算後の値を見るだけでは二つの値が「同じ計算」で生じたのか、「別の実行」で生じたのか知ることは通常はできません。つまり、ある計算が
+
+```haskell
+  let y = add x 1
+      y2 = mul y y
+```
+
+と書かれたのか、
+
+```haskell
+  let y2 = mul (add x 1) (add x 1)
+```
+
+と書かれたのか真っ当なHaskellコードで区別することはできません。そもそも、コンパイラーは両者が同じ意味だと考えるので、下のコードを上のコードに最適化することだってあり得ます。最適化によって純粋なコードから見た挙動が変わることはあってはならないので、やはり純粋なHaskellコードからこれらの違いを検出するのは無理そうだという結論になります。
+
+つまり、「計算の共有」を真っ当で純粋なHaskellコードで検出することはできないのです。この記事に書いた方法で「計算の共有」が実現できているのは、`unsafePerformIO` とグローバル変数の更新という「真っ当なHaskellから逸脱した手段」を使っているからです。
+
+「計算の共有」を検出する方法としては、この記事に書いた方法のほかに、`StableName` を使った方法もあります。これも純粋なコードからは使えず、`IO` モナドが関わってきます。`StableName` についても別の機会に紹介します。
