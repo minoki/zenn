@@ -18,7 +18,7 @@ ArmのC拡張、ACLEに対応した処理系では `__arm_rsr64`, `__arm_wsr64` 
 
 * [Arm C Language Extensions > Special register intrinsics](https://arm-software.github.io/acle/main/acle.html#special-register-intrinsics)
 
-執筆時点ではClangがこれらの組み込み関数に対応しています。GCCとMSVCは未対応です。
+執筆時点ではClangがこれらの組み込み関数に対応しています。GCCは14以降で対応しています。MSVCは不明です。
 
 使用例：
 
@@ -43,7 +43,7 @@ FPSRにも同様の方法でアクセスできます。
 
 # GCC
 
-現在のGCCはACLEの対応が部分的で、特に `__arm_rsr64`, `__arm_wsr64` には対応していません。代わりに、FPCRやFPSRにアクセスするための組み込み関数を提供しています。
+GCC 13までACLEの対応が部分的で、特に `__arm_rsr64`, `__arm_wsr64` には対応していません。代わりに、FPCRやFPSRにアクセスするための組み込み関数を提供しています。
 
 * [AArch64 Built-in Functions (Using the GNU Compiler Collection (GCC))](https://gcc.gnu.org/onlinedocs/gcc/AArch64-Built-in-Functions.html)
 
