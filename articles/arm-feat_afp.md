@@ -250,7 +250,7 @@ FEAT_AFPは “Alternate floating-point behavior”、日本語で言うなら�
 
 というわけで、FEAT_AFPの解説です。と言っても重要なことはすでに述べてしまいましたが……。
 
-FEAT_AFPによって追加される命令はありません。なので、LLVMの定義ファイルを見てもCPUが対応しているかはわかりません。
+FEAT_AFPによって追加される命令はありません。なので、[LLVMの定義ファイル](https://github.com/llvm/llvm-project/blob/main/llvm/lib/Target/AArch64/AArch64Processors.td)を見てもCPUが対応しているかはわかりません。
 
 FEAT_AFPで規定される代替動作は、FPCR.AHをセットすることによって有効になります。
 
