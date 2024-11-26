@@ -8,7 +8,7 @@ published: false
 
 [HaskellでEDSLを作る：atomicModifyIORef編](haskell-dsl-atomicmodifyioref)では、`unsafePerformIO` と `atomicModifyIORef` を使って、純粋な計算の中で行われている計算をキャプチャーし、リバースモード自動微分を実装する例を見ました。そして、その手法では計算の共有を取り扱えることを述べました。
 
-HaskellでEDSLを作る上で、計算の共有を観測し、利用する方法は他にもあります。それがここで紹介する `StableName` です。前回述べたように、計算の共有は純粋なコードからは観測できないので、`StableName` を使う場合でも `IO` が絡んできます。
+HaskellでEDSLを作る上で、計算の共有を観測し、利用する方法は他にもあります。それがここで紹介する `StableName` です。前回述べたように、計算の共有は純粋なコードからは観測できてはいけないので、`StableName` を使う場合でも `IO` が絡んできます。
 
 ## 四則演算DSL
 
@@ -118,7 +118,7 @@ f x = let y = x + 1
 
 と書いたら（アグレッシブな最適化や、マルチスレッドでの処理により増減はあるかもしれませんが）多くの場合は `x + 1` は1回しか評価されません。これは、`let` 構文や関数の引数への束縛により、**計算の共有**が実現できていることを意味します。
 
-それがASTを経由することにより失われてしまいました。ASTを構築する際に、計算の共有を回復することはできないのでしょうか？
+それがDSLを経由することにより失われてしまいました。DSLを構築する際に、計算の共有を回復することはできないのでしょうか？
 
 ## 計算の共有の回復：`StableName`
 
@@ -138,9 +138,9 @@ hashStableName :: StableName a -> Int
 eqStableName :: StableName a -> StableName b -> Bool
 ```
 
-`StableName` は、メモリ上に確保されたオブジェクト（オブジェクト指向ではない言語でも、メモリ上に確保された一塊の領域を「オブジェクト」と呼ぶことがあります）としての同一性を判定することができます。GHCではGCによってオブジェクトが移動することがありますが、オブジェクトに対して移動しても変わらない（安定な）「名前」を与えることから `StableName` というのだと思われます。
+`StableName` は、メモリ上に確保されたオブジェクトとしての同一性を判定することができます（オブジェクト指向ではない言語でも、メモリ上に確保された一塊の領域を「オブジェクト」と呼ぶことがあります）。GHCではGCによってオブジェクトが移動することがありますが、オブジェクトに対して移動しても変わらない（安定な）「名前」を与えることから `StableName` というのだと思われます。
 
-使い方としては、`makeStableName` によって `a` 型から `StableName a` 型の値を作ります。`makeStableName x` は `IO` 計算なので注意が必要です。純粋に見せたい関数から使いたい時は、どこかで `unsafePerformIO` が必要になります。
+使い方としては、`makeStableName` によって `a` 型から `StableName a` 型の値を作ります。同じオブジェクトから作られた `StableName` は基本的に「等しい」と判断されます。`makeStableName x` は `IO` 計算なので注意が必要です。純粋に見せたい関数から使いたい時は、どこかで `unsafePerformIO` が必要になります。
 
 注意点として、同じ値であっても評価前と評価後で異なる `StableName` が得られることがあります。試してみましょう。
 
@@ -193,7 +193,6 @@ build-depends: base, unordered-containers, transformers
 import           Control.Monad.Trans.Class
 import           Control.Monad.Trans.State.Strict
 import qualified Data.HashMap.Strict as HM
-import qualified Data.HashSet as HS
 import           System.Mem.StableName
 
 -- ...
@@ -219,7 +218,9 @@ recoverSharing x = do
       n <- lift $ makeStableName x
       (_, _, m) <- get
       case HM.lookup n m of
-        Just i -> pure $ VarV i
+        Just i ->
+          -- すでに出現した項であればそれを変数として参照する
+          pure $ VarV i
         Nothing ->
           case x of
             Const k -> pure $ ConstV k
