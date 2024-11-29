@@ -6,6 +6,12 @@ topics: [haskell, DSL]
 published: false
 ---
 
+シリーズ：
+
+* [HaskellでEDSLを作る：atomicModifyIORef編 〜自動微分を題材に〜](haskell-dsl-atomicmodifyioref)
+* HaskellでEDSLを作る：StableName編 〜共有の回復〜（この記事）
+* HaskellでEDSLを作る：LLVM編 〜JITコンパイル〜（後日公開）
+
 [HaskellでEDSLを作る：atomicModifyIORef編](haskell-dsl-atomicmodifyioref)では、`unsafePerformIO` と `atomicModifyIORef` を使って、純粋な計算の中で行われている計算をキャプチャーし、リバースモード自動微分を実装する例を見ました。そして、その手法では計算の共有を取り扱えることを述べました。
 
 HaskellでEDSLを作る上で、計算の共有を観測し、利用する方法は他にもあります。それがここで紹介する `StableName` です。前回述べたように、計算の共有は純粋なコードからは観測できてはいけないので、`StableName` を使う場合でも `IO` が絡んできます。
@@ -144,7 +150,7 @@ eqStableName :: StableName a -> StableName b -> Bool
 
 注意点として、同じ値であっても評価前と評価後で異なる `StableName` が得られることがあります。試してみましょう。
 
-```
+```haskell
 ghci> import System.Mem.StableName 
 ghci> x :: Double; x = 1 + 1 -- 未評価の計算を作る
 ghci> n1 <- makeStableName x
@@ -312,7 +318,7 @@ let v1 = v0 + 1.0 in
     v2
 ```
 
-となるかもしれません。
+となるかもしれません。共有の観測結果が最適化によって違うということは、共有の観測がある種のランダムさを伴う操作であり、それゆえに `IO` が型に現れる、と解釈できるかもしれません。
 
 共有を回復する処理を `unsafePerformIO` により純粋な関数 `Exp -> ExpS` に見せかける場合は、回復後の構文木の違いが純粋なコードから観測できないようにした方が良いかもしれません。つまり、`eval :: ExpS -> Double -> Double` はよくても、文字列化する関数は `ExpS -> IO String` という風に `IO` をかませる、という具合です。
 
