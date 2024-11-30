@@ -3,7 +3,7 @@ title: "HaskellでEDSLを作る：atomicModifyIORef編 〜自動微分を題材�
 emoji: "🐙"
 type: "tech" # tech: 技術記事 / idea: アイデア
 topics: [haskell, DSL, 自動微分]
-published: false
+published: true
 ---
 
 シリーズ：
