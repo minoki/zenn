@@ -6,11 +6,11 @@ topics: [haskell]
 published: true
 ---
 
-GHC 9.12.1-alpha1が2024年10月16日にリリースされました。
+GHC 9.12.1-rc1が2024年11月29日にリリースされました。
 
-* [GHC 9.12.1-alpha1 is now available! - Announcements - Haskell Community](https://discourse.haskell.org/t/ghc-9-12-1-alpha1-is-now-available/10544)
+* [GHC 9.12.1-rc1 is now available - Announcements - Haskell Community](https://discourse.haskell.org/t/ghc-9-12-1-rc1-is-now-available/10835)
 
-そのうち、GHCupのprerelease channelでも使えるようになるのではないかと思います（[Haskellの環境構築2023](haskell-setup-2023)の「補遺：アルファ版・ベータ版のGHCを使う」も参考）。
+GHCupのprerelease channelで使えます（[Haskellの環境構築2023](haskell-setup-2023)の「補遺：アルファ版・ベータ版のGHCを使う」も参考）。
 
 この記事では、GHC 9.12の新機能を筆者の独断と偏見に基づき確認していきます。過去の類似の記事は
 
@@ -25,7 +25,7 @@ GHC 9.12.1-alpha1が2024年10月16日にリリースされました。
 
 この記事は網羅的な紹介記事とはなっていません。特に、筆者が詳しくないRTSやTemplate Haskell周りはカバーできていません。是非、公式のリリースノート類も参照してください：
 
-* [2.1. Version 9.12.1 — Glasgow Haskell Compiler 9.12.20241014 User's Guide](https://downloads.haskell.org/~ghc/9.12.1-alpha1/docs/users_guide/9.12.1-notes.html)
+* [2.1. Version 9.12.1 — Glasgow Haskell Compiler 9.12.0.20241128 User's Guide](https://downloads.haskell.org/~ghc/9.12.1-rc1/docs/users_guide/9.12.1-notes.html)
     * [docs/users_guide/9.12.1-notes.rst · ghc-9.12 · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/blob/ghc-9.12/docs/users_guide/9.12.1-notes.rst)
 * [libraries/base/changelog.md · ghc-9.12 · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/blob/ghc-9.12/libraries/base/changelog.md)
 * [9.12 · Wiki · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/wikis/migration/9.12)
@@ -73,7 +73,7 @@ str3 = """
 * 先頭が改行であれば、改行 `\n` が1個削除される。
 * 末尾が改行であれば、改行 `\n` が1個削除される。
 * 入力ファイルの改行コードがCRLFであっても、文字列に埋め込まれる改行コードはLFとして扱われる（予定）
-    * alpha1の段階ではこの挙動は実装されていませんが、正式版が出るまでに直る予定です。
+    * alpha1の段階ではこの挙動は実装されていませんでしたが、rc1で修正されました。
 
 このことがわかる例も載せておきます：
 
@@ -346,13 +346,13 @@ HasField :: k -> TYPE r_rep -> TYPE a_rep -> Constraint
 
 そして、`Int#` の例も通るようになります。
 
-ちなみに、`TYPE` を使ってunboxedな型を統一的に扱えるようにする仕組みは当初はlevity polymorphismと呼ばれていましたが、これは今はrepresentation polymorphismと呼ばれています。[GHC 9.2](https://zenn.dev/mod_poppo/articles/ghc-9-2-and-future)でlifted boxed←→unlifted boxedのみを統一的に扱う「本物の（？）levity polymorphism」（`BoxedRep`）が導入されたことによります。
+ちなみに、`TYPE` を使ってunboxedな型を統一的に扱えるようにする仕組みは当初はlevity polymorphismと呼ばれていましたが、これは今はrepresentation polymorphismと呼ばれています。[GHC 9.2](ghc-9-2-and-future)でlifted boxed←→unlifted boxedのみを統一的に扱う「本物の（？）levity polymorphism」（`BoxedRep`）が導入されたことによります。
 
 ## RequiredTypeArguments拡張の強化（項の中に `->` と `=>` を書けるようになる）
 
 * [Dependent Types in Haskell, Part 4](https://serokell.io/blog/serokell-s-work-on-ghc-dependent-types-part-4)
 
-GHC 9.10で導入されたRequiredTypeArguments拡張（参照：[GHC 9.10で実装された可視なforallで遊ぶ](https://zenn.dev/mod_poppo/articles/playing-with-visible-forall)）ですが、GHC 9.10の時点では関数などの矢印は項のレベルでは使えませんでした（`type` の明示が必要）。この制限が緩和され、`->` や `=>` を `type` なしで書いても型として扱えるようになりました。
+GHC 9.10で導入されたRequiredTypeArguments拡張（参照：[GHC 9.10で実装された可視なforallで遊ぶ](playing-with-visible-forall)）ですが、GHC 9.10の時点では関数などの矢印は項のレベルでは使えませんでした（`type` の明示が必要）。この制限が緩和され、`->` や `=>` を `type` なしで書いても型として扱えるようになりました。
 
 ```haskell
 {-# LANGUAGE RequiredTypeArguments #-}
@@ -476,7 +476,7 @@ main = do
 コンパイルには、今回新しく対応したx86 NCGで
 
 ```
-$ ghc -msse4 simdtest.hs
+$ ghc simdtest.hs
 ```
 
 とするか、従来から対応しているLLVMバックエンドで
@@ -518,7 +518,7 @@ maxFloat# :: Float# -> Float# -> Float#
 
 ## Windows上で何もしなくてもLLVMバックエンドを使える
 
-[Haskellの環境構築2023](./haskell-setup-2023)では「Windows上にLLVMのツールを用意するのは厄介だ」というようなことを書きました。当時は `opt.exe` と `llc.exe` が公式の配布バイナリーに含まれなかったのです（今は含まれるようです）。しかも、何らかの方法でこれらを用意しても、浮動小数点数を使うとリンクエラーが出たりします。
+[Haskellの環境構築2023](haskell-setup-2023)では「Windows上にLLVMのツールを用意するのは厄介だ」というようなことを書きました。当時は `opt.exe` と `llc.exe` が公式の配布バイナリーに含まれなかったのです（今は含まれるようです）。しかも、何らかの方法でこれらを用意しても、浮動小数点数を使うとリンクエラーが出たりします。
 
 今回、これらの問題が解決されて、Windows上で何もしなくてもLLVMバックエンドが使えるようになりました。つまり、`opt.exe` と `llc.exe` はGHCに付属のものが使われるようになり（実は少し前にWindows向けのGHCはClangを使うようになっており、LLVM自体は付属するようになっていたのでした）、浮動小数点数絡みのリンクエラーも解決しました。
 
@@ -629,6 +629,7 @@ bitraverse :: (Bitraversable t, Applicative f) => (a -> f c) -> (b -> f d) -> t 
     * 状況の調査を行いました。
 * MultilineStrings拡張とCRLFについて（10月）
     * ProposalがCRLFの挙動に関して不明瞭で、実装されたものも意図しない挙動をしているように思えたので、報告しました。
+* `FloatX4#` のpack/insert/broadcastがSSE4.1を指定しなくても使えるようにする（11月） [!13542: x86 NCG SIMD: Lower packFloatX4#, insertFloatX4# and broadcastFloatX4# to SSE1 instructions · Merge requests · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/merge_requests/13542)
 
 これらの貢献は趣味として、無償でやっています。私を支援したいと思った方には、Zennでバッジを送る、「だめぽラボ」の同人誌を買う、GitHub Sponsorsで支援するなどの手段があります。
 
