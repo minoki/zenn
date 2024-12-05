@@ -14,7 +14,7 @@ published: false
 
 [HaskellでEDSLを作る：StableName編](haskell-dsl-stablename)では、`StableName` を使って計算の共有を回復する方法を見ました。
 
-今回は、作った四則演算DSLをLLVMでJITコンパイルする方法を見てみます。サンプルコードは[haskell-dsl-example](https://github.com/minoki/haskell-dsl-example/tree/main/llvm)に載せています。
+今回は、作った四則演算DSLをLLVMでJITコンパイルする方法を見てみます。サンプルコードは[haskell-dsl-example/llvm](https://github.com/minoki/haskell-dsl-example/tree/main/llvm)に載せています。
 
 ## 概要
 
@@ -1568,6 +1568,8 @@ Apple M4 Proと比較すると、スカラーのコードはApple M4 Proに負�
 
 ## おわりに
 
-ここで紹介したテクニックは[accelerate-llvm](https://github.com/AccelerateHS/accelerate-llvm)で使われていると思います（ちゃんと見てない）。AccelerateといえばGPUな印象ですが、CPUでも使えるんですね。LLVMでGPU向けのコード生成もやっているようです。llvm-hsはAccelerateの人がメンテナンスに関わっているようです。
+ここで紹介したテクニックは[accelerate-llvm](https://github.com/AccelerateHS/accelerate-llvm)で使われていると思います（ちゃんと見てない）。AccelerateといえばGPUな印象ですが、CPUでも使えるんですね。LLVMでCPU向けコード生成のほか、GPU向けのコード生成もLLVMでやっているようです。llvm-hsはAccelerateの人がメンテナンスに関わっているようです。
 
 真面目にCPUを使い倒すには、自動ベクトル化によるSIMDの利用だけじゃなくて、マルチコアの活用も必要になってきます。が、その辺はやればできるんじゃないでしょうか。Haskellならrepaやmassivを見るといいかもしれません。
+
+記事の執筆のためにllvm-hsを使ったわけですが、結構ハマりどころがありました。皆さんがAccelerateを打倒したくなったら私の屍を越えていってください。

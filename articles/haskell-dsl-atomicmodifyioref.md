@@ -22,7 +22,7 @@ HaskellはEDSLを作るのに適した言語です。例えば、**モナド**�
 
 このシリーズでは、HaskellでEDSLを作る**モナド以外の**テクニックを紹介します。つまり、純粋関数型のDSLを作る時に、使う側が不必要にモナドの `do` や `<-` に煩わされない方法を紹介します。
 
-そういうテクニックはいくつかありますが、今回は、`unsafePerformIO` と `atomicModifyIORef` を使う例を紹介します。
+そういうテクニックはいくつかありますが、今回は、`unsafePerformIO` と `atomicModifyIORef` を使う例を紹介します。サンプルコードは[haskell-dsl-example/ad](https://github.com/minoki/haskell-dsl-example/tree/main/ad)に置いています。
 
 ## 題材：自動微分
 
@@ -77,7 +77,7 @@ dg (x, xt) (y, yt) = (g x y, g_x x y * xt + g_y x y * yt)
 
 動くコード例を載せます。
 
-```haskell
+```haskell:Forward.hs
 type Forward a = (a, a) -- primal, tangent
 
 constant :: Double -> Forward Double
@@ -192,7 +192,7 @@ d x = let (x1, f') = f_ x
 
 $(x+1)^{10}$ の例を実装すると次のようになります：
 
-```haskell
+```haskell:revad_manual.hs
 add :: Double -> Double -> (Double, Double -> (Double, Double))
 add x y = (x + y, \s -> (s, s))
 
@@ -236,7 +236,7 @@ ghci> f' 1
 
 Haskellでの実装例を以下に載せます。計算手順はリストの `STRef` に溜めておきます（可変な状態は1個だけなので、この場合は `State` も使えますが、後で `IO` に繋げたいのでこの書き方をしています）。
 
-```haskell
+```haskell:revad_st.hs
 {- cabal:
 build-depends: base, vector, mtl
 -}
@@ -556,7 +556,7 @@ addNode n = do
 
 一つの `IORef` を複数のスレッドから安全に読み書きしたい。そんな願いを叶えてくれるのが、[atomicModifyIORef](https://hackage.haskell.org/package/base-4.20.0.1/docs/Data-IORef.html#v:atomicModifyIORef)です。使ってみましょう。
 
-```haskell
+```haskell:revad_atomicmodifyioref.hs
 addNode :: Node -> M Int
 addNode n = do
   r <- ask

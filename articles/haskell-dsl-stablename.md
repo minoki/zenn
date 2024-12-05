@@ -16,11 +16,13 @@ published: false
 
 HaskellでEDSLを作る上で、計算の共有を観測し、利用する方法は他にもあります。それがここで紹介する `StableName` です。前回述べたように、計算の共有は純粋なコードからは観測できてはいけないので、`StableName` を使う場合でも `IO` が絡んできます。
 
+サンプルコードは[haskell-dsl-example/stablename](https://github.com/minoki/haskell-dsl-example/tree/main/stablename)に載せています。
+
 ## 四則演算DSL
 
 変数を一個含み、四則演算ができる式のデータ型を作ります。抽象構文木（AST）です。
 
-```haskell
+```haskell:Simple.hs
 data Exp = Const Double
          | Var
          | Add Exp Exp
@@ -32,7 +34,7 @@ data Exp = Const Double
 
 これに対して演算子オーバーロードを行えば、四則演算ができるDSLができます。
 
-```haskell
+```haskell:Simple.hs
 instance Num Exp where
   (+) = Add
   (-) = Sub
@@ -48,7 +50,7 @@ instance Fractional Exp where
 
 評価する関数も用意します。
 
-```haskell
+```haskell:Simple.hs
 eval :: Exp -> Double -> Double
 eval (Const k) _ = k
 eval Var x = x
@@ -60,7 +62,7 @@ eval (Div a b) x = eval a x / eval b x
 
 使用例は次のようになります。
 
-```haskell
+```haskell:Simple.hs
 main :: IO ()
 main = do
   let f x = (x + 1)^10
@@ -169,7 +171,7 @@ False
 
 先ほどの `Exp` 型から計算の共有を回復してみましょう。まず、計算の共有を表現できる式の表現を用意します。ここでは、ネストした式を `let` の羅列にし、`let` の右辺にはネストしない式だけが来るようにします。
 
-```haskell
+```haskell:ExpS.hs
 type Id = Int -- 変数の識別子
 
 data Value = ConstV Double
@@ -252,7 +254,7 @@ recoverSharing x = do
 
 試しに、`(x + 1)^10` の式から共有を回復してみましょう：
 
-```haskell
+```haskell:ExpS.hs
 main :: IO ()
 main = do
   let f x = (x + 1)^10
