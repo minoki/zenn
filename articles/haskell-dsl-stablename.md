@@ -3,7 +3,7 @@ title: "HaskellでEDSLを作る：StableName編 〜共有の回復〜"
 emoji: "🌟"
 type: "tech" # tech: 技術記事 / idea: アイデア
 topics: [haskell, DSL]
-published: false
+published: true
 ---
 
 シリーズ：
@@ -11,6 +11,7 @@ published: false
 * [HaskellでEDSLを作る：atomicModifyIORef編 〜自動微分を題材に〜](haskell-dsl-atomicmodifyioref)
 * HaskellでEDSLを作る：StableName編 〜共有の回復〜（この記事）
 * HaskellでEDSLを作る：LLVM編 〜JITコンパイル〜（後日公開）
+* HaskellでEDSLを作る：SIMD編（後日公開）
 
 [HaskellでEDSLを作る：atomicModifyIORef編](haskell-dsl-atomicmodifyioref)では、`unsafePerformIO` と `atomicModifyIORef` を使って、純粋な計算の中で行われている計算をキャプチャーし、リバースモード自動微分を実装する例を見ました。そして、その手法では計算の共有を取り扱えることを述べました。
 
@@ -100,7 +101,7 @@ $ runghc Simple.hs
 1048576.0
 ```
 
-つまり、ソース上は `x + 1` の一箇所だった足し算が、ASTを経由することにより10回も評価される羽目になってしまったのです！
+10回表示されました。つまり、ソース上は `x + 1` の一箇所だった足し算が、ASTを経由することにより10回も評価される羽目になってしまったのです！
 
 `print $ f Var` により構築された構文木を表示してみると、当たり前ですが `Add Var (Const 1.0)` が10回出現します：
 
