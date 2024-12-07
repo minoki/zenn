@@ -11,6 +11,7 @@ published: false
 * [HaskellでEDSLを作る：atomicModifyIORef編 〜自動微分を題材に〜](haskell-dsl-atomicmodifyioref)
 * [HaskellでEDSLを作る：StableName編 〜共有の回復〜](haskell-dsl-stablename)
 * HaskellでEDSLを作る：LLVM編 〜JITコンパイル〜（この記事）
+* HaskellでEDSLを作る：SIMD編（後日公開）
 
 [HaskellでEDSLを作る：StableName編](haskell-dsl-stablename)では、`StableName` を使って計算の共有を回復する方法を見ました。
 
@@ -504,7 +505,7 @@ void f(int size, double * restrict resultArray, const double *inputArray)
 }
 ```
 
-すると、LLVMは自動ベクトル化によってループをSIMD命令を使うように変換してくれるであろう、という寸法です。関数の型はHaskell的には `Int32 -> Ptr Double -> Ptr Double -> IO ()` となりますが、storable vector (`Data.Vector.Storable`) で `VS.Vector Double -> VS.Vector Double` として使えるようにラップするのが良いでしょう。`Data.Vector` にはいくつかバリエーションがありますが、アドレスを取ってFFIで使う場合は基本的にstorable vectorを使います。primitive vectorやunboxed vectorはGCによってアドレスが変わりうるのでFFIでは使いづらいです（確保時にピン留めしたりFFI時にGCを止めて良いのならFFIでも使えますが、上級者向けです）。
+すると、LLVMは自動ベクトル化によってループをSIMD命令を使うように変換してくれるであろう、という寸法です。関数の型はHaskell的には `Int32 -> Ptr Double -> Ptr Double -> IO ()` となりますが、storable vector (`Data.Vector.Storable`) で `VS.Vector Double -> VS.Vector Double` として使えるようにラップするのが良いでしょう。`Data.Vector` にはいくつかバリエーションがありますが、アドレスを取ってFFIで使う場合は基本的にstorable vectorを使います。primitive vectorやそれを使うunboxed vectorはGCによってアドレスが変わりうるのでFFIでは使いづらいです（確保時にピン留めしたりFFI時にGCを止めて良いのならFFIでも使えますが、上級者向けです）。
 
 ループのLLVM IRを生成する部分は次のようになります：
 
@@ -558,7 +559,7 @@ codegen expr = IR.buildModule "dsl.ll" $ do
 
 ここでは詳しい説明はしません。[LLVM Language Reference Manual](https://llvm.org/docs/LangRef.html)とにらめっこしてください。何点か補足しておきます：
 
-* llvm-hs-pureのLLVM IRの命令を出力する関数は大体想像がつくと思いますが、LLVMの `getelementptr` は `gep` と省略されます。
+* llvm-hs-pureのLLVM IRの命令を出力する関数は大体想像がつくと思います。ただ、LLVMの `getelementptr` は `gep` と省略されます。
 * `RecursiveDo` 拡張の `mdo` 構文を使うことによって、後ろの方で定義されるラベルを参照できています。
 * `load` と `store` に渡している `0` はアラインメントで、`0` を指定してやると型のデフォルトのものが利用されるようです。
 
@@ -601,7 +602,7 @@ withArrayJIT expr doFun = do
 
 次に、`passSetSpec` で `targetMachine` を指定するようにします。これがないと、LLVMはプラットフォーム非依存の最適化しかしてくれないので、ベクトル化も行われません。
 
-あとは与えられた関数を `VS.Vector Double -> VS.Vector Double` に見せるようにゴニョゴニョします。
+あとは与えられた関数を `VS.Vector Double -> VS.Vector Double` に見せるようにゴニョゴニョします（`vecFn` 関数）。
 
 利用側は次のようになります：
 
@@ -610,7 +611,7 @@ main :: IO ()
 main = do
   let f x = (x + 1)^10 * (x + 1)
   expr <- recoverSharing (f Var)
-  _ <- withSimpleJIT expr $ \vf -> do
+  _ <- withArrayJIT expr $ \vf -> do
     print $ vf (VS.fromList [1..20])
   pure ()
 ```
@@ -1045,13 +1046,13 @@ LBB0_8:
 
 純Haskellで書いた処理と、LLVMに生成させたコードで速度を比較してみましょう。
 
-純Haskellの方は、`(x + 1)^10` を普通に計算するのと、`^10` を展開したものを用意します。storable vectorの `map` で `Double -> Double` の関数を回すのと、配列ごとFFIで投げるものを用意します。
+純Haskellの方は、`(x + 1)^(10 :: Int)` を普通に計算するのと、`^10` を展開したものを用意します。storable vectorの `map` で `Double -> Double` の関数を回すのと、配列ごとFFIで投げるものを用意します。
 
 ```haskell:benchmark/Main.hs
 import           Criterion.Main
 
 f :: Num a => a -> a
-f x = (x + 1)^10
+f x = (x + 1)^(10 :: Int)
 {-# SPECIALIZE f :: Double -> Double #-}
 
 g :: Num a => a -> a
@@ -1082,70 +1083,68 @@ main = do
 まず、GHCのNCGバックエンドでの結果を載せます：
 
 ```
-$ cabal-3.10.3.0 run -w ghc-9.6.6 -O2 --builddir=dist-ncg example-benchmark
+$ cabal-3.10.3.0 bench -w ghc-9.6.6 -O2 --builddir=dist-ncg
 benchmarking Haskell/map
-time                 226.8 μs   (226.4 μs .. 227.1 μs)
+time                 26.91 μs   (26.88 μs .. 26.93 μs)
                      1.000 R²   (1.000 R² .. 1.000 R²)
-mean                 229.2 μs   (227.8 μs .. 231.3 μs)
-std dev              5.977 μs   (3.976 μs .. 8.122 μs)
-variance introduced by outliers: 20% (moderately inflated)
+mean                 26.90 μs   (26.85 μs .. 26.93 μs)
+std dev              138.9 ns   (111.8 ns .. 185.2 ns)
 
 benchmarking Haskell unrolled/map
-time                 7.335 μs   (7.315 μs .. 7.353 μs)
+time                 7.239 μs   (7.228 μs .. 7.251 μs)
                      1.000 R²   (1.000 R² .. 1.000 R²)
-mean                 7.316 μs   (7.299 μs .. 7.331 μs)
-std dev              55.45 ns   (45.31 ns .. 72.47 ns)
+mean                 7.241 μs   (7.229 μs .. 7.254 μs)
+std dev              41.28 ns   (33.48 ns .. 51.65 ns)
 
 benchmarking JIT/map
-time                 21.46 μs   (21.42 μs .. 21.49 μs)
+time                 20.97 μs   (20.93 μs .. 21.00 μs)
                      1.000 R²   (1.000 R² .. 1.000 R²)
-mean                 21.41 μs   (21.36 μs .. 21.44 μs)
-std dev              130.8 ns   (106.1 ns .. 171.0 ns)
+mean                 20.96 μs   (20.93 μs .. 20.99 μs)
+std dev              102.1 ns   (79.48 ns .. 131.4 ns)
 
 benchmarking JIT/array
-time                 1.675 μs   (1.671 μs .. 1.679 μs)
+time                 1.632 μs   (1.631 μs .. 1.634 μs)
                      1.000 R²   (1.000 R² .. 1.000 R²)
-mean                 1.679 μs   (1.674 μs .. 1.686 μs)
-std dev              19.41 ns   (12.55 ns .. 32.24 ns)
+mean                 1.633 μs   (1.630 μs .. 1.635 μs)
+std dev              7.347 ns   (5.794 ns .. 9.874 ns)
 ```
 
 GHCのLLVMバックエンドでの結果を載せます：
 
 ```
-$ cabal-3.10.3.0 run -w ghc-9.6.6 -O2 --ghc-options=-fllvm --builddir=dist-llvm example-benchmark
+$ cabal-3.10.3.0 bench -w ghc-9.6.6 -O2 --ghc-options=-fllvm --builddir=dist-llvm
 benchmarking Haskell/map
-time                 200.4 μs   (197.2 μs .. 204.3 μs)
-                     0.999 R²   (0.998 R² .. 0.999 R²)
-mean                 202.7 μs   (201.0 μs .. 204.2 μs)
-std dev              5.180 μs   (4.546 μs .. 6.030 μs)
-variance introduced by outliers: 20% (moderately inflated)
+time                 3.181 μs   (3.175 μs .. 3.187 μs)
+                     1.000 R²   (1.000 R² .. 1.000 R²)
+mean                 3.180 μs   (3.173 μs .. 3.191 μs)
+std dev              27.62 ns   (17.49 ns .. 48.06 ns)
 
 benchmarking Haskell unrolled/map
-time                 3.219 μs   (3.215 μs .. 3.224 μs)
+time                 3.212 μs   (3.208 μs .. 3.217 μs)
                      1.000 R²   (1.000 R² .. 1.000 R²)
-mean                 3.221 μs   (3.215 μs .. 3.227 μs)
-std dev              20.98 ns   (15.53 ns .. 29.93 ns)
+mean                 3.214 μs   (3.211 μs .. 3.217 μs)
+std dev              11.45 ns   (9.470 ns .. 15.02 ns)
 
 benchmarking JIT/map
-time                 7.317 μs   (7.298 μs .. 7.337 μs)
+time                 7.238 μs   (7.223 μs .. 7.252 μs)
                      1.000 R²   (1.000 R² .. 1.000 R²)
-mean                 7.313 μs   (7.296 μs .. 7.332 μs)
-std dev              61.94 ns   (50.01 ns .. 77.54 ns)
+mean                 7.227 μs   (7.211 μs .. 7.250 μs)
+std dev              61.64 ns   (40.19 ns .. 98.23 ns)
 
 benchmarking JIT/array
-time                 1.662 μs   (1.659 μs .. 1.664 μs)
+time                 1.653 μs   (1.650 μs .. 1.658 μs)
                      1.000 R²   (1.000 R² .. 1.000 R²)
-mean                 1.662 μs   (1.659 μs .. 1.664 μs)
-std dev              9.798 ns   (7.900 ns .. 12.62 ns)
+mean                 1.649 μs   (1.647 μs .. 1.653 μs)
+std dev              8.994 ns   (6.586 ns .. 12.49 ns)
 ```
 
-JITしたコードを要素ごとに呼び出す方（JIT/vector）は関数呼び出しかどこかでオーバーヘッドがかかるのか、純Haskellの `^10` を展開した方（Haskell unrolled/vector）に敵わないという結果になりました。
+JITしたコードを要素ごとに呼び出す方（JIT/map）は関数呼び出しかどこかでオーバーヘッドがかかるのか、純Haskellの `^10` を展開した方（Haskell unrolled/vector）に敵わないという結果になりました。
 
-JITしたコードに配列ごと処理させる方（JIT/array）は、良い成績です。純HaskellでLLVMを使って `^10` を展開した方（Haskell unrolled/map）の半分くらいの所要時間です。2要素同時に処理しているので、こんなものでしょうか。自前でコード生成してLLVMを呼び出した甲斐がありましたね。
+JITしたコードに配列ごと処理させる方（JIT/array）は、良い成績です。純HaskellでGHCのLLVMバックエンドを使って `^10` を展開した方（Haskell unrolled/map）の半分くらいの所要時間です。2要素同時に処理しているので、こんなものでしょうか。自前でコード生成してLLVMを呼び出した甲斐がありましたね。
 
 #### Ryzen 9 7940HSでの結果
 
-AVX-512が使えるRyez 9 7940HS（Zen 4）での結果も載せておきます。OSはWSL2上のUbuntuです。
+AVX-512が使えるRyzen 9 7940HS（Zen 4）での結果も載せておきます。OSはWSL2上のUbuntu 22.04です。
 
 `(x + 1)^10 * (x + 1)` に対して生成されるアセンブリコードは次のようになりました：
 
@@ -1499,76 +1498,75 @@ SIMDの利用だけではなく、ループの展開がすごいことになっ�
 
 ベンチマークの結果は次の通りです：
 
-
 ```
-$ cabal-3.10.3.0 run -w ghc-9.6.6 -O2 --builddir=dist-ncg example-benchmark
+$ cabal-3.10.3.0 bench -w ghc-9.6.6 -O2 --builddir=dist-ncg
 benchmarking Haskell/map
-time                 240.5 μs   (237.9 μs .. 243.2 μs)
-                     0.999 R²   (0.998 R² .. 0.999 R²)
-mean                 242.0 μs   (239.9 μs .. 244.6 μs)
-std dev              8.169 μs   (6.566 μs .. 10.09 μs)
-variance introduced by outliers: 29% (moderately inflated)
-
-benchmarking Haskell unrolled/map
-time                 14.01 μs   (13.74 μs .. 14.27 μs)
-                     0.997 R²   (0.997 R² .. 0.998 R²)
-mean                 13.76 μs   (13.58 μs .. 13.96 μs)
-std dev              663.6 ns   (568.2 ns .. 840.9 ns)
-variance introduced by outliers: 58% (severely inflated)
-
-benchmarking JIT/map
-time                 16.25 μs   (16.07 μs .. 16.45 μs)
-                     0.999 R²   (0.998 R² .. 0.999 R²)
-mean                 16.32 μs   (16.16 μs .. 16.56 μs)
-std dev              696.3 ns   (520.2 ns .. 1.005 μs)
-variance introduced by outliers: 51% (severely inflated)
-
-benchmarking JIT/array
-time                 1.568 μs   (1.537 μs .. 1.599 μs)
-                     0.997 R²   (0.997 R² .. 0.999 R²)
-mean                 1.562 μs   (1.541 μs .. 1.593 μs)
-std dev              82.10 ns   (67.95 ns .. 106.2 ns)
-variance introduced by outliers: 67% (severely inflated)
-```
-
-```
-$ cabal-3.10.3.0 run -w ghc-9.6.6 -O2 --ghc-options=-fllvm --builddir=dist-llvm example-benchmark
-benchmarking Haskell/map
-time                 235.7 μs   (233.1 μs .. 238.5 μs)
-                     0.998 R²   (0.998 R² .. 0.999 R²)
-mean                 235.6 μs   (233.1 μs .. 238.9 μs)
-std dev              9.660 μs   (7.705 μs .. 11.88 μs)
-variance introduced by outliers: 39% (moderately inflated)
-
-benchmarking Haskell unrolled/map
-time                 4.259 μs   (4.199 μs .. 4.317 μs)
-                     0.998 R²   (0.998 R² .. 0.999 R²)
-mean                 4.261 μs   (4.220 μs .. 4.329 μs)
-std dev              169.3 ns   (129.5 ns .. 229.4 ns)
+time                 38.65 μs   (38.35 μs .. 38.92 μs)
+                     0.999 R²   (0.999 R² .. 1.000 R²)
+mean                 38.38 μs   (37.96 μs .. 39.03 μs)
+std dev              1.766 μs   (1.215 μs .. 3.018 μs)
 variance introduced by outliers: 52% (severely inflated)
 
+benchmarking Haskell unrolled/map
+time                 13.79 μs   (13.70 μs .. 13.89 μs)
+                     0.999 R²   (0.999 R² .. 1.000 R²)
+mean                 13.70 μs   (13.60 μs .. 13.84 μs)
+std dev              390.5 ns   (300.6 ns .. 520.6 ns)
+variance introduced by outliers: 32% (moderately inflated)
+
 benchmarking JIT/map
-time                 18.12 μs   (17.85 μs .. 18.42 μs)
-                     0.998 R²   (0.998 R² .. 0.999 R²)
-mean                 18.01 μs   (17.83 μs .. 18.27 μs)
-std dev              690.6 ns   (550.5 ns .. 890.7 ns)
-variance introduced by outliers: 45% (moderately inflated)
+time                 17.89 μs   (17.75 μs .. 18.06 μs)
+                     0.999 R²   (0.999 R² .. 1.000 R²)
+mean                 17.92 μs   (17.81 μs .. 18.10 μs)
+std dev              474.0 ns   (349.9 ns .. 644.7 ns)
+variance introduced by outliers: 28% (moderately inflated)
 
 benchmarking JIT/array
-time                 1.520 μs   (1.494 μs .. 1.551 μs)
-                     0.997 R²   (0.996 R² .. 0.998 R²)
-mean                 1.523 μs   (1.502 μs .. 1.549 μs)
-std dev              81.16 ns   (66.50 ns .. 107.1 ns)
-variance introduced by outliers: 68% (severely inflated)
+time                 1.485 μs   (1.467 μs .. 1.506 μs)
+                     0.999 R²   (0.998 R² .. 0.999 R²)
+mean                 1.487 μs   (1.473 μs .. 1.511 μs)
+std dev              56.94 ns   (41.96 ns .. 85.39 ns)
+variance introduced by outliers: 52% (severely inflated)
 ```
 
-GHCのLLVMバックエンドのHaskell unrolled/mapとJITコンパイルしたものを比較すると、4.259/1.520≈2.80なので自動ベクトル化によって2.8倍速になったことがわかります。AVX-512なので `Double` なら8並列を期待してしまいますが、内部処理が512ビット幅になるのはZen 5以降という話もありますし、実質4並列と考えて2.8倍……。こんなものなのでしょうか。
+```
+$ cabal-3.10.3.0 bench -w ghc-9.6.6 -O2 --ghc-options=-fllvm --builddir=dist-llvm
+benchmarking Haskell/map
+time                 4.237 μs   (4.207 μs .. 4.272 μs)
+                     0.999 R²   (0.999 R² .. 1.000 R²)
+mean                 4.227 μs   (4.195 μs .. 4.271 μs)
+std dev              128.6 ns   (93.79 ns .. 171.3 ns)
+variance introduced by outliers: 38% (moderately inflated)
 
-Apple M4 Proと比較すると、スカラーのコードはApple M4 Proに負けています（いずれもミニPCのもので、CPUはモバイル向けのはずです）。しかし、自動ベクトル化でAVX-512を使った場合はApple M4 Proに勝っています。
+benchmarking Haskell unrolled/map
+time                 4.202 μs   (4.171 μs .. 4.238 μs)
+                     0.999 R²   (0.999 R² .. 1.000 R²)
+mean                 4.249 μs   (4.213 μs .. 4.309 μs)
+std dev              153.8 ns   (110.9 ns .. 229.4 ns)
+variance introduced by outliers: 47% (moderately inflated)
+
+benchmarking JIT/map
+time                 17.79 μs   (17.64 μs .. 17.96 μs)
+                     0.999 R²   (0.999 R² .. 1.000 R²)
+mean                 17.87 μs   (17.73 μs .. 18.20 μs)
+std dev              671.3 ns   (342.2 ns .. 1.204 μs)
+variance introduced by outliers: 44% (moderately inflated)
+
+benchmarking JIT/array
+time                 1.492 μs   (1.475 μs .. 1.514 μs)
+                     0.999 R²   (0.998 R² .. 0.999 R²)
+mean                 1.492 μs   (1.478 μs .. 1.511 μs)
+std dev              53.86 ns   (37.95 ns .. 72.97 ns)
+variance introduced by outliers: 49% (moderately inflated)
+```
+
+GHCのLLVMバックエンドのHaskell unrolled/mapと、自動ベクトル化+JITコンパイルしたもの（JIT/array）を比較すると、4.202/1.492≈2.82なので自動ベクトル化によって2.8倍速になったことがわかります。AVX-512なので `Double` なら8並列を期待してしまいますが、内部処理が512ビット幅になるのはZen 5以降という話もありますし、実質4並列と考えて2.8倍……。こんなものなのでしょうか。
+
+Apple M4 Proと比較すると、スカラーのコードはApple M4 Proに負けています（いずれもミニPCのもので、CPUはモバイル向けです）。しかし、自動ベクトル化でAVX-512を使った場合はApple M4 Proに勝っています。
 
 ## おわりに
 
-ここで紹介したテクニックは[accelerate-llvm](https://github.com/AccelerateHS/accelerate-llvm)で使われていると思います（ちゃんと見てない）。AccelerateといえばGPUな印象ですが、CPUでも使えるんですね。LLVMでCPU向けコード生成のほか、GPU向けのコード生成もLLVMでやっているようです。llvm-hsはAccelerateの人がメンテナンスに関わっているようです。
+ここで紹介したテクニックは[accelerate-llvm](https://github.com/AccelerateHS/accelerate-llvm)で使われていると思います（ちゃんと見てない）。AccelerateといえばGPUな印象ですが、CPUでも使えます。LLVMでCPU向けコード生成とGPU向けのコード生成の両方ができます。llvm-hsはAccelerateの人がメンテナンスに関わっているようです。
 
 真面目にCPUを使い倒すには、自動ベクトル化によるSIMDの利用だけじゃなくて、マルチコアの活用も必要になってきます。が、その辺はやればできるんじゃないでしょうか。Haskellならrepaやmassivを見るといいかもしれません。
 
