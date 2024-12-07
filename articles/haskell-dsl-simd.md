@@ -13,7 +13,7 @@ published: false
 * [HaskellでEDSLを作る：LLVM編 〜JITコンパイル〜](haskell-dsl-llvm)
 * HaskellでEDSLを作る：SIMD編（この記事）
 
-[HaskellでEDSLを作る：LLVM編 〜JITコンパイル〜](haskell-dsl-llvm)ではLLVMを使って自動ベクトル化を行い、SIMD命令を活用しました。一方で、GHCにはSIMD命令を直接使うプリミティブ型と関数があります。これらを活用できないでしょうか？
+[HaskellでEDSLを作る：LLVM編](haskell-dsl-llvm)ではLLVMを使って自動ベクトル化を行い、SIMD命令を活用しました。一方で、GHCにはSIMD命令をHaskellから直接使うプリミティブ型と関数があります。これらを活用できないでしょうか？
 
 例によってサンプルコードは[haskell-dsl-example/simd](https://github.com/minoki/haskell-dsl-example/tree/main/simd)に置いています。
 
@@ -96,7 +96,7 @@ writeFloatOffAddrAsFloatX4# :: Addr# -> Int# -> FloatX4# -> State# s -> State# s
 
 が必要です。
 
-ちなみに、GHC 9.12ではいくつかプリミティブ関数が追加されました。
+ちなみに、[GHC 9.12](whats-new-in-ghc-9-12)ではいくつかプリミティブ関数が追加されました（min/max/FMA/shuffle）。
 
 まあ、アレですね。型や関数の名前が `#` で終わっているのは上級者向けの目印です。一般ユーザーが使うには、何らかの形でこれらをラップする必要があります。
 
@@ -203,12 +203,6 @@ class Broadcast f a where
 instance Broadcast X4 Float
 instance Broadcast X4 Double
 
-class MonoMap f a where
-  monoMap :: (a -> a) -> f a -> f a
-
-instance MonoMap X4 Float
-instance MonoMap X4 Double
-
 class Broadcast f a => NumF f a where
   plusF :: f a -> f a -> f a
   minusF :: f a -> f a -> f a
@@ -270,16 +264,16 @@ mapStorable (\v -> (v + 1)^(10 :: Int)) (\x -> (x + 1)^(10 :: Int)) (VS.fromList
 
 ### 端数を統一的に扱う
 
-上記の `mapStorable` 関数には、SIMDによる4要素ごとの処理と、端数の処理を別々に渡す必要があります。どうせ演算子オーバーロードで同じように書けるので、無駄ですね。
+上記の `mapStorable` 関数には、SIMDによる4要素ごとの処理 `X4 a -> X4 b` と、端数の処理 `a -> b` を別々に渡す必要があります。どうせ演算子オーバーロードで同じように書けるので、冗長ですね。
 
-例えば `(x + 1)^10` という関数なら関数の型は `Num a => a -> a` と一般化できるので、
+例えば `f x = (x + 1)^10` という関数なら関数の型は `Num a => a -> a` と一般化できるので、
 
 ```haskell
 mapStorable' :: (StorableF X4 a, Num a, NumF X4 a) => (forall v. Num v => v -> v) -> VS.Vector a -> VS.Vector a
 mapStorable' f = mapStorable f f
 ```
 
-とできます。しかし、これでは `Num` 制約を特別扱いすることになってしまい、汎用性が低いです。
+とできます。しかし、これでは `Num` 制約を `map` 関数で特別扱いすることになってしまい、汎用性が低いです。`Fractional` や `Bits` 系の操作を使いたくなった時に困りそうです。
 
 そこで、別のやり方を考えます。具体的には、端数部分を処理する関数の型に細工を加えて、`Identity a -> Identity b` と考えます。すると、ベクトル部分の関数も端数部分の関数も `f a -> f b` という形になり、都合がよさそうです。つまり、`X4` と `Identity` をインスタンスとするような何らかの型クラス `SIMD` によって
 
@@ -376,7 +370,7 @@ LLVMバックエンドを使うにはGHCに `-fllvm` オプションを渡す必
 $ cabal configure -w ghc-9.8.4 --ghc-options=-fllvm
 ```
 
-を実行しておきましょう。このコマンドによって `cabal.project.local` というファイルができ、設定内容が書き込まれます。
+を実行しておくと良いかもしれません。このコマンドによって `cabal.project.local` というファイルができ、設定内容が書き込まれます。
 
 `cabal run` で
 
@@ -668,12 +662,32 @@ variance introduced by outliers: 48% (moderately inflated)
 
 `Float` の方は `f` が37.44/7.014≈5.34倍、`g` が13.74/1.180≈11.6倍でした。4並列なのに4倍以上速度向上しています。
 
-`Double` の方は、`f` は38.91/8.149≈4.77倍、`g` は13.86/2.221=6.24倍でした。これも2並列なのに2倍以上速度向上しています。
+`Double` の方は、`f` は38.91/8.149≈4.77倍、`g` は13.86/2.221≈6.24倍でした。これも2並列なのに2倍以上速度向上しています。
 
 NCGの方でSIMDの利用による速度向上幅が大きいということは、スカラーのコードの最適化が足りないのでしょうか。
 
-## 一般論
+## これまでを振り返って／一般化
 
 これまで何回か、HaskellでEDSLを作る際に役立つ手法を見てきました。いずれも、演算子オーバーロードで普通のHaskellっぽく書けるようになっています。使った型を見ると、自動微分では `Reverse s a`、StableName編では `Exp` または `Exp a` の形をしていて、SIMDでは `X4 a` という形をしています。
 
 これらは多くが `f a` という形をしています（`a` は `Float` や `Double` など、要素の型）。まあ演算子オーバーロードする都合上 `f a` の形になるのは当然なんですが、何かの意味を見出すことはできるでしょうか？
+
+`f` はある種の関手、`Functor` のようなものと思うことができるかもしれません。ただ、任意の `a -> b` を `f a -> f b` に持ち上げることができるわけではありません。なので、「Hask圏の自己関手」ではなさそうです。
+
+ひとつの見方としては、`f` はHaskellのいくつかの型を対象とし、いくつかの関数を射とする圏（Hask圏の部分圏）からHask圏への関手、と考えることができるでしょうか。もっとクールな見方ができるかは私にはわかりません。
+
+## ささやかな野望：Haskellによる数値計算フレームワーク
+
+これまで、
+
+* 自動微分
+* DSLから中間言語を作ってLLVMでJITコンパイル
+* SIMD
+
+などをHaskellで扱う方法を見てきました。これらはいずれも演算子オーバーロードで実装されており、`f a` という形の型を持ちます。これらを統一的に扱えないでしょうか？
+
+例えば、HaskellにはすでにAccelerateというフレームワークがありますが、これは現状自動微分をサポートしていません（[Support Automatic Differentiation · Issue #398 · AccelerateHS/accelerate](https://github.com/AccelerateHS/accelerate/issues/398)）。Accelerateを自動微分に対応させたようなフレームワークを作れないでしょうか？
+
+あるいは、GoogleがPython向けに作っているJAXというフレームワークでは、自動微分、自動ベクトル化、JITコンパイルやGPUでの実行などが行えます。これのHaskell版を作れないでしょうか？
+
+そんな野望をこの数年抱えていたのですが、どうやら私にはそれに取り組むための十分な時間がなさそうです。ですので、同じ志を持った人が現れた時に役に立てるように、必要な技術とアイディアをこの一連の記事にまとめているというわけです。

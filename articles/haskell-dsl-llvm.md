@@ -29,7 +29,7 @@ llvm-hsファミリーのパッケージの構成は以下のようになりま�
 * llvm-hs: C++で実装されたLLVMへのバインディング。
 * [llvm-hs-pretty](https://github.com/llvm-hs/llvm-hs-pretty): 純Haskellのpretty printerだが、メンテされていない。pretty print自体は（C++で書かれたLLVMに依存する）llvm-hsパッケージでできる。
 
-llvm-hsはHackageには古いやつしか上がっていないので、GitHubにあるものを利用します。llvm-15ブランチにLLVM 15対応のものがあるので、これを利用します。執筆時点のものはGHC 9.8以降に対応していないようです（`LLVM.Prelude` でimportしている `unzip` が衝突する）。また、Cabalも新しいものはダメで3.10以下にしないとダメそうです。なので、この記事の内容はGHC 9.6.6/Cabal 3.10で動作確認しています。ちなみに、llvm-hsのGitHubのPRを見ると新しめのGHCやCabalに対応させたものがあるようです。
+llvm-hsはHackageには古いやつしか上がっていないので、GitHubにあるものを利用します。llvm-15ブランチにLLVM 15対応のものがあるので、これを利用します。ただ、執筆時点のものはGHC 9.8以降に対応していないようです（`LLVM.Prelude` でimportしている `unzip` が衝突する）。また、Cabalも新しいものはダメで3.10以下にしないとダメそうです。なので、この記事の内容はGHC 9.6.6/Cabal 3.10で動作確認しています。ちなみに、llvm-hsのGitHubのPRを見ると新しめのGHCやCabalに対応させたものがあるようです。
 
 Cabalのプロジェクトで、依存パッケージをGitから取ってくるには、`cabal.project` に次のように `source-repository-package` を記述します：
 
@@ -81,7 +81,7 @@ foreign import ccall unsafe "dynamic"
 
 FFIのunsafeは短時間で終わる処理を想定しています。時間がかかる処理はsafe FFIにした方が良いかもしれません。
 
-この方式では、関数の型がコードを書く時点で確定している必要があります。任意個数の引数に対応する関数をJITコンパイルしたい場合は、Haskellとの界面を構造体へのポインターにして `Ptr MyStruct -> IO ()` という型の関数にするか、何らかのlibffiバインディングを使用します。
+この方式では、関数の型がコードを書く時点で確定している必要があります。任意個数の引数に対応する関数をJITコンパイルしたい場合は、Haskellとの界面を構造体か配列へのポインターにして `Ptr SomeStruct -> IO ()` という型の関数にするか、何らかのlibffiバインディングを使用します。
 
 ## 実践
 
@@ -252,7 +252,7 @@ LLVM IRのオペランド（変数や即値）は `LLVM.AST.Operand` 型を持�
 
 ### LLVM IRのpretty print
 
-生成したLLVM IRを表示してみましょう。llvm-hs-prettyパッケージは使えないので、llvm-hsパッケージでやります。`LLVM.Module.moduleLLVMAssembly` 関数を使います。
+生成したLLVM IRをテキスト形式で表示してみましょう。llvm-hs-prettyパッケージは使えないので、llvm-hsパッケージでやります。`LLVM.Module.moduleLLVMAssembly` 関数を使います。
 
 ```haskell:pp/Main.hs
 import qualified Data.ByteString as BS
@@ -1109,7 +1109,7 @@ mean                 1.633 μs   (1.630 μs .. 1.635 μs)
 std dev              7.347 ns   (5.794 ns .. 9.874 ns)
 ```
 
-GHCのLLVMバックエンドでの結果を載せます：
+GHCのLLVMバックエンドでの結果も載せます：
 
 ```
 $ cabal-3.10.3.0 bench -w ghc-9.6.6 -O2 --ghc-options=-fllvm --builddir=dist-llvm
