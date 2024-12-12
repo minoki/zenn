@@ -19,6 +19,16 @@ published: false
 
 ## 概要
 
+### LLVMの呼び出し方
+
+HaskellからLLVMを呼び出すやり方はいくつかあります。
+
+まず、LLVM IRをファイルとして書き出し、LLVMをコマンドとして呼び出すというやり方があります。例えば、GHCはLLVM IRを `.ll` ファイルに書き出し、LLVMの `opt` コマンドと `llc` コマンドを使ってオブジェクトファイルを得ています。この方法では、コンパイラーはテキスト処理とファイルの読み書きさえできればよく、面倒なFFIを考える必要はありません。
+
+次に、LLVMをC/C++のライブラリーとして呼び出すという方法です。Haskellから呼び出すにはFFIが必要となります。この方法は、JITコンパイルに適しています。
+
+この記事では、後者、つまりFFIを使ってLLVMを呼び出す方法を取ります。ただし、FFIの部分を自前で書くのは大変なので、既にあるバインディングを利用します。
+
 ### LLVMへのバインディング
 
 HaskellからLLVMを呼び出すためのバインディングはいくつか存在します。ここでは、[llvm-hs](https://github.com/llvm-hs)のファミリーを利用します。
@@ -26,10 +36,10 @@ HaskellからLLVMを呼び出すためのバインディングはいくつか存
 llvm-hsファミリーのパッケージの構成は以下のようになります：
 
 * llvm-hs-pure: C++の部分には依存しない純Haskellの部分。LLVM IRを構築できる。
-* llvm-hs: C++で実装されたLLVMへのバインディング。
+* llvm-hs: C++で実装されたLLVMへのバインディング（FFI）。
 * [llvm-hs-pretty](https://github.com/llvm-hs/llvm-hs-pretty): 純Haskellのpretty printerだが、メンテされていない。pretty print自体は（C++で書かれたLLVMに依存する）llvm-hsパッケージでできる。
 
-llvm-hsはHackageには古いやつしか上がっていないので、GitHubにあるものを利用します。llvm-15ブランチにLLVM 15対応のものがあるので、これを利用します。ただ、執筆時点のものはGHC 9.8以降に対応していないようです（`LLVM.Prelude` でimportしている `unzip` が衝突する）。また、Cabalも新しいものはダメで3.10以下にしないとダメそうです。なので、この記事の内容はGHC 9.6.6/Cabal 3.10で動作確認しています。ちなみに、llvm-hsのGitHubのPRを見ると新しめのGHCやCabalに対応させたものがあるようです。
+llvm-hsはHackageには古いやつしか上がっていないので、GitHubにあるものを利用します。執筆時点では、llvm-15ブランチにあるLLVM 15対応のものが最新で、これを使います。ただ、執筆時点のものはGHC 9.8以降に対応していないようです（`LLVM.Prelude` でimportしている `unzip` が衝突する）。また、Cabalも新しいものはダメで3.10以下にしないとダメそうです。なので、この記事の内容はGHC 9.6.6/Cabal 3.10で動作確認しています。ちなみに、llvm-hsのGitHubのPRを見ると新しめのGHCやCabalに対応させたものがあるようです。
 
 Cabalのプロジェクトで、依存パッケージをGitから取ってくるには、`cabal.project` に次のように `source-repository-package` を記述します：
 
@@ -49,7 +59,7 @@ source-repository-package
     subdir: llvm-hs
 ```
 
-llvm-hsのビルドにはLLVMが必要となります。具体的には、`llvm-config-15` コマンドあるいは `llvm-config` コマンドが必要となります。Homebrew等を利用しているとデフォルトではこれらへのPATHが通っていないので、`cabal.project.local` に以下のように記述してllvm-hsが `llvm-config` を見つけられるようにします：
+llvm-hsのビルドにはLLVMが必要となります。具体的には、configure時に `llvm-config-15` コマンドあるいは `llvm-config` コマンドが見えている必要があります。Homebrew等を利用しているとデフォルトではこれらへのPATHが通っていないので、`cabal.project.local` に以下のように記述してllvm-hsが `llvm-config` を見つけられるようにします：
 
 ```:cabal.project.local
 package llvm-hs
@@ -79,7 +89,7 @@ foreign import ccall unsafe "dynamic"
 
 こうやって定義した `mkDoubleFn` 関数で、関数ポインターをHaskellの関数へ変換できます。
 
-FFIのunsafeは短時間で終わる処理を想定しています。時間がかかる処理はsafe FFIにした方が良いかもしれません。
+unsafe FFIはオーバーヘッドが少ないですが、短時間で終わる処理を想定しています。時間がかかる処理はsafe FFIにした方が良いかもしれません。FFIの種類の話は昔描いた「[【低レベルHaskell】Haskell (GHC) でもインラインアセンブリに肉薄したい！ #assembly - Qiita](https://qiita.com/mod_poppo/items/793fdb08e62591d6f3fb)」で触れました。
 
 この方式では、関数の型がコードを書く時点で確定している必要があります。任意個数の引数に対応する関数をJITコンパイルしたい場合は、Haskellとの界面を構造体か配列へのポインターにして `Ptr SomeStruct -> IO ()` という型の関数にするか、何らかのlibffiバインディングを使用します。
 
@@ -246,6 +256,8 @@ codegen expr = IR.buildModule "dsl.ll" $ do
 
 `codegen` 関数が、作ったDSLの構文木を受け取って、LLVM IRを含むモジュールを作成する関数です。モジュールには関数の定義と、外部の関数の宣言が含まれます。
 
+llvm-hs-pureはLLVM IRを構築するためのEDSL（モナド）を提供しています。ここでの例は単純すぎてDSLという感じがしませんが、後述の自動ベクトル化の例を見るとそれがよりわかりやすいかと思います。
+
 LLVM IRのオペランド（変数や即値）は `LLVM.AST.Operand` 型を持ちます。変数は、IRの命令に対応する関数の返り値として得られます。
 
 `LLVM.IRBuilder.Monad.named` 関数を使うことで、定義される変数やラベルに名前をつけることができます。実際には番号などがついて、`%x_0` という風になります。
@@ -363,7 +375,7 @@ withSimpleJIT expr doFun = do
 
 まあ私もllvm-hs-examples/arithからよく理解しないまま写経しただけなので、詳しい説明はできません。それでも、わかる範囲で何点か説明しておきます。
 
-`LLVM.Module.withModuleFromAST` にさっき作った `codegen` 関数の返り値を渡しています。
+`LLVM.Module.withModuleFromAST` にさっき作った `codegen` 関数の返り値（モジュール `LLVM.AST.Module`）を渡しています。
 
 さっきもやりましたが、作ったLLVM IRのテキスト表現は `LLVM.Module.moduleLLVMAssembly` 関数で取れます。ここでは最適化の前後で表示しています。
 
@@ -371,9 +383,9 @@ withSimpleJIT expr doFun = do
 
 `LLVM.Target.withHostTargetMachine` の引数にllvm-hs-examplesの例だと `CodeModel.Default` を使っていますが、ここは `JITDefault` にしないとAArch64で外部の関数呼び出し（`exp` や `sin`）がコケます。
 
-最適化を実行するのが `LLVM.Passes.runPasses` です。この関数は引数のモジュールを破壊的に更新します。これはJITコンパイルに入る前に実行しておかないと生成されるバイナリーに反映されないので注意してください。私はこれをミスったせいで後述の自動ベクトル化が効かなくて悩みました。
+最適化を実行するのが `LLVM.Passes.runPasses` です。この関数は引数のモジュールを破壊的に更新します。これはJITコンパイルに入る前に実行しておかないと生成される機械語に反映されないので注意してください。私はこれをミスったせいで後述の自動ベクトル化が効かなくて（性能の向上が見られなくて）悩みました。
 
-JITでできた関数のポインターは `fnAddr :: WordPtr` として取得できます。これを `FunPtr` に変換して、`foreign import ccall "dynamic"` の関数に渡し、Haskellの関数に変換しています。
+JITコンパイルでできた関数のポインターは `fnAddr :: WordPtr` として取得できます。これを `FunPtr` に変換して、`foreign import ccall "dynamic"` の関数に渡し、Haskellの関数に変換しています。
 
 作った関数はスコープから抜けると消えてしまいます。作った関数はコールバック関数 `doFun` で消費されるわけですが、その評価がスコープを抜ける前に終わるように、`Control.DeepSeq` の `force` を使っています。
 
@@ -499,7 +511,7 @@ LLVMによって共通部分式削除が行われるのはわかりましたが�
 void f(int size, double * restrict resultArray, const double *inputArray)
 {
     for (int i = 0; i < size; ++i) {
-        double x = inputArray[x];
+        double x = inputArray[i];
         resultArray[i] = /* x を使った計算 */;
     }
 }
@@ -598,7 +610,7 @@ withArrayJIT expr doFun = do
                 Just <$> evaluate (force result)
 ```
 
-まず、関数の型が変わります。これはいいですね。
+まず、関数の型が変わります。ここでは任意のIOアクションを実行できるようにしました。これはいいですね。
 
 次に、`passSetSpec` で `targetMachine` を指定するようにします。これがないと、LLVMはプラットフォーム非依存の最適化しかしてくれないので、ベクトル化も行われません。
 
@@ -1140,7 +1152,7 @@ std dev              8.994 ns   (6.586 ns .. 12.49 ns)
 
 JITしたコードを要素ごとに呼び出す方（JIT/map）は関数呼び出しかどこかでオーバーヘッドがかかるのか、純Haskellの `^10` を展開した方（Haskell unrolled/vector）に敵わないという結果になりました。
 
-JITしたコードに配列ごと処理させる方（JIT/array）は、良い成績です。純HaskellでGHCのLLVMバックエンドを使って `^10` を展開した方（Haskell unrolled/map）の半分くらいの所要時間です。2要素同時に処理しているので、こんなものでしょうか。自前でコード生成してLLVMを呼び出した甲斐がありましたね。
+JITしたコードに配列ごと処理させる方（JIT/array）は、良い成績です。純HaskellでGHCのLLVMバックエンドを使って `^10` を展開した方（Haskell unrolled/map）の半分くらいの所要時間です。SIMDで2要素同時に処理しているので、こんなものでしょうか。自前でコード生成してLLVMを呼び出した甲斐がありましたね。
 
 #### Ryzen 9 7940HSでの結果
 
