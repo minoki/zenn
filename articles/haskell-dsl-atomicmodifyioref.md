@@ -10,7 +10,7 @@ published: true
 
 * HaskellでEDSLを作る：atomicModifyIORef編 〜自動微分を題材に〜（この記事）
 * [HaskellでEDSLを作る：StableName編 〜共有の回復〜](haskell-dsl-stablename)
-* HaskellでEDSLを作る：LLVM編 〜JITコンパイル〜（後日公開）
+* [HaskellでEDSLを作る：LLVM編 〜JITコンパイル〜](haskell-dsl-llvm)
 * HaskellでEDSLを作る：SIMD編（後日公開）
 
 普通のプログラミング言語は、典型的には逐次実行、条件分岐、繰り返しなどの制御構造を持ち、数値に対しては四則演算などの計算ができます。何らかの機能を提供するライブラリーは、これらの構造・計算規則に従いつつ、データ型や関数によって機能を提供します。

@@ -3,7 +3,7 @@ title: "HaskellでEDSLを作る：LLVM編 〜JITコンパイル〜"
 emoji: "😸"
 type: "tech" # tech: 技術記事 / idea: アイデア
 topics: [haskell, dsl, llvm]
-published: false
+published: true
 ---
 
 シリーズ：

@@ -10,7 +10,7 @@ published: true
 
 * [HaskellでEDSLを作る：atomicModifyIORef編 〜自動微分を題材に〜](haskell-dsl-atomicmodifyioref)
 * HaskellでEDSLを作る：StableName編 〜共有の回復〜（この記事）
-* HaskellでEDSLを作る：LLVM編 〜JITコンパイル〜（後日公開）
+* [HaskellでEDSLを作る：LLVM編 〜JITコンパイル〜](haskell-dsl-llvm)
 * HaskellでEDSLを作る：SIMD編（後日公開）
 
 [HaskellでEDSLを作る：atomicModifyIORef編](haskell-dsl-atomicmodifyioref)では、`unsafePerformIO` と `atomicModifyIORef` を使って、純粋な計算の中で行われている計算をキャプチャーし、リバースモード自動微分を実装する例を見ました。そして、その手法では計算の共有を取り扱えることを述べました。
