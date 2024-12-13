@@ -35,11 +35,11 @@ HaskellからLLVMを呼び出すためのバインディングはいくつか存
 
 llvm-hsファミリーのパッケージの構成は以下のようになります：
 
-* llvm-hs-pure: C++の部分には依存しない純Haskellの部分。LLVM IRを構築できる。
-* llvm-hs: C++で実装されたLLVMへのバインディング（FFI）。
+* [llvm-hs-pure](https://github.com/llvm-hs/llvm-hs/tree/llvm-15/llvm-hs-pure): C++の部分には依存しない純Haskellの部分。LLVM IRを構築できる。
+* [llvm-hs](https://github.com/llvm-hs/llvm-hs/tree/llvm-15/llvm-hs): C++で実装されたLLVMへのバインディング（FFI）。
 * [llvm-hs-pretty](https://github.com/llvm-hs/llvm-hs-pretty): 純Haskellのpretty printerだが、メンテされていない。pretty print自体は（C++で書かれたLLVMに依存する）llvm-hsパッケージでできる。
 
-llvm-hsはHackageには古いやつしか上がっていないので、GitHubにあるものを利用します。執筆時点では、llvm-15ブランチにあるLLVM 15対応のものが最新で、これを使います。ただ、執筆時点のものはGHC 9.8以降に対応していないようです（`LLVM.Prelude` でimportしている `unzip` が衝突する）。また、Cabalも新しいものはダメで3.10以下にしないとダメそうです。なので、この記事の内容はGHC 9.6.6/Cabal 3.10で動作確認しています。ちなみに、llvm-hsのGitHubのPRを見ると新しめのGHCやCabalに対応させたものがあるようです。
+llvm-hsはHackageには古いやつしか上がっていないので、GitHubにあるものを利用します。執筆時点では、llvm-15ブランチにあるLLVM 15対応のものが最新で、これを使います。ただ、執筆時点のものはGHC 9.8以降に対応していないようです（`LLVM.Prelude` でimportしている `unzip` が衝突する）。また、Cabalも新しいものはダメで3.10以下にしないとダメそうです。なので、この記事の内容はGHC 9.6.6/Cabal 3.10で動作確認しています。ちなみに、llvm-hsの[GitHubのPR](https://github.com/llvm-hs/llvm-hs/pulls)を見ると新しめのGHCやCabalに対応させたものがあるようです。
 
 Cabalのプロジェクトで、依存パッケージをGitから取ってくるには、`cabal.project` に次のように `source-repository-package` を記述します：
 
@@ -89,7 +89,7 @@ foreign import ccall unsafe "dynamic"
 
 こうやって定義した `mkDoubleFn` 関数で、関数ポインターをHaskellの関数へ変換できます。
 
-unsafe FFIはオーバーヘッドが少ないですが、短時間で終わる処理を想定しています。時間がかかる処理はsafe FFIにした方が良いかもしれません。FFIの種類の話は昔描いた「[【低レベルHaskell】Haskell (GHC) でもインラインアセンブリに肉薄したい！ #assembly - Qiita](https://qiita.com/mod_poppo/items/793fdb08e62591d6f3fb)」で触れました。
+unsafe FFIはオーバーヘッドが少ないですが、短時間で終わる処理を想定しています。時間がかかる処理はsafe FFIにした方が良いかもしれません。FFIの種類の話は昔書いた「[【低レベルHaskell】Haskell (GHC) でもインラインアセンブリに肉薄したい！](https://qiita.com/mod_poppo/items/793fdb08e62591d6f3fb)」で触れました。
 
 この方式では、関数の型がコードを書く時点で確定している必要があります。任意個数の引数に対応する関数をJITコンパイルしたい場合は、Haskellとの界面を構造体か配列へのポインターにして `Ptr SomeStruct -> IO ()` という型の関数にするか、何らかのlibffiバインディングを使用します。
 
@@ -610,7 +610,7 @@ withArrayJIT expr doFun = do
                 Just <$> evaluate (force result)
 ```
 
-まず、関数の型が変わります。ここでは任意のIOアクションを実行できるようにしました。これはいいですね。
+まず、関数の型が変わります。ここではJITコンパイルした関数を使って任意のIOアクションを実行できるようにしました。これはいいですね。
 
 次に、`passSetSpec` で `targetMachine` を指定するようにします。これがないと、LLVMはプラットフォーム非依存の最適化しかしてくれないので、ベクトル化も行われません。
 
