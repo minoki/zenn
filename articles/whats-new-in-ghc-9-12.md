@@ -6,11 +6,9 @@ topics: [haskell]
 published: true
 ---
 
-GHC 9.12.1-rc1が2024年11月29日にリリースされました。
+GHC 9.12.1が2024年12月16日にリリースされました。
 
-* [GHC 9.12.1-rc1 is now available - Announcements - Haskell Community](https://discourse.haskell.org/t/ghc-9-12-1-rc1-is-now-available/10835)
-
-GHCupのprerelease channelで使えます（[Haskellの環境構築2023](haskell-setup-2023)の「補遺：アルファ版・ベータ版のGHCを使う」も参考）。
+* [GHC 9.12.1 is now available - Announcements - Haskell Community](https://discourse.haskell.org/t/ghc-9-12-1-is-now-available/11031)
 
 この記事では、GHC 9.12の新機能を筆者の独断と偏見に基づき確認していきます。過去の類似の記事は
 
@@ -25,9 +23,10 @@ GHCupのprerelease channelで使えます（[Haskellの環境構築2023](haskell
 
 この記事は網羅的な紹介記事とはなっていません。特に、筆者が詳しくないRTSやTemplate Haskell周りはカバーできていません。是非、公式のリリースノート類も参照してください：
 
-* [2.1. Version 9.12.1 — Glasgow Haskell Compiler 9.12.0.20241128 User's Guide](https://downloads.haskell.org/~ghc/9.12.1-rc1/docs/users_guide/9.12.1-notes.html)
+* [2.1. Version 9.12.1 — Glasgow Haskell Compiler 9.12.1 User's Guide](https://downloads.haskell.org/ghc/9.12.1/docs/users_guide/9.12.1-notes.html)
     * [docs/users_guide/9.12.1-notes.rst · ghc-9.12 · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/blob/ghc-9.12/docs/users_guide/9.12.1-notes.rst)
-* [libraries/base/changelog.md · ghc-9.12 · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/blob/ghc-9.12/libraries/base/changelog.md)
+* [Changelog for base-4.21.0.0 | Hackage](https://hackage.haskell.org/package/base-4.21.0.0/changelog)
+    * [libraries/base/changelog.md · ghc-9.12 · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/blob/ghc-9.12/libraries/base/changelog.md)
 * [9.12 · Wiki · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/wikis/migration/9.12)
 
 # GHC 9.12に入る機能
@@ -72,8 +71,7 @@ str3 = """
 * 共通するインデントは削除される。
 * 先頭が改行であれば、改行 `\n` が1個削除される。
 * 末尾が改行であれば、改行 `\n` が1個削除される。
-* 入力ファイルの改行コードがCRLFであっても、文字列に埋め込まれる改行コードはLFとして扱われる（予定）
-    * alpha1の段階ではこの挙動は実装されていませんでしたが、rc1で修正されました。
+* 入力ファイルの改行コードがCRLFであっても、文字列に埋め込まれる改行コードはLFとして扱われる
 
 このことがわかる例も載せておきます：
 
@@ -178,7 +176,7 @@ f Bar; Baz = putStrLn "B" -- 不可
 ## NamedDefaults拡張：default宣言の一般化
 
 * [ghc-proposals/proposals/0409-exportable-named-default.rst at master · ghc-proposals/ghc-proposals](https://github.com/ghc-proposals/ghc-proposals/blob/master/proposals/0409-exportable-named-default.rst)
-* [6.11.3. Named default declarations — Glasgow Haskell Compiler 9.12.20241014 User's Guide](https://downloads.haskell.org/~ghc/9.12.1-alpha1/docs/users_guide/exts/named_defaults.html)
+* [6.11.3. Named default declarations — Glasgow Haskell Compiler 9.12.1 User's Guide](https://downloads.haskell.org/~ghc/9.12.1/docs/users_guide/exts/named_defaults.html)
 
 Haskellでは、型の曖昧性が発生する場合があります。例えば、
 
@@ -414,7 +412,7 @@ $ # ghcupを使ってGHC（9.6以降）をインストールしておく
 $ ghcup install ghc 9.6.6 --set
 $ cabal install alex happy
 
-$ GHC_VERSION=9.12.20241014
+$ GHC_VERSION=9.12.1
 $ curl -LO https://downloads.haskell.org/~ghc/$GHC_VERSION/ghc-$GHC_VERSION-src.tar.xz && tar -xJf ghc-$GHC_VERSION-src.tar.xz
 $ cd ghc-$GHC_VERSION
 $ ./configure --target=riscv64-linux-gnu
