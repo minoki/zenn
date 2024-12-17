@@ -149,7 +149,7 @@ class (Num v, Real (Elem v)) => SIMDVector v where
   type ElemTuple v
   broadcastVector :: Elem v -> v
   mapVector :: (Elem v -> Elem v) -> v -> v
-  - ...
+  -- ...
 
 data FloatX4
 data FloatX8
@@ -192,6 +192,10 @@ class BroadcastX4 a => NumX4 a where
 
 instance NumX4 Float
 instance NumX4 Double
+
+instance (Num a, NumX4 a) => Num (X4 a) where
+  (+) = plusX4
+  -- ...
 ```
 
 が、`X4` の部分は他の要素数も考慮して一般化するべきかもしれません：
@@ -214,7 +218,9 @@ class Broadcast f a => NumF f a where
 instance NumF X4 Float
 instance NumF X4 Double
 
-instance (NumF X4 a, Num a) => Num (X4 a)
+instance (NumF X4 a, Num a) => Num (X4 a) where
+  (+) = plusF
+  -- ...
 ```
 
 `Data.Vector.Storable.Vector a` を扱えるように、`Storable` 系のクラスとインスタンスも用意します。
@@ -474,7 +480,7 @@ std dev              9.381 ns   (4.704 ns .. 17.62 ns)
 
 `Double` の方は、`^` を使って計算した方はあまり速度が向上していません。冪乗を展開した方は3.221/1.658≈1.94でした。おおよそ2倍、2並列なので妥当ですね。
 
-#### Ryzen 9 7940HSでの結果（LLVMバックエンド）
+### Ryzen 9 7940HSでの結果（LLVMバックエンド）
 
 AVX-512が使えるRyzen 9 7940HS（Zen 4）での結果も載せておきます。OSはWSL2上のUbuntu 22.04です。
 
@@ -569,7 +575,7 @@ variance introduced by outliers: 46% (moderately inflated)
 
 こちらも、`Double` の方は、`^` を使って計算した方はあまり速度が向上していません。冪乗を展開した方は4.192/2.181≈1.92でした。おおよそ2倍、2並列なので妥当ですね。
 
-#### Ryzen 9 7940HSでの結果（NCGバックエンド）
+### Ryzen 9 7940HSでの結果（NCGバックエンド）
 
 GHC 9.12で実装されたNCGバックエンドでのSIMDサポートも試してみましょう。
 
@@ -672,7 +678,7 @@ NCGの方でSIMDの利用による速度向上幅が大きいということは�
 
 これらは多くが `f a` という形をしています（`a` は `Float` や `Double` など、要素の型）。まあ演算子オーバーロードする都合上 `f a` の形になるのは当然なんですが、何かの意味を見出すことはできるでしょうか？
 
-`f` はある種の関手、`Functor` のようなものと思うことができるかもしれません。ただ、任意の `a -> b` を `f a -> f b` に持ち上げることができるわけではありません。なので、「Hask圏の自己関手」ではなさそうです。
+`f` はある種の関手、`Functor` のようなものと思うことができるかもしれません。ただ、任意の `a -> b` を `f a -> f b` に持ち上げることができるわけではありません。なので、「Hask圏の強自己関手」ではなさそうです。
 
 ひとつの見方としては、`f` はHaskellのいくつかの型を対象とし、いくつかの関数を射とする圏（Hask圏の部分圏）からHask圏への関手、と考えることができるでしょうか。もっとクールな見方ができるかは私にはわかりません。
 
