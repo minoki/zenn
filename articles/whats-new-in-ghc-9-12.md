@@ -520,6 +520,12 @@ maxFloat# :: Float# -> Float# -> Float#
 
 今回、これらの問題が解決されて、Windows上で何もしなくてもLLVMバックエンドが使えるようになりました。つまり、`opt.exe` と `llc.exe` はGHCに付属のものが使われるようになり（実は少し前にWindows向けのGHCはClangを使うようになっており、LLVM自体は付属するようになっていたのでした）、浮動小数点数絡みのリンクエラーも解決しました。
 
+## WebAssemblyバックエンドのTemplate Haskell対応
+
+* [GHC's wasm backend now supports Template Haskell and ghci - Tweag](https://www.tweag.io/blog/2024-11-21-ghc-wasm-th-ghci/)
+
+対応したらしいです。（突っ込んだ説明が書けなくてすみません）
+
 ## ライブラリー
 
 ### `Data.List{.NonEmpty}.compareLength`
