@@ -13,6 +13,10 @@ published: false
 * [HaskellでEDSLを作る：LLVM編 〜JITコンパイル〜](haskell-dsl-llvm)
 * HaskellでEDSLを作る：SIMD編（この記事）
 
+この記事は[Haskell Advent Calendar 2024](https://qiita.com/advent-calendar/2024/haskell)の20日目の記事です。
+
+---
+
 [HaskellでEDSLを作る：LLVM編](haskell-dsl-llvm)ではLLVMを使って自動ベクトル化を行い、SIMD命令を活用しました。一方で、GHCにはSIMD命令をHaskellから直接使うプリミティブ型と関数があります。これらを活用できないでしょうか？
 
 例によってサンプルコードは[haskell-dsl-example/simd](https://github.com/minoki/haskell-dsl-example/tree/main/simd)に置いています。
@@ -580,95 +584,96 @@ variance introduced by outliers: 46% (moderately inflated)
 GHC 9.12で実装されたNCGバックエンドでのSIMDサポートも試してみましょう。
 
 ```
-$ cabal bench -w ghc-9.12.0.20241128 --builddir=dist-ncg -O2 --allow-newer
+$ cabal bench -w ghc-9.12.1 --builddir=dist-ncg -O2 --allow-newer
 benchmarking Float/f/scalar
-time                 37.44 μs   (37.14 μs .. 37.76 μs)
-                     0.999 R²   (0.999 R² .. 1.000 R²)
-mean                 37.34 μs   (37.09 μs .. 37.86 μs)
-std dev              1.080 μs   (665.7 ns .. 1.866 μs)
-variance introduced by outliers: 29% (moderately inflated)
+time                 38.18 μs   (38.00 μs .. 38.37 μs)
+                     1.000 R²   (1.000 R² .. 1.000 R²)
+mean                 38.00 μs   (37.80 μs .. 38.19 μs)
+std dev              670.4 ns   (522.7 ns .. 874.4 ns)
+variance introduced by outliers: 14% (moderately inflated)
 
 benchmarking Float/f/vector
-time                 7.048 μs   (6.981 μs .. 7.101 μs)
+time                 7.118 μs   (7.049 μs .. 7.184 μs)
                      0.999 R²   (0.999 R² .. 1.000 R²)
-mean                 7.047 μs   (6.995 μs .. 7.129 μs)
-std dev              212.2 ns   (133.8 ns .. 324.3 ns)
-variance introduced by outliers: 36% (moderately inflated)
+mean                 7.121 μs   (7.080 μs .. 7.178 μs)
+std dev              170.4 ns   (140.2 ns .. 209.8 ns)
+variance introduced by outliers: 26% (moderately inflated)
 
 benchmarking Float/f/vector (unified)
-time                 7.014 μs   (6.959 μs .. 7.071 μs)
-                     0.999 R²   (0.999 R² .. 1.000 R²)
-mean                 7.034 μs   (6.988 μs .. 7.108 μs)
-std dev              186.6 ns   (146.7 ns .. 252.1 ns)
-variance introduced by outliers: 30% (moderately inflated)
+time                 7.151 μs   (7.106 μs .. 7.195 μs)
+                     1.000 R²   (1.000 R² .. 1.000 R²)
+mean                 7.131 μs   (7.091 μs .. 7.177 μs)
+std dev              147.8 ns   (123.3 ns .. 186.5 ns)
+variance introduced by outliers: 21% (moderately inflated)
 
 benchmarking Float/g/scalar
-time                 13.74 μs   (13.61 μs .. 13.88 μs)
-                     0.999 R²   (0.998 R² .. 0.999 R²)
-mean                 13.54 μs   (13.40 μs .. 13.66 μs)
-std dev              458.4 ns   (356.4 ns .. 604.5 ns)
-variance introduced by outliers: 40% (moderately inflated)
+time                 13.76 μs   (13.63 μs .. 13.89 μs)
+                     0.999 R²   (0.999 R² .. 1.000 R²)
+mean                 13.39 μs   (13.22 μs .. 13.54 μs)
+std dev              539.9 ns   (434.0 ns .. 699.9 ns)
+variance introduced by outliers: 48% (moderately inflated)
 
 benchmarking Float/g/vector
-time                 1.408 μs   (1.388 μs .. 1.441 μs)
-                     0.996 R²   (0.993 R² .. 0.998 R²)
-mean                 1.478 μs   (1.448 μs .. 1.529 μs)
-std dev              136.4 ns   (83.51 ns .. 203.8 ns)
-variance introduced by outliers: 87% (severely inflated)
+time                 1.397 μs   (1.384 μs .. 1.412 μs)
+                     0.999 R²   (0.999 R² .. 1.000 R²)
+mean                 1.395 μs   (1.384 μs .. 1.408 μs)
+std dev              35.98 ns   (29.38 ns .. 44.60 ns)
+variance introduced by outliers: 33% (moderately inflated)
 
 benchmarking Float/g/vector (unified)
-time                 1.180 μs   (1.171 μs .. 1.191 μs)
+time                 1.199 μs   (1.187 μs .. 1.210 μs)
                      0.999 R²   (0.999 R² .. 1.000 R²)
-mean                 1.176 μs   (1.169 μs .. 1.187 μs)
-std dev              32.02 ns   (21.83 ns .. 50.35 ns)
-variance introduced by outliers: 36% (moderately inflated)
+mean                 1.195 μs   (1.186 μs .. 1.205 μs)
+std dev              30.76 ns   (26.36 ns .. 35.65 ns)
+variance introduced by outliers: 34% (moderately inflated)
 
 benchmarking Double/f/scalar
-time                 38.91 μs   (38.57 μs .. 39.29 μs)
-                     0.999 R²   (0.998 R² .. 0.999 R²)
-mean                 38.59 μs   (38.25 μs .. 39.06 μs)
-std dev              1.361 μs   (1.070 μs .. 1.724 μs)
-variance introduced by outliers: 38% (moderately inflated)
+time                 38.59 μs   (38.38 μs .. 38.83 μs)
+                     1.000 R²   (1.000 R² .. 1.000 R²)
+mean                 38.65 μs   (38.46 μs .. 38.91 μs)
+std dev              699.1 ns   (550.4 ns .. 890.0 ns)
+variance introduced by outliers: 14% (moderately inflated)
 
 benchmarking Double/f/vector
-time                 8.440 μs   (8.366 μs .. 8.537 μs)
-                     0.999 R²   (0.999 R² .. 1.000 R²)
-mean                 8.456 μs   (8.399 μs .. 8.541 μs)
-std dev              232.4 ns   (160.3 ns .. 309.1 ns)
-variance introduced by outliers: 32% (moderately inflated)
+time                 8.237 μs   (8.185 μs .. 8.302 μs)
+                     1.000 R²   (0.999 R² .. 1.000 R²)
+mean                 8.281 μs   (8.229 μs .. 8.349 μs)
+std dev              195.3 ns   (145.6 ns .. 255.1 ns)
+variance introduced by outliers: 26% (moderately inflated)
 
 benchmarking Double/f/vector (unified)
-time                 8.149 μs   (8.068 μs .. 8.241 μs)
-                     0.999 R²   (0.999 R² .. 0.999 R²)
-mean                 8.199 μs   (8.127 μs .. 8.305 μs)
-std dev              292.6 ns   (229.5 ns .. 450.0 ns)
-variance introduced by outliers: 44% (moderately inflated)
+time                 8.267 μs   (8.208 μs .. 8.332 μs)
+                     1.000 R²   (0.999 R² .. 1.000 R²)
+mean                 8.291 μs   (8.233 μs .. 8.363 μs)
+std dev              205.6 ns   (162.1 ns .. 272.7 ns)
+variance introduced by outliers: 27% (moderately inflated)
 
 benchmarking Double/g/scalar
-time                 13.86 μs   (13.73 μs .. 13.98 μs)
-                     0.999 R²   (0.999 R² .. 0.999 R²)
-mean                 13.71 μs   (13.62 μs .. 13.85 μs)
-std dev              374.7 ns   (285.7 ns .. 525.6 ns)
-variance introduced by outliers: 30% (moderately inflated)
+time                 13.91 μs   (13.79 μs .. 14.03 μs)
+                     0.999 R²   (0.998 R² .. 0.999 R²)
+mean                 13.64 μs   (13.47 μs .. 13.77 μs)
+std dev              523.9 ns   (437.4 ns .. 658.1 ns)
+variance introduced by outliers: 46% (moderately inflated)
 
 benchmarking Double/g/vector
-time                 2.641 μs   (2.621 μs .. 2.664 μs)
-                     0.999 R²   (0.999 R² .. 1.000 R²)
-mean                 2.652 μs   (2.631 μs .. 2.682 μs)
-std dev              83.22 ns   (60.53 ns .. 118.6 ns)
-variance introduced by outliers: 41% (moderately inflated)
+time                 2.667 μs   (2.640 μs .. 2.701 μs)
+                     0.999 R²   (0.999 R² .. 0.999 R²)
+mean                 2.690 μs   (2.671 μs .. 2.711 μs)
+std dev              67.58 ns   (53.11 ns .. 86.86 ns)
+variance introduced by outliers: 31% (moderately inflated)
 
 benchmarking Double/g/vector (unified)
-time                 2.221 μs   (2.201 μs .. 2.244 μs)
+time                 2.267 μs   (2.241 μs .. 2.298 μs)
                      0.999 R²   (0.999 R² .. 1.000 R²)
-mean                 2.231 μs   (2.213 μs .. 2.267 μs)
-std dev              80.59 ns   (46.99 ns .. 135.7 ns)
-variance introduced by outliers: 48% (moderately inflated)
+mean                 2.264 μs   (2.246 μs .. 2.288 μs)
+std dev              68.17 ns   (54.30 ns .. 86.66 ns)
+variance introduced by outliers: 39% (moderately inflated)
+
 ```
 
-`Float` の方は `f` が37.44/7.014≈5.34倍、`g` が13.74/1.180≈11.6倍でした。4並列なのに4倍以上速度向上しています。
+`Float` の方は `f` が38.18/7.118≈5.36倍、`g` が13.76/1.199≈11.5倍でした。4並列なのに4倍以上速度向上しています。
 
-`Double` の方は、`f` は38.91/8.149≈4.77倍、`g` は13.86/2.221≈6.24倍でした。これも2並列なのに2倍以上速度向上しています。
+`Double` の方は、`f` は38.59/8.237≈4.68倍、`g` は13.91/2.267≈6.14倍でした。これも2並列なのに2倍以上速度向上しています。
 
 NCGの方でSIMDの利用による速度向上幅が大きいということは、スカラーのコードの最適化が足りないのでしょうか。
 
@@ -678,7 +683,7 @@ NCGの方でSIMDの利用による速度向上幅が大きいということは�
 
 これらは多くが `f a` という形をしています（`a` は `Float` や `Double` など、要素の型）。まあ演算子オーバーロードする都合上 `f a` の形になるのは当然なんですが、何かの意味を見出すことはできるでしょうか？
 
-`f` はある種の関手、`Functor` のようなものと思うことができるかもしれません。ただ、任意の `a -> b` を `f a -> f b` に持ち上げることができるわけではありません。なので、「Hask圏の強自己関手」ではなさそうです。
+`f` はある種の関手 (functor) のようなものと思うことができるかもしれません。ただ、任意の `a -> b` を `f a -> f b` に持ち上げることができるわけではありません。なので、「Hask圏の強自己関手」（`Functor` のインスタンス）ではなさそうです。
 
 ひとつの見方としては、`f` はHaskellのいくつかの型を対象とし、いくつかの関数を射とする圏（Hask圏の部分圏）からHask圏への関手、と考えることができるでしょうか。もっとクールな見方ができるかは私にはわかりません。
 
@@ -690,10 +695,16 @@ NCGの方でSIMDの利用による速度向上幅が大きいということは�
 * DSLから中間言語を作ってLLVMでJITコンパイル
 * SIMD
 
-などをHaskellで扱う方法を見てきました。これらはいずれも演算子オーバーロードで実装されており、`f a` という形の型を持ちます。これらを統一的に扱えないでしょうか？
+などをHaskellで扱う方法を見てきました。これらはいずれも演算子オーバーロードで実装されており、`f a` という形の型を持ちます。これらを統一的に扱えないでしょうか？つまり、今回定義した `SIMD` というクラスを一般化して、他の用途でも同様に書けるようにならないでしょうか？
 
 例えば、HaskellにはすでにAccelerateというフレームワークがありますが、これは現状自動微分をサポートしていません（[Support Automatic Differentiation · Issue #398 · AccelerateHS/accelerate](https://github.com/AccelerateHS/accelerate/issues/398)）。Accelerateを自動微分に対応させたようなフレームワークを作れないでしょうか？
 
 あるいは、GoogleがPython向けに作っているJAXというフレームワークでは、自動微分、自動ベクトル化、JITコンパイルやGPUでの実行などが行えます。これのHaskell版を作れないでしょうか？
 
 そんな野望をこの数年抱えていたのですが、どうやら私にはそれに取り組むための十分な時間がなさそうです。ですので、同じ志を持った人が現れた時に役に立てるように、必要な技術とアイディアをこの一連の記事にまとめているというわけです。
+
+まあそんな泣き言ばかり言っていてもアレなので、この記事で提示した設計のSIMDラッパーライブラリーをそのうち公開する予定です。
+
+---
+
+お読みいただきありがとうございました。HaskellはDSLを作る上でも色々な可能性がある言語です。その可能性の一端を感じていただけましたでしょうか？
