@@ -13,6 +13,10 @@ published: true
 * HaskellでEDSLを作る：LLVM編 〜JITコンパイル〜（この記事）
 * HaskellでEDSLを作る：SIMD編（後日公開）
 
+この記事は[言語実装 Advent Calendar 2024](https://qiita.com/advent-calendar/2024/lang_dev)の13日目の記事です。
+
+---
+
 [HaskellでEDSLを作る：StableName編](haskell-dsl-stablename)では、`StableName` を使って計算の共有を回復する方法を見ました。
 
 今回は、作った四則演算DSLをLLVMでJITコンパイルする方法を見てみます。サンプルコードは[haskell-dsl-example/llvm](https://github.com/minoki/haskell-dsl-example/tree/main/llvm)に載せています。

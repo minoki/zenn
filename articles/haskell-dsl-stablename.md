@@ -13,6 +13,10 @@ published: true
 * [HaskellでEDSLを作る：LLVM編 〜JITコンパイル〜](haskell-dsl-llvm)
 * HaskellでEDSLを作る：SIMD編（後日公開）
 
+この記事は[言語実装 Advent Calendar 2024](https://qiita.com/advent-calendar/2024/lang_dev)の7日目の記事です。
+
+---
+
 [HaskellでEDSLを作る：atomicModifyIORef編](haskell-dsl-atomicmodifyioref)では、`unsafePerformIO` と `atomicModifyIORef` を使って、純粋な計算の中で行われている計算をキャプチャーし、リバースモード自動微分を実装する例を見ました。そして、その手法では計算の共有を取り扱えることを述べました。
 
 HaskellでEDSLを作る上で、計算の共有を観測し、利用する方法は他にもあります。それがここで紹介する `StableName` です。前回述べたように、計算の共有は純粋なコードからは観測できてはいけないので、`StableName` を使う場合でも `IO` が絡んできます。
