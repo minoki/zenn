@@ -562,11 +562,7 @@ Ubuntuユーザーの場合は `sudo apt install llvm-12` とすれば良いで�
 
 何であれ重要なのは、LLVMの `opt` コマンドと `llc` コマンドがGHCから見えることです。
 
-厄介なのがWindowsで、LLVMのWindows向け公式バイナリーには `opt.exe` と `llc.exe` が含まれません。Chocolateyは公式バイナリーを使っているので、Chocolateyを使ってLLVMを入れても意味がありません。どうしてもLLVMバックエンドを使いたい場合はMSYS2を使って `opt.exe` と `llc.exe` を入手すると良いでしょう。なお、GHC 9.4以降には `opt.exe` と `llc.exe` が付属する[^opt-llc-in-ghc-9-4]ようなので、将来的にはそれがデフォルトで利用できるようになるかもしれません[^llvm-on-windows]。
-
-[^opt-llc-in-ghc-9-4]: 場所は `C:\ghcup\ghc\9.4.3\mingw\bin\{opt.exe,llc.exe}` という感じです。設定ファイル `C:\ghcup\ghc\9.4.3\lib\settings` を書き換えるか `-pgmlo` / `-pgmlc` オプションで指定してやると使えると思います（未確認）。
-
-[^llvm-on-windows]: [Use bundled llc/opt on Windows (#22438) · Issues · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/issues/22438)
+Windowsでは、GHC 9.12以降でGHC自身に付属するLLVMが使えるようになったので、9.12以降であれば何もしなくても大丈夫です。9.12より前のGHCでは、浮動小数点数を使おうとするとリンクエラーが発生する問題があるので、LLVMバックエンドは実質使えません。
 
 ## GHC側の設定
 
