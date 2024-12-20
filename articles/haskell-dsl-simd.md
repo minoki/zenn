@@ -3,7 +3,7 @@ title: "HaskellでEDSLを作る：SIMD編"
 emoji: "💨"
 type: "tech" # tech: 技術記事 / idea: アイデア
 topics: [haskell, dsl, simd]
-published: false
+published: true
 ---
 
 シリーズ：
@@ -164,7 +164,7 @@ data DoubleX8
 -- ...
 ```
 
-`DoubleX4` 型は `DoubleX4#` 型のラッパーかというとそういうわけでもなく、デフォルトでは `DoubleX2#` を2つ使い、パッケージフラグで使用するベクトルの最大長をno-vec, vec256, vec512という風に選択することができます。
+`DoubleX4` 型は常に `DoubleX4#` 型のラッパーかというとそういうわけでもなく、デフォルトでは `DoubleX2#` を2つ使い、パッケージフラグで使用するベクトルの最大長をno-vec, vec256, vec512という風に選択することができます。
 
 スカラーの配列 `Vector a` の処理に関するサポートは特になさそうです。
 
@@ -697,9 +697,9 @@ NCGの方でSIMDの利用による速度向上幅が大きいということは�
 
 などをHaskellで扱う方法を見てきました。これらはいずれも演算子オーバーロードで実装されており、`f a` という形の型を持ちます。これらを統一的に扱えないでしょうか？つまり、今回定義した `SIMD` というクラスを一般化して、他の用途でも同様に書けるようにならないでしょうか？
 
-例えば、HaskellにはすでにAccelerateというフレームワークがありますが、これは現状自動微分をサポートしていません（[Support Automatic Differentiation · Issue #398 · AccelerateHS/accelerate](https://github.com/AccelerateHS/accelerate/issues/398)）。Accelerateを自動微分に対応させたようなフレームワークを作れないでしょうか？
+あるいは、HaskellにはすでにAccelerateというフレームワークがありますが、これは現状自動微分をサポートしていません（[Support Automatic Differentiation · Issue #398 · AccelerateHS/accelerate](https://github.com/AccelerateHS/accelerate/issues/398)）。Accelerateを自動微分に対応させたようなフレームワークを作れないでしょうか？
 
-あるいは、GoogleがPython向けに作っているJAXというフレームワークでは、自動微分、自動ベクトル化、JITコンパイルやGPUでの実行などが行えます。これのHaskell版を作れないでしょうか？
+また、GoogleがPython向けに作っているJAXというフレームワークでは、自動微分、自動ベクトル化、JITコンパイルやGPUでの実行などが行えます。これのHaskell版を作れないでしょうか？
 
 そんな野望をこの数年抱えていたのですが、どうやら私にはそれに取り組むための十分な時間がなさそうです。ですので、同じ志を持った人が現れた時に役に立てるように、必要な技術とアイディアをこの一連の記事にまとめているというわけです。
 

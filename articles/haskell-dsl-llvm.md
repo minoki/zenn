@@ -11,7 +11,7 @@ published: true
 * [HaskellでEDSLを作る：atomicModifyIORef編 〜自動微分を題材に〜](haskell-dsl-atomicmodifyioref)
 * [HaskellでEDSLを作る：StableName編 〜共有の回復〜](haskell-dsl-stablename)
 * HaskellでEDSLを作る：LLVM編 〜JITコンパイル〜（この記事）
-* HaskellでEDSLを作る：SIMD編（後日公開）
+* [HaskellでEDSLを作る：SIMD編](haskell-dsl-simd)
 
 この記事は[言語実装 Advent Calendar 2024](https://qiita.com/advent-calendar/2024/lang_dev)の13日目の記事です。
 
