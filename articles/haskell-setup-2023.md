@@ -547,12 +547,14 @@ GHCはネイティブコードを生成できるコンパイラーですが、�
 |-|-|
 | GHC 8.10.7 | LLVM 9以上12以下 |
 | GHC 9.0.2 | LLVM 9以上12以下 |
-| GHC 9.2 | LLVM 9以上12以下 |
-| GHC 9.4 | LLVM 10以上13以下 |
-| GHC 9.6 | LLVM 11以上15以下 |
-| GHC 9.8 | LLVM 11以上15以下 |
+| GHC 9.2.8 | LLVM 9以上12以下 |
+| GHC 9.4.8 | LLVM 10以上13以下（`-mavx` を使う場合はLLVM 12以下が必要） |
+| GHC 9.6 | LLVM 11以上15以下（`-mavx` を使う場合はLLVM 12以下が必要） |
+| GHC 9.8 | LLVM 11以上15以下（`-mavx` を使う場合はLLVM 12以下が必要） |
 | GHC 9.10 | LLVM 13以上15以下 |
 | GHC 9.12 | LLVM 13以上19以下 |
+
+（GHC 9.8以下とLLVM 13以上で `-mavx` を使う場合は[#23870: LLVM 13+ doesn't recognize `-stack-alignment` option · Issues · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/issues/23870)という問題があるので、そういう場合はLLVM 12を使ってください）
 
 ここではGHC 9.0.2 + LLVM 12を例とします。
 
