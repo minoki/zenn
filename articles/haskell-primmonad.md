@@ -300,3 +300,7 @@ Main.$w$s$wmkSievePMInlinable [InlPrag=INLINABLE[2]]
 ```
 
 といういかにも特殊化されたような関数が `.dump-prep` に書き出されます。
+
+---
+
+「[HaskellのPrimMonadとうまく付き合う その2：Brainfuckインタープリターを題材にして](haskell-primmonad-interpreter)」へ続く
