@@ -58,18 +58,18 @@ TODO: float16とbfloat16 (AVX512)
 | 引き算（飽和、符号あり） | `psubsb` (SSE2) | `psubsw` (SSE2) | | |
 | 足し算（飽和、符号なし） | `paddusb` (SSE2) | `paddusw` (SSE2) | | |
 | 引き算（飽和、符号なし） | `psubusb` (SSE2) | `psubusw` (SSE2) | | |
-| 絶対値（符号あり） | `pabsb` (SSSE3) | `pabsw` (SSSE3) | `pabsd` (SSSE3) | |
-| min（符号あり） | `pminsb` (SSE4.1) | `pminsw` (SSE2) | `pminsd` (SSE4.1) | |
-| min（符号なし） | `pminub` (SSE2) | `pminuw` (SSE4.1) | `pminud` (SSE4.1) | |
-| max（符号あり） | `pmaxsb` (SSE4.1) | `pmaxsw` (SSE2) | `pmaxsd` (SSE4.1) | |
-| max（符号なし） | `pmaxub` (SSE2) | `pmaxuw` (SSE4.1) | `pmaxud` (SSE4.1) | |
+| 絶対値（符号あり） | `pabsb` (SSSE3) | `pabsw` (SSSE3) | `pabsd` (SSSE3) | `vpabsq` (AVX-512F+VL OR AVX10.1) |
+| min（符号あり） | `pminsb` (SSE4.1) | `pminsw` (SSE2) | `pminsd` (SSE4.1) | `vpminsq` (AVX-512F+VL OR AVX10.1) |
+| min（符号なし） | `pminub` (SSE2) | `pminuw` (SSE4.1) | `pminud` (SSE4.1) | `vpminuq` (AVX-512F+VL OR AVX10.1) |
+| max（符号あり） | `pmaxsb` (SSE4.1) | `pmaxsw` (SSE2) | `pmaxsd` (SSE4.1) | `vpmaxsq` (AVX-512F+VL OR AVX10.1) |
+| max（符号なし） | `pmaxub` (SSE2) | `pmaxuw` (SSE4.1) | `pmaxud` (SSE4.1) | `vpmaxuq` (AVX-512F+VL OR AVX10.1) |
 | bitwise not | | | | |
 | bitwise and | `pand` (SSE2) | ← | ← | ← |
 | bitwise or | `por` (SSE2) | ← | ← | ← |
 | bitwise xor | `pxor` (SSE2) | ← | ← | ← |
 | bitwise andnot | `pandn` (SSE2) | ← | ← | ← |
 | left shift by scalar | | `psllw` (SSE2) | `pslld` (SSE2) | `psllq` (SSE2) |
-| arithmetic right shift by scalar | | `psraw` (SSE2) | `psrad` (SSE2) | |
+| arithmetic right shift by scalar | | `psraw` (SSE2) | `psrad` (SSE2) | `vpsraq` (AVX-512F+VL OR AVX10.1) |
 | logical right shift by scalar | | `psrlw` (SSE2) | `psrld` (SSE2) | `psrlq` (SSE2) |
 | = | `pcmpeqb` (SSE2) | `pcmpeqw` (SSE2) | `pcmdeqd` (SSE2) | `pcmdeqq` (SSE4.1) |
 | \>（符号あり） | `pcmpgtb` (SSE2) | `pcmpgtw` (SSE2) | `pcmpgtd` (SSE2) | `pcmpgtq` (SSE4.2) |
