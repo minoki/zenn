@@ -1,14 +1,12 @@
 ---
-title: "C言語のinline関数について"
+title: "C言語のinline関数について：C99とGNU89の違いも含めて"
 emoji: "🐷"
 type: "tech" # tech: 技術記事 / idea: アイデア
-topics: [c言語]
-published: false
+topics: [c, c言語]
+published: true
 ---
 
-C99以降のC言語には**インライン関数**という機能があります。機能自体は有名かと思いますが、重箱の隅をつつきに行くと意外と知られていないことがあるのではないかと思います。この記事では、インライン関数を深掘りします。あくまで**C言語を対象とし、C++は対象としません**。
-
-この記事では特に、**`static` じゃない `inline` 関数**について解説します。
+C99以降のC言語には**インライン関数**という機能があります。機能自体は有名かと思いますが、**`static` と併用しない使い方**は意外と知られていないのではないかと思います（少なくとも、無料版のChatGPTはこの件に関して頓珍漢な答えを出してきました）。そういうわけで、この記事ではC言語のインライン関数を深掘りします。あくまで**C言語を対象とし、C++は対象としません**。
 
 ## 関数定義とコンパイル・リンクについての基本
 
@@ -52,7 +50,7 @@ foo: 0x102433ec0, 8
 
 関数のアドレスは環境によって、あるいは実行ごとに変わる可能性がありますが、他は普通ですね。
 
-C言語の用語で言うと、`main1.c` と `foo1.c` は異なる**翻訳単位** (translation unit; C17 5.1.1.1) になります。`add` と `foo` は**外部結合**または**外部リンケージ** (external linkage; C17 6.2.2) を持つため、異なる翻訳単位であっても同じ実体を参照します。`add` のアドレスが同一であることがその証拠です。
+C言語の用語で言うと、`main1.c` と `foo1.c` は異なる**翻訳単位** (translation unit; C17 5.1.1.1) になります。`add` と `foo` は**外部リンケージ** (external linkage; C17 6.2.2; JISの訳語では**外部結合**) を持つため、異なる翻訳単位であっても同じ実体を参照します。`add` のアドレスが同一であることがその証拠です。
 
 今度は、`add` の定義を `static` 付きのものに変えてみましょう：
 
@@ -95,7 +93,7 @@ ld: symbol(s) not found for architecture arm64
 clang: error: linker command failed with exit code 1 (use -v to see invocation)
 ```
 
-C言語の用語で言うと、`foo2.c` での `add` の定義は `static` がついたことにより**内部結合**あるいは**内部リンケージ** (internal linkage) を持つようになりました。一方で `main2.c` での `add` は外部リンケージのままです。外部リンケージを持つ `add` が使用されたにもかかわらず、その（外部リンケージを持つ `add` の）定義がプログラム中に存在しないので、エラーとなります（C17 6.9 段落5）。
+C言語の用語で言うと、`foo2.c` での `add` の定義は `static` がついたことにより**内部リンケージ** (internal linkage; JISの訳語では**内部結合**) を持つようになりました。一方で `main2.c` での `add` は外部リンケージのままです。外部リンケージを持つ `add` が使用されたにもかかわらず、その（外部リンケージを持つ `add` の）定義がプログラム中に存在しないので、エラーとなります（C17 6.9 段落5）。
 
 今度は、`main3.c` で `add` を `static` 付きで定義してみましょう：
 
@@ -187,13 +185,13 @@ clang: error: linker command failed with exit code 1 (use -v to see invocation)
 
 C言語の用語で言うと、`add` は外部リンケージを持ちますが、**外部定義** (external definition) がプログラム中に複数存在するのでエラーになるということになります。外部リンケージを持つ一つの識別子に対する外部定義は高々1つしか存在してはいけません（その識別子が実際に使用される場合は、ちょうど1つ）。
 
-一般論はCの規格を見てもらうとして、関数が外部リンケージ（JISの訳語では「外部結合」）を持つとは、ざっくりいうと `static` がついていない関数のことです。
+一般論はCの規格を見てもらうとして、関数が外部リンケージを持つとは、ざっくりいうと `static` がついていない関数のことです。
 
 また、関数定義が外部定義であるとは、インライン定義ではないもののことです。同じ識別子の外部定義が一つのプログラム中に複数存在するとエラーです（C17 6.9 段落5）。
 
 ## インライン関数とは
 
-関数に `inline` 関数指定子をつけると、その関数はインライン関数になり、関数呼び出しが高速になる可能性があります。典型的にはインライン展開によって高速化が実現されますが、実際にインライン展開されるとは限らないので注意してください。詳しいことはCの規格では処理系定義 (implementation-defined) だったり未規定 (unspecified) だったりします。
+関数に `inline` 関数指定子をつけると、その関数は**インライン関数**になり、関数呼び出しが高速になる可能性があります。典型的にはインライン展開によって高速化が実現されますが、実際にインライン展開されるとは限らないので注意してください。詳しいことはCの規格では処理系定義 (implementation-defined) だったり未規定 (unspecified) だったりします。
 
 もう少し詳しく説明します。
 
@@ -286,7 +284,7 @@ main: 0x1047ebf18, 8
 
 この場合、`add` はインライン定義には該当しないため、Cの規格ではインライン化が起こるかどうかについては何も言っていないことになります。しかし、外部リンケージを持つ識別子の外部定義はプログラム中に高々一つというルールがあるので、処理系がインライン化等の最適化を行うことに支障はないでしょう。
 
-翻訳単位中に `extern` 付きの宣言が一つでもあれば、インライン定義には該当しなくなり、外部定義を与えるようになります：
+翻訳単位中に `inline` なしの宣言が一つでもあれば、インライン定義には該当しなくなり、外部定義を与えるようになります：
 
 ```c:main7.c
 #include <stdio.h>
@@ -296,7 +294,7 @@ inline int add(int a, int b)
     return a + b;
 }
 
-extern int add(int a, int b);
+extern int add(int a, int b); // inlineなしの宣言
 
 int main(void)
 {
@@ -310,9 +308,9 @@ $ ./exe7
 main: 0x100c47f18, 8
 ```
 
-## ヘッダーとソースファイルを組み合わせる場合はどうすればいいのか
+## ヘッダーとソースファイルを組み合わせる場合はどうすればいいのか：標準Cの場合
 
-C言語でライブラリーを書くとき、ある関数のインライン定義を提供しつつ、インライン化できない場合（例えば、アドレスを取りたい場合）用の外部定義も用意しておくと良さそうです。そういう場合の書き方を考えてみます。
+C言語でライブラリーを書くとき、ある関数のインライン定義を提供しつつ、インライン化できない場合（例えば、アドレスを取りたい場合や、C以外の言語から呼び出したい場合など）用の外部定義も用意しておくと良さそうです。そういう場合の書き方を考えてみます。
 
 まず、ヘッダーでは次のように `static` も `extern` もない `inline` 関数として定義します：
 
@@ -328,7 +326,7 @@ inline int add(int a, int b)
 #endif
 ```
 
-まあ翻訳単位ごとに別の実体が生成されても良く、なおかつ外部リンケージである必要がないのであれば `static` をつけても構いませんが、ここでは外部リンケージが欲しいとします（例えば、C言語以外の言語からFFIで呼ばれる関数を用意するには外部リンケージが必要です）。
+翻訳単位ごとに別の実体が生成されても良く、なおかつ外部リンケージである必要がないのであれば `static` をつけても構いませんが、ここでは外部リンケージが欲しいとします。
 
 インライン定義だけでは外部定義が生成されないので、どこかのソースファイル（翻訳単位）で `extern` 付きの `add` の宣言も用意します（定義ではダメです）：
 
@@ -402,17 +400,17 @@ foo: 0x102917f58, 8
 
 無事に外部定義が一個だけ生成され、うまくコンパイルできました。
 
-この形がベストプラクティスだと思うのですが、あまり見かけたことがない気がします。みんな `static inline` を使っているのでは。`static inline` だとヘッダーで完結しますしね。
+この形がベストプラクティスだと思うのですが、あまり見かけたことがない気がします。みんな `static inline` を使っているのではないでしょうか。`static inline` だとヘッダーで完結しますしね。
 
-## `__attribute__((gnu_inline))` について
+## GNU89および `__attribute__((gnu_inline))` について
 
-GCCはC89の時代から独自拡張としてインライン関数を実装していました。その仕様はC99のものとは微妙に違うので注意が必要です。GCCに `-std=gnu89` オプションまたは `-fgnu89-inline` オプションを渡すか、または関数に `gnu_inline` 属性をつけると古い仕様が有効になります。ここでは古い仕様を「GNU 89モード」と呼ぶことにします。
+GCCはC89の時代から独自拡張としてインライン関数を実装していました。その仕様はC99のものとは微妙に違うので注意が必要です。GCCに `-std=gnu89` オプションまたは `-fgnu89-inline` オプションを渡すか、または関数に `gnu_inline` 属性をつけると古い仕様が有効になります。ここでは古い仕様を「GNU89モード」と呼ぶことにします。
 
 参考：「[Inline (Using the GNU Compiler Collection (GCC))](https://gcc.gnu.org/onlinedocs/gcc/Inline.html)」
 
-GNU 89モードでは、`static` も `extern` もつかないインライン関数は、外部定義を与えます。
+GNU89モードでは、`static` も `extern` もつかないインライン関数は、外部定義を与えます。
 
-GNU 89モードでは、`extern inline` がついた関数はインライン展開のみに使用され、外部定義を与えません。C標準の「インライン定義」に相当すると考えて良さそうです。
+GNU89モードでは、`extern inline` がついた関数はインライン展開のみに使用され、外部定義を与えません。C標準の「インライン定義」に相当すると考えて良さそうです。
 
 例えば、次のコードは、`foo` の方で外部定義が与えられ、`main` と `foo` の両方で `add` は同じ実体を指します：
 
@@ -476,7 +474,33 @@ main-gnu89-bad.c:(.text+0x13): undefined reference to `add'
 collect2: error: ld returned 1 exit status
 ```
 
-現在どちらのモード（GNU 89 vs C99）でコンパイルされているかは、`__GNUC_STDC_INLINE__` マクロと `__GNUC_GNU_INLINE__` マクロで判別できるようです（参考：[Common Predefined Macros (The C Preprocessor)](https://gcc.gnu.org/onlinedocs/cpp/Common-Predefined-Macros.html)）。
+`extern` のつかない `inline` 宣言を用意すると、これは外部定義を与えるようになります：
+
+```c:main-gnu89-2.c
+#include <stdio.h>
+
+__attribute__((gnu_inline))
+extern inline int add(int a, int b)
+{
+    return a + b;
+}
+
+__attribute__((gnu_inline))
+inline int add(int a, int b); // extern のつかない inline 宣言
+
+int main(void)
+{
+    printf("main: %p, %d\n", add, add(3, 5));
+}
+```
+
+```
+$ gcc main-gnu89-2.c
+$ ./a.out
+main: 0x55a4b4022149, 8
+```
+
+現在どちらのモード（GNU89 vs C99）でコンパイルされているかは、GCC 4.2以降では `__GNUC_STDC_INLINE__` マクロと `__GNUC_GNU_INLINE__` マクロで判別できるようです（参考：[Common Predefined Macros (The C Preprocessor)](https://gcc.gnu.org/onlinedocs/cpp/Common-Predefined-Macros.html)）。
 
 ```c
 #include <stdio.h>
@@ -491,13 +515,72 @@ int main()
 }
 ```
 
-## always_inline, forceinline
+## ヘッダーとソースファイルを組み合わせる場合はどうすればいいのか：GNU89モードを考慮する場合
+
+先ほどと同じように、C言語でライブラリーを書く際にインライン定義と外部定義の両方を用意したいとします。C99とGNU89では `inline` の意味が違うので、GNU89モードを考慮する場合は工夫が必要です。
+
+一つの選択肢は、GNU89モードは2025年現在あまり使われていないと考えて、GNU89モードの場合はインライン定義を用意しないことです。その場合はヘッダーの記述は次のようになります：
+
+```c:add.h
+#if defined(__GNUC_GNU_INLINE__)
+// GNU89モード
+extern int add(int a, int b);
+#else
+// 標準C
+inline int add(int a, int b)
+{
+    return a + b;
+}
+#endif
+```
+
+参考までに、GCCのデフォルトはGCC 5（2015年リリース）以降では `-std=gnu11` で、`__GNUC_GNU_INLINE__` が利用できるようになったのはGCC 4.2のようです。より古いGCCを考慮する場合はより細かい条件が必要になります。
+
+古いGCCでもインライン定義を有効にしたい場合は、適宜 `extern inline` を切り替えます。
+
+```c
+// ヘッダーの記述
+#if defined(__GNUC_GNU_INLINE__)
+// GNU89モード
+extern inline
+#else
+// C99モード
+inline
+#endif
+int add(int a, int b)
+{
+    return a + b;
+}
+```
+
+```c
+// ソースの記述
+#include "add.h"
+#if defined(__GNUC_GNU_INLINE__)
+inline
+#else
+extern
+#endif
+int add(int a, int b);
+```
+
+## C99, GNU89, C++の `inline` の比較
+
+C99はC++ともGNU89とも少し違う `inline` を導入しました。これによって混乱が生まれていることは否定できません（私はこの記事を書くまで「C言語の `inline` は面倒そうだな」と思っていました）。果たして、非互換性の価値はあったのでしょうか？
+
+C99の `inline` が策定された際の文書（[ISO/IEC JTC1/SC22/WG14 N709](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n709.htm)）を読むと、実際にはC++との互換性を重視していたことがわかります。具体的には、C99の `inline` を想定して書かれたコードはそのままC++としても解釈できるようになっています。
+
+C++だと同じ関数の実体が異なる翻訳単位で複数生成されても、リンク時にうまいこと取捨選択するようになっています。C99でC++のやり方を踏襲せず、どこかに外部定義を置かなければならないようにしたのは、weakシンボル等の機能をサポートしない環境でも実装できるようにしたかったのだと推測できます（N709に「such a way that it can be implemented with existing linker technology」とある）。
+
+そういうわけで、C99の `inline` の仕様はそんなに悪いものでもない、というのが私の結論です。
+
+## 処理系の独自機能：always_inline, forceinline
 
 C標準の `inline` はあくまでコンパイラーに対するヒントで、実際にインライン化が起こるとは限りません。コンパイラーによっては、もっと強制力の強い属性を提供していることがあります。
 
 GCCや互換コンパイラー（Clangなど）は `always_inline` 属性により、関数呼び出しがインライン化されることを強制できます：[Common Function Attributes (Using the GNU Compiler Collection (GCC))](https://gcc.gnu.org/onlinedocs/gcc/Common-Function-Attributes.html#index-always_005finline-function-attribute)
 
-MSVCは `__forceinline` というキーワードを提供しています：[Inline Functions (C++) | Microsoft Learn](https://learn.microsoft.com/en-us/cpp/cpp/inline-functions-cpp?view=msvc-170)
+MSVCは `__forceinline` というキーワードを提供しています：[Inline Functions (C++) | Microsoft Learn](https://learn.microsoft.com/en-us/cpp/cpp/inline-functions-cpp?view=msvc-170) が、これは「強いヒント」という位置付けで、本当に強制するわけではないようです。
 
 詳しくは、各コンパイラーのマニュアルを参照してください。
 
@@ -522,6 +605,12 @@ MSVCは `__forceinline` というキーワードを提供しています：[Inli
 
 ## 参考
 
-* GCC: [Inline (Using the GNU Compiler Collection (GCC))](https://gcc.gnu.org/onlinedocs/gcc/Inline.html)
+* GCC
+    * [Inline (Using the GNU Compiler Collection (GCC))](https://gcc.gnu.org/onlinedocs/gcc/Inline.html)
+    * [Common Function Attributes (Using the GNU Compiler Collection (GCC))](https://gcc.gnu.org/onlinedocs/gcc/Common-Function-Attributes.html#index-always_005finline-function-attribute)
 * Clang: [Language Compatibility -- C99 inline functions](https://clang.llvm.org/compatibility.html#inline)
-* [Inline Functions In C](https://www.greenend.org.uk/rjk/tech/inline.html)
+* MSVC: [Inline Functions (C++) | Microsoft Learn](https://learn.microsoft.com/en-us/cpp/cpp/inline-functions-cpp?view=msvc-170)
+* [ISO/IEC JTC1/SC22/WG14 N709](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n709.htm)
+* オンラインの記事
+    * [Inline Functions In C](https://www.greenend.org.uk/rjk/tech/inline.html)
+    * [Myth and reality about inline in C99 – Jens Gustedt's Blog](https://gustedt.wordpress.com/2010/11/29/myth-and-reality-about-inline-in-c99/)
