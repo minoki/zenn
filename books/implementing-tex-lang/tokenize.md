@@ -10,13 +10,13 @@ title: "字句解析"
 
 TeX3からpdfTeXまでは、「文字」といえばASCIIを拡張した8ビットコードのことでした。一方、Unicodeにネイティブ対応したLuaTeXやXeTeXでは、字句解析器はUnicodeを扱い、「文字」と言ったらUnicodeコードポイント（0以上0x10FFFF以下の整数）のことです。
 
-ここでは、「文字」はUnicodeスカラー値のこととします。つまり、0以上0x10FFFF以下の整数であって、0xD800以上0xDFFF以下の範囲にあるものを除いたものです。
+ここで実装する処理系では、「文字」はUnicodeスカラー値のこととします。つまり、0以上0x10FFFF以下の整数であって、0xD800以上0xDFFF以下の範囲にあるものを除いたものです。
 
-Haskellの `Char` はUnicodeコードポイントを表しますが、本書ではもっぱらUnicodeスカラー値のために使います。
+Haskellでは `Char` 型はUnicodeコードポイントを表しますが、本書ではもっぱらUnicodeスカラー値のために使います。
 
 ## カテゴリーコード
 
-TeXの字句解析器は、文字に割り当たった**カテゴリーコード** (category code) に従って字句解析を行います。カテゴリーコードは0以上15以下の整数で表現されますが、ここでは列挙型で表しましょう：
+TeXの字句解析器は、文字に割り当てられた**カテゴリーコード** (category code) に従って字句解析を行います。カテゴリーコードは0以上15以下の整数で表現されますが、ここでは列挙型で表しましょう：
 
 ```haskell
 data CatCode = CCEscape -- 0, escape character
@@ -44,7 +44,7 @@ TeX文書で使う `\left` はこの5文字で一つのトークンを成しま�
 
 `\def` や `\let` などを使うと、制御綴に意味を代入することができます。
 
-制御綴の他に、**アクティブ文字**にも意味を代入することができます。アクティブ文字はカテゴリーコード13が割り当たった文字です。
+制御綴の他に、**アクティブ文字**にも意味を代入することができます。アクティブ文字はカテゴリーコード13が割り当てられた文字です。
 
 制御綴とアクティブ文字をひっくるめて、本書では**コマンド名** (command name) と呼ぶことにします。「コマンド名」は筆者が独自に使っている用語なので、The TeXbookやTeX by Topicを見ても見つかりません。
 
@@ -58,7 +58,7 @@ data CommandName = ControlSeq Text
 
 ## コマンド名とトークン
 
-TeXのトークンは、大きく分けると（カテゴリーコードのついた）文字と、コマンド名に大別されます。文字のカテゴリーコードとして現れうるのは、1 (beginning of group), 2 (end of group), 3 (math shift), 4 (alignment tab), 6 (parameter), 7 (superscript), 8 (subscript), 10 (space), 11 (letter), 12 (other) です。アクティブ文字はコマンド名扱いとします。
+TeXのトークンは、大きく分けると（カテゴリーコードのついた）文字と、コマンド名に大別されます。トークン化された文字のカテゴリーコードとして現れうるのは、1 (beginning of group), 2 (end of group), 3 (math shift), 4 (alignment tab), 6 (parameter), 7 (superscript), 8 (subscript), 10 (space), 11 (letter), 12 (other) です。アクティブ文字はコマンド名扱いとします。
 
 条件分岐の展開では、この他に特殊なトークンとしてfrozen \relaxというものが現れます。`\ifodd1\fi` というトークン列を展開してみましょう。
 
@@ -67,7 +67,7 @@ TeXのトークンは、大きく分けると（カテゴリーコードのつ�
 \relax 
 ```
 
-`\relax` が現れました（詳しい仕組みは条件分岐のところで説明します）。しかし、この `\relax` は通常の `\relax` とは異なります。
+`\relax` が現れました（詳しい仕組みは条件分岐のところで説明します）。しかし、この `\relax` は通常の `\relax` とは異なります。`\ifodd1\fi` で現れた `\relax` と通常の `\relax` をそれぞれ中身に持つマクロを作り、`\ifx` で比較してみましょう：
 
 ```
 *\edef\x{\ifodd1\fi} % \fi によって挿入される \relax
@@ -77,6 +77,8 @@ TeXのトークンは、大きく分けると（カテゴリーコードのつ�
 *\ifx\x\y \message{Yes}\else\message{No}\fi
 No
 ```
+
+これらは「異なる」と判定されました。つまり、`\ifodd1\fi` で生成された `\relax` トークンは通常の `\realx` とは異なるのです。
 
 この特殊な `\relax` トークンのことをfrozen \relaxと呼びます。frozen \relaxの意味は常にプリミティブ `\relax` であり、`\let` などで意味を上書きすることはできません。従って、本書ではfrozen \relaxはコマンド名ではないことにします。
 
@@ -92,5 +94,9 @@ data Token = TCommandName CommandName
 実際のTeXには、エラー回復の関係でfrozen \relax以外の「frozen」トークンがあるようです。
 
 なお、TeX by Topicの2.4ではparameter tokensなるものも挙げられていますが、本書ではparameter tokenはマクロ定義で登場するものとし、字句解析の段階では考慮しません。
+
+## 字句解析器の実装
+
+TODO: 執筆
 
 <!-- [TeXの字句解析器の動作について](https://zenn.dev/mod_poppo/articles/tex-input-processor) -->
