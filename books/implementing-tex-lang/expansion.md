@@ -5,7 +5,12 @@ title: "展開"
 展開器の役目は、入力を消費し、展開不能なトークン（展開不能な値を持つトークン）を生み出すことです。Haskellの関数として書けば次のようになるでしょう：
 
 ```haskell
+data Context = ... -- 展開に関するパラメーター
+data State = ... -- 展開器の状態
+
 -- M は展開器の状態を含むモナド
+type M = ReaderT Context (StateT State (Either String))
+
 nextExpandedToken :: M (Maybe (Token, Unexpandable))
 ```
 
