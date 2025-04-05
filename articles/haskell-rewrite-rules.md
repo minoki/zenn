@@ -273,7 +273,7 @@ instance MyFunctor IO where
   myFmapIO f (myFmapIO g x) = myFmapIO (f . g) x
 #-}
 
-main = myFmapIO (+ 2) (myFmapIO (* 3) (pure 5)) >>= print
+main = myFmap (+ 2) (myFmap (* 3) (pure 5)) >>= print
 ```
 
 ## newtypeとcoerce
