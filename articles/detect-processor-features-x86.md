@@ -11,6 +11,7 @@ published: true
 * CPUの機能を実行時に検出する：x86編（この記事）
 * [CPUの機能を実行時に検出する：Arm編](detect-processor-features-arm)
 * [CPUの機能を実行時に検出する：実践編](using-processor-features)
+* [CPUの機能を実行時に検出する：RISC-V Linux編](detect-processor-features-riscv-linux)
 
 ---
 
