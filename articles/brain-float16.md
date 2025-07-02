@@ -327,8 +327,8 @@ Zvfbfwma拡張は、bfloat16同士を掛けてbinary32に加える、つまりbf
 int main(void)
 {
     // _mm256_set_psの引数は上位ビットが先に来ることに注意
-    __m128bh a = _mm256_cvtneps_pbh(_mm256_set_ps(1.0, 2.0, -1.0, 0.5, 3.5, 0.0, -2.0, 4.0));
-    __m128bh b = _mm256_cvtneps_pbh(_mm256_set_ps(3.0, 5.0, -7.0, 5.0, 2.0, 5.0, 3.0, -1.5));
+    __m128bh a = _mm256_cvtneps_pbh(_mm256_set_ps(1.0f, 2.0f, -1.0f, 0.5f, 3.5f, 0.0f, -2.0f, 4.0f));
+    __m128bh b = _mm256_cvtneps_pbh(_mm256_set_ps(3.0f, 5.0f, -7.0f, 5.0f, 2.0f, 5.0f, 3.0f, -1.5f));
     __m128 acc = _mm_setzero_ps();
     __m128 result = _mm_dpbf16_ps(acc, a, b);
     _Alignas(16) float resultA[4];
@@ -439,3 +439,54 @@ $ ./a.out
 ```
 
 Armの奇数丸め命令は、絶対値が大きくてbinary32で表現できない有限値を、「binary32の無限大」ではなく「binary32の有限の最大値」に変換するようです。マジで？って感じですが、この後bfloat16に変換する時に無限大になるから気にしない、ってことですかね。
+
+ドット積も試してみます。
+
+```c
+#include <stdio.h>
+#include <arm_acle.h>
+#include <arm_neon.h>
+
+int main(void)
+{
+    bfloat16x8_t a = vcvtq_low_bf16_f32((float32x4_t){4.0f, -2.0f, 0.0f, 3.5f});
+    a = vcvtq_high_bf16_f32(a, (float32x4_t){0.5f, -1.0f, 2.0f, 1.0f});
+    bfloat16x8_t b = vcvtq_low_bf16_f32((float32x4_t){-1.5f, 3.0f, 5.0f, 2.0f});
+    b = vcvtq_high_bf16_f32(b, (float32x4_t){5.0f, -7.0f, 5.0f, 3.0f});
+    float32x4_t acc = {0.0f, 0.0f, 0.0f, 0.0f};
+    acc = vbfdotq_f32(acc, a, b);
+    printf("%g, %g, %g, %g\n", vdups_laneq_f32(acc, 0), vdups_laneq_f32(acc, 1), vdups_laneq_f32(acc, 2), vdups_laneq_f32(acc, 3));
+}
+```
+
+実行結果：
+
+```
+$ clang -march=armv8.6-a bfdot.c
+$ ./a.out                       
+-12, 7, 9.5, 13
+```
+
+BFDOTは、疑似コードで書けば
+
+```
+src1, src2: bfloat16[8]
+acc: float[4]
+for i in 0 ..< 4:
+    acc[i] += src1[2 * i + 0] * src2[2 * i + 0] + src1[2 * i + 1] * src2[2 * i + 1]
+```
+
+という動作をするので、上記コードは
+
+```
+acc[0] += 4.0 * (-1.5) + (-2.0) * 3.0
+acc[1] += 0.0 * 5.0 + 3.5 * 2.0
+acc[2] += 0.5 * 5.0 + (-1.0) * (-7.0)
+acc[3] += 2.0 * 5.0 + 1.0 * 3.0
+```
+
+という内積を計算します。良さそうですね。
+
+---
+
+bfloat16は深層学習向けのデータ形式というだけあって、CPUでの対応も汎用の四則演算よりは行列積に役立つ命令（ドット積など）が優先的に実装されているのがわかります。実際にこれらの命令を直接使うのは高効率な行列積ルーチンを実装する一部の人になると思いますが、深層学習の応用が広がるにつれて直接的、間接的な形で恩恵を受ける人も増えてくるのでしょう（とか言ってるうちにBF16の代わりにINT8/INT4/FP8/FP4などが主流になってたりするんでしょうか）。
