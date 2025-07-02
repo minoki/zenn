@@ -8,7 +8,7 @@ published: true
 
 ## bfloat16とは
 
-bfloat16 (brain float16) は深層学習で使われる浮動小数点形式で、元々Googleが考案したらしいです。
+bfloat16 (brain float16, BF16) は深層学習で使われる浮動小数点形式で、元々Googleが考案したらしいです。
 
 * [Tearing Apart Google’s TPU 3.0 AI Coprocessor](https://www.nextplatform.com/2018/05/10/tearing-apart-googles-tpu-3-0-ai-coprocessor/) (2018-05-10)
 * [BFloat16: The secret to high performance on Cloud TPUs | Google Cloud Blog](https://cloud.google.com/blog/products/ai-machine-learning/bfloat16-the-secret-to-high-performance-on-cloud-tpus?hl=en) (2019-08-24)
@@ -46,7 +46,7 @@ s eeeeeeee mmmm mmm
 
 もうちょっとビット演算をガチャガチャやれば偶数丸め（roundTiesToEven）もできるでしょう。
 
-bfloat16からbinary32への変換は、単に上位16ビットに設定すれば大丈夫です。
+bfloat16からbinary32への変換は、単に上位16ビットに設定すれば大丈夫です。このやり方だと入力がsNaNの時に出力もsNaNとなってしまいますが（IEEE 754的には入力がsNaNだと例外が発生して出力はqNaNとなるべき）、深層学習向けの応用でsNaNが問題になることはないでしょう。
 
 C言語で変換関数を書くなら、次のようになるでしょう：
 
@@ -111,15 +111,79 @@ C言語でも標準化されてほしい……。
 
 AVX-512 BF16はAVX10.1の一部となります。
 
+これらに対応するCの組み込み関数は以下のようになります。
+
+```c
+#include <immintrin.h>
+
+// VCVTNE2PS2BF16に対応する命令のうち、代表的なもの（実際にはmask付きの変種もある）
+__m128bh _mm_cvtne2ps_pbh(__m128, __m128);
+__m256bh _mm256_cvtne2ps_pbh(__m256, __m256);
+__m512bh _mm512_cvtne2ps_pbh(__m512, __m512);
+
+// VCVTNEPS2BF16に対応する命令のうち、代表的なもの（実際にはmask付きの変種もある）
+__m128bh _mm_cvtneps_pbh(__m128);
+__m256bh _mm256_cvtneps_pbh(__m256);
+__m512bh _mm512_cvtneps_pbh(__m512);
+
+// VDPBF16PSに対応する命令のうち、代表的なもの（実際にはmask付きの変種もある）
+__m128 _mm_dpbf16_ps(__m128, __m128bh, __m128bh);
+__m256 _mm256_dpbf16_ps(__m256, __m256bh, __m256bh);
+__m512 _mm512_dpbf16_ps(__m512, __m512bh, __m512bh);
+
+// その他（実際にはmask付きの変種もある）
+__bfloat16 _mm_cvtness_sbh(float a);
+__m128 _mm_cvtpbh_ps(__m128bh a);
+__m256 _mm256_cvtpbh_ps(__m128bh a);
+__m512 _mm512_cvtpbh_ps(__m256bh a);
+float _mm_cvtsbh_ss(__bfloat16 a);
+```
+
 #### AVX-NE-CONVERT
 
-* VCVTNEEBF162PS: メモリ上のbfloat16ベクトルの偶数番目の要素をbinary32に変換する。
-* VCVTNEOBF162PS: メモリ上のbfloat16ベクトルの奇数番目の要素をbinary32に変換する。
+AVX-NE-CONVERTはbfloat16やbinary16のベクトルをbinary32に変換する命令を提供します。一部、AVX-512 BF16の命令をAVX向けに持ってきたものもあります。
+
+* VBCSTNEBF162PS: メモリ上のbfloat16スカラーをbinary32に変換してベクトルにブロードキャストする。
+* VCVTNEEBF162PS: メモリ上のbfloat16ベクトルの偶数番目 (even) の要素をbinary32に変換する。
+* VCVTNEOBF162PS: メモリ上のbfloat16ベクトルの奇数番目 (odd) の要素をbinary32に変換する。
 * VCVTNEPS2BF16 (VEX): AVX-512 BF16の同名の命令と同じことをする。VEXでエンコードされる。
+* AVX-NE-CONVERTにはこれらの他、binary16に対する命令もある。
+
+これらに対応するCの組み込み関数は以下のようになります。
+
+```c
+#include <immintrin.h>
+
+// VBCSTNEBF162PS
+__m128 _mm_bcstnebf16_ps(const __bf16* a);
+__m256 _mm256_bcstnebf16_ps(const __bf16* a);
+
+// VCVTNEEBF162PS
+__m128 _mm_cvtneebf16_ps(const __m128bh* a);
+__m256 _mm256_cvtneebf16_ps(const __m256bh* a);
+
+// VCVTNEOBF162PS
+__m128 _mm_cvtneobf16_ps(const __m128bh* a);
+__m256 _mm256_cvtneobf16_ps(const __m256bh* a);
+
+// VCVTNEPS2BF16
+__m128bh _mm_cvtneps_avx_pbh(__m128);
+__m256bh _mm256_cvtneps_avx_pbh(__m256);
+```
 
 #### AMX-BF16
 
 * TDPBF16PS: bfloat16×bfloat16→binary32のドット積を行う。roundTiesToEvenで丸められる。入出力の非正規化数は0扱いされる。MXCSRは参照も更新もされない。
+
+これに対応するCの組み込み関数は以下のようになります。
+
+```c
+#include <immintrin.h>
+
+// TDPBF16PS
+void __tile_dpbf16ps(__tile1024i* dst, __tile1024i src0, __tile1024i src1);
+void _tile_dpbf16ps(constexpr int dst, constexpr int src1, constexpr int src2);
+```
 
 #### AVX10.2
 
@@ -168,11 +232,57 @@ FEAT_BF16: Armv8.2以降のオプショナルな機能で、Armv8.6以降で必�
 * BFMLALB, BFMLALT: 積和bfloat16×bfloat16+binary32→binary32を計算する。
 * BFMMLA: bfloat16を要素とする2×2行列の乗算を行う。
 
+これらに対応するCの組み込み関数は以下のようになります。
+
+```c
+// BFCVT
+bfloat16_t vcvth_bf16_f32(float32_t a);
+
+// BFCVTN
+bfloat16x4_t vcvt_bf16_f32(float32x4_t a);
+bfloat16x8_t vcvtq_low_bf16_f32(float32x4_t a);
+
+// BFCVTN2
+bfloat16x8_t vcvtq_high_bf16_f32(bfloat16x8_t inactive, float32x4_t a);
+
+// BFDOT
+float32x2_t vbfdot_f32(float32x2_t r, bfloat16x4_t a, bfloat16x4_t b);
+float32x4_t vbfdotq_f32(float32x4_t r, bfloat16x8_t a, bfloat16x8_t b);
+float32x2_t vbfdot_lane_f32(float32x2_t r, bfloat16x4_t a, bfloat16x4_t b, const int lane);
+float32x4_t vbfdotq_laneq_f32(float32x4_t r, bfloat16x8_t a, bfloat16x8_t b, const int lane);
+float32x2_t vbfdot_laneq_f32(float32x2_t r, bfloat16x4_t a, bfloat16x8_t b, const int lane);
+float32x4_t vbfdotq_lane_f32(float32x4_t r, bfloat16x8_t a, bfloat16x4_t b, const int lane);
+
+// BFMLALB
+float32x4_t vbfmlalbq_f32(float32x4_t r, bfloat16x8_t a, bfloat16x8_t b);
+float32x4_t vbfmlalbq_lane_f32(float32x4_t r, bfloat16x8_t a, bfloat16x4_t b, const int lane);
+float32x4_t vbfmlalbq_laneq_f32(float32x4_t r, bfloat16x8_t a, bfloat16x8_t b, const int lane);
+
+// BFMLALT
+float32x4_t vbfmlaltq_f32(float32x4_t r, bfloat16x8_t a, bfloat16x8_t b);
+float32x4_t vbfmlaltq_lane_f32(float32x4_t r, bfloat16x8_t a, bfloat16x4_t b, const int lane);
+float32x4_t vbfmlaltq_laneq_f32(float32x4_t r, bfloat16x8_t a, bfloat16x8_t b, const int lane);
+
+// BFMMLA
+float32x4_t vbfmmlaq_f32(float32x4_t r, bfloat16x8_t a, bfloat16x8_t b);
+```
+
 FEAT_EBF16: Armv8.2以降のオプショナルな機能で、拡張された動作を可能にする。具体的には、丸めモードやflush to zeroの制御が可能になる。
 
 binary64等の高い精度の値をbinary32を経由してもっと低い精度の値に変換する場合、普通にやると「二段階丸め」(double rounding) の問題が発生します（詳しくは私の同人誌「[浮動小数点数小話](https://lab.miz-ar.info/floating-point/)」を参照してください）。この問題は、奇数丸め (round to odd) という丸め方法を使うことで解消できます。Armには、round to oddでbinary64→binary32の変換を行う命令がいくつか用意されています：
 
 * FCVTXN, FCVTXN2, FCVTX (SVE2), FCVTXNT (SVE2)
+
+これらに対応するCの組み込み関数は以下のようになります。
+
+```c
+// FCVTXN
+float32x2_t vcvtx_f32_f64(float64x2_t a);
+float32_t vcvtxd_f32_f64(float64_t a);
+
+// FCVTXN2
+float32x4_t vcvtx_high_f32_f64(float32x2_t r, float64x2_t a);
+```
 
 ### RISC-V編
 
@@ -205,6 +315,60 @@ Zvfbfmin拡張は、bfloat16のベクトルに対する最低限のサポート�
 Zvfbfwma拡張は、bfloat16同士を掛けてbinary32に加える、つまりbfloat16×bfloat16+binary32→binary32を行う命令を追加します。
 
 * VFWMACCBF16: Vector BF16 widening multiply-accumulate
+
+## AVX-512 BF16を試す
+
+私の手元にあるAMDのZen4はAVX-512 BF16を実装しています。試してみました。
+
+```c
+#include <stdio.h>
+#include <immintrin.h>
+
+int main(void)
+{
+    // _mm256_set_psの引数は上位ビットが先に来ることに注意
+    __m128bh a = _mm256_cvtneps_pbh(_mm256_set_ps(1.0, 2.0, -1.0, 0.5, 3.5, 0.0, -2.0, 4.0));
+    __m128bh b = _mm256_cvtneps_pbh(_mm256_set_ps(3.0, 5.0, -7.0, 5.0, 2.0, 5.0, 3.0, -1.5));
+    __m128 acc = _mm_setzero_ps();
+    __m128 result = _mm_dpbf16_ps(acc, a, b);
+    _Alignas(16) float resultA[4];
+    _mm_store_ps(resultA, result);
+    printf("%g, %g, %g, %g\n", resultA[0], resultA[1], resultA[2], resultA[3]);
+}
+```
+
+実行結果：
+
+```
+$ gcc -Wall -mavx512bf16 -mavx512vl avx512bf16.c
+$ ./a.out
+-12, 7, 9.5, 13
+```
+
+VDPBF16PSは、疑似コードで書けば
+
+```
+src1, src2: bfloat16[8]
+acc: float[4]
+for i in 0 ..< 4:
+    acc[i] += src1[2 * i + 1] * src2[2 * i + 1]
+    acc[i] += src1[2 * i + 0] * src2[2 * i + 0]
+```
+
+という動作をするので、上記コードは
+
+```
+acc[0] += (-2.0) * 3.0
+acc[0] += 4.0 * (-1.5)
+acc[1] += 3.5 * 2.0
+acc[1] += 0.0 * 5.0
+acc[2] += (-1.0) * (-7.0)
+acc[2] += 0.5 * 5.0
+acc[3] += 1.0 * 3.0
+acc[3] += 2.0 * 5.0
+```
+
+という内積を計算します。良さそうですね。
 
 ## ArmのFEAT_BF16を試す
 
