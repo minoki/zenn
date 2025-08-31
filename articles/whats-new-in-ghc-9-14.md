@@ -6,6 +6,8 @@ topics: [haskell]
 published: true
 ---
 
+English version: [An Unofficial Guide to What's New in GHC 9.14 - Mizuki's Blog](https://minoki.github.io/posts/2025-08-31-whats-new-in-ghc-9-14.html)
+
 GHC 9.14.1-alpha1が2025年8月20日にリリースされました。
 
 * [GHC 9.14.1-alpha1 released - Announcements - Haskell Community](https://discourse.haskell.org/t/ghc-9-14-1-alpha1-released/12786)
@@ -175,7 +177,7 @@ class HasField x r a | x r -> a where
   getField :: r -> a
 ```
 
-OverloadedRecordFields拡張と組み合わせると、同じフィールド名を持つ異なるレコードを（`getField` 関数を介して）扱えます。
+DuplicateRecordFields拡張と組み合わせると、同じフィールド名を持つ異なるレコードを（`getField` 関数を介して）扱えます。
 
 ```haskell
 {-# LANGUAGE DuplicateRecordFields #-}
@@ -323,6 +325,7 @@ data B where
 data C where
   MkC :: Int %'Many -> Int %'One -> C
 
+-- GHC 9.14の新機能
 data R = R { foo %'Many :: Int, bar %'One :: Int }
 
 fA :: A %1-> Int
@@ -740,7 +743,7 @@ $ runghc-9.14 enum.hs
 
 # おまけ：私の貢献
 
-私（@mod_poppo）が行なった貢献（バグ報告や修正など）で、GHC 9.14に入るものを備忘録代わりに書いておきます。x86 NCGにSIMDを実装するやつに感化された活動がちょいちょいあります。
+私（@mod_poppo）が行なった貢献（バグ報告や修正など）で、GHC 9.14に入るものを備忘録代わりに書いておきます。
 
 * x86 NCGバックエンドで整数のSIMDプリミティブをコンパイルできるようにする。
     * [#25487: x86 NCG SIMD: Implement pack/insert/broadcast/unpack for integer vectors · Issues · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/issues/25487)
