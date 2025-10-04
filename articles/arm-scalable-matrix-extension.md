@@ -10,6 +10,8 @@ published: true
 
 SMEはここ数年（2021年ごろから？）話は聞きますが、実物の話は聞かないという状況でした（私の中では）。それが最近発表されたApple M4に実装されているという噂を聞いて、俄然興味が出てきました。Apple M4の実物は私は持っていませんが、QEMUを使うとSMEの動作確認ができるようです。やってみましょう。
 
+【2025年10月4日 追記】Apple M4での動作結果を載せました。環境はmacOS 15.7.1 / Xcode 26.0.1 / Apple Clang 17.0.0です。【/追記】
+
 ## 環境構築とベクトル長
 
 Ubuntu 24.04上のGCC 14/Clang 18とQEMU 8.2で動作確認します。Ubuntuはx86_64で動いています。
@@ -44,6 +46,8 @@ int main(void)
 
 ~~[ACLE](https://arm-software.github.io/acle/main/acle.html#changing-streaming-mode-locally)だと `__arm_locally_streaming` じゃなくて `__attribute__((arm_locally_streaming))` のようですが、実際のコンパイラーに実装されているのは `__arm_locally_streaming` です。謎です。将来変わるのかもしれません。~~ 執筆時点のACLEだと `__attribute__` を使っていましたが、ACLE 2024 Q1で `__arm_locally_streaming` のようなキーワードを使うように改訂されたようです。コンパイラーに実装されたのは改訂後の仕様です。
 
+【2025年10月4日 追記】Apple M4は非Streaming ModeでのSVEをサポートしていないため、上記のコードはSIGILLで落ちます。「Non-streaming mode」の行をコメントアウトしてください。【/追記】
+
 御託はいいので、コンパイルして実行してみましょう。
 
 GCCの場合：
@@ -66,9 +70,24 @@ Non-streaming mode: svcntw() = 16, svcntsw() = 8
 Streaming mode: svcntw() = 8, svcntsw() = 8
 ```
 
+【2025年10月4日 追記】Apple M4の場合
+
+```
+$ clang -O2 -march=armv8-a+sme -o veclen veclen.c
+$ ./veclen
+Has SME? Yes
+Streaming mode: svcntw() = 16, svcntsw() = 16
+```
+
+【/追記】
+
 出力されたベクトル長を解釈します。Non-streaming modeでの `svcntw()` は16を返しました。通常のSVEでのベクトル長がワード（32ビット）単位で16個、つまり512ビットということですね。一方、`svcntsw()` は8を返しているので、Streaming SVE vectorは256ビットのようです。
 
+【2025年10月4日 追記】Apple M4では `svcntw()` が16を返したので、Streaming SVE vectorは512ビットのようです。$\mathrm{SVL}=512$です。【/追記】
+
 なお、GCC 13のクロスコンパイラーが入った状態でClangでスタティックリンクすると ``undefined reference to `__arm_sme_state'`` というリンクエラーが出ました。動的リンクして `qemu-aarch64 -L /usr/aarch64-linux-gnu/` とするか、ここでの手順のようにGCC 14を入れましょう。
+
+【2025年10月4日 追記】古いmacOS / Xcodeでも `___arm_sme_state` に関するリンクエラーが出ていました。エラーが出る場合はXcode等のバージョンを上げてみてください。【/追記】
 
 QEMUでは `-cpu` オプションでベクトル長を変えることができます。Non-streaming時のベクトル長は `sve-default-vector-length` で、Streamingベクトル長は `sme-default-vector-length` で指定できます（詳細は[Arm CPU Features — QEMU documentation](https://www.qemu.org/docs/master/system/arm/cpu-features.html)を参照）。単位はバイトです。指定をいじってみましょう。
 
@@ -349,6 +368,18 @@ int main(void)
 }
 ```
 
+【2025年10月4日 追記】上記コードの `min` 関数はStreaming Mode対応かどうか明記されていないため、インライン化されません（Apple Clangで確認）。`__arm_streaming_compatible` と `__attribute__((always_inline))` をつけるとインライン化されるようになります：
+
+```c
+__attribute__((always_inline))
+static inline size_t min(size_t x, size_t y) __arm_streaming_compatible
+{
+    return x > y ? y : x;
+}
+```
+
+【/追記】
+
 GCCでコンパイル、QEMUで実行してみましょう。
 
 ```
@@ -386,6 +417,16 @@ $ clang-18 -O2 --target=aarch64-linux-gnu -march=armv9-a+sme -static -o matmul-s
 $ qemu-aarch64 ./matmul-sme
 ... 略 ...
 ```
+
+【2025年10月4日 追記】Apple M4の場合
+
+```
+$ clang -O2 -march=armv8-a+sme -o matmul-sme matmul-sme.c
+$ ./matmul-sme
+... 略 ...
+```
+
+【/追記】
 
 ## 雑感
 
