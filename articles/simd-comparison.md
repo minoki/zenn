@@ -54,6 +54,7 @@ TODO: bfloat16 (AVX-512)
 |-|-|-|-|-|
 | 足し算 | `paddb` (SSE2) | `paddw` (SSE2) | `paddd` (SSE2) | `paddq` (SSE2) |
 | 引き算 | `psubb` (SSE2) | `psubw` (SSE2) | `psubd` (SSE2) | `psubq` (SSE2) |
+| 掛け算（下位ビット） | ※ | `pmullw` (SSE2) | `pmulld` (SSE4.1) ※ | `vpmullq` (AVX512DQ+VL) ※ |
 | 足し算（飽和、符号あり） | `paddsb` (SSE2) | `paddsw` (SSE2) | | |
 | 引き算（飽和、符号あり） | `psubsb` (SSE2) | `psubsw` (SSE2) | | |
 | 足し算（飽和、符号なし） | `paddusb` (SSE2) | `paddusw` (SSE2) | | |
@@ -80,6 +81,12 @@ TODO: bfloat16 (AVX-512)
 | gather（64ビットインデックス） | | | `vpgatherqd` (AVX2) | `vpgatherqq` (AVX2) |
 | scatter（32ビットインデックス） | | | `vpscatterdd` (AVX512F+VL) | `vpscatterdq` (AVX512F+VL) |
 | scatter（64ビットインデックス） | | | `vpscatterqd` (AVX512F+VL) | `vpscatterqq` (AVX512F+VL) |
+
+※SSE2で整数乗算をやる場合：
+
+* 8ビット：16ビット整数ベクトル2つに分けて `pmullw` を2回実行する。
+* 32ビット：`pmuludq`（32ビット×32ビット→64ビット）を2回適用する。
+* 64ビット：`pmuludq` を3回適用する。
 
 ## ビットマスク
 
