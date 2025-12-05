@@ -283,7 +283,7 @@ type String = [Char]
 
 Haxeという言語は色々なターゲットにコンパイルできます。Java, JavaScript, Python, Lua, バイトコード、などなど。
 
-Haxeの文字列型はターゲットにおいて最も自然な文字列型にマップされるので、**ターゲットによって使用すべきUnicodeエンコーディングが異なります**。JavaやJavaScriptならUTF-8、PythonならUTF-32、LuaならUTF-8という具合に。ASCIIしか使わない人なら問題ないのかもしれませんが。
+Haxeの文字列型はターゲットにおいて最も自然な文字列型にマップされるので、**ターゲットによって使用すべきUnicodeエンコーディングが異なります**。JavaやJavaScriptならUTF-16、PythonならUTF-32、LuaならUTF-8という具合に。ASCIIしか使わない人なら問題ないのかもしれませんが。
 
 * [String - Haxe - The Cross-platform Toolkit](https://haxe.org/manual/std-String.html)
     * [Encoding - Haxe - The Cross-platform Toolkit](https://haxe.org/manual/std-String-encoding.html)
