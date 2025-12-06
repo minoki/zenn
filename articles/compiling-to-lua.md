@@ -106,7 +106,7 @@ JIT: ON fold cse dce fwd dse narrow loop abc sink fuse
 -inf
 ```
 
-LuaJITをターゲットとする言語で浮動小数点型を提供する場合は、符号反転には `-x` の代わりに `NEGATIVE_ZERO - x` を出力すると良いでしょう。
+LuaJITをターゲットとする言語でIEEE 754準拠の浮動小数点型を提供する場合は、符号反転には `-x` の代わりに `NEGATIVE_ZERO - x` を出力すると良いでしょう。乗算も、「結果が0だったら符号を補正する」という処理が必要になります。
 
 ## 実装上の制限
 
