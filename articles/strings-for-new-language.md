@@ -16,6 +16,8 @@ published: true
 
 【2025年12月4日 更新】small string optimization、スライスとGCの話を追加、Rubyの文言の修正、可変性と値セマンティクスの記述の整理など。完全な変更履歴は[GitHub](https://github.com/minoki/zenn/commits/master/articles/strings-for-new-language.md)を見てください。
 
+【2025年12月7日 更新】ケーススタディーにJava、D、Schemeを追加。JavaScript文字列のコードポイント単位のアクセスの記述を追加。Swiftの記述を改訂。
+
 ## 文字列とは何か
 
 文字列とは何でしょうか？文字の列ですね。では計算機上での「文字」とは何でしょうか？
@@ -307,7 +309,19 @@ PureScriptもJavaScriptバックエンドではJavaScript文字列を使いま�
 
 JavaScriptの文字列はUTF-16を想定した16ビット整数列です。UTF-16としての正しさは保証されません。`"\uDC00"` のようなorphan surrogateが許容されます。
 
+Unicodeコードポイントを取得するために `codePoint` メソッドが使えるほか、for ofで走査した場合はコードポイント単位となります。
+
 モダンなJavaScriptでUTF-8を扱いたい場合は、`Uint8Array` を使うというのが一つの手です。WebやNode.jsで使える `TextEncoder`/`TextDecoder` で文字列との相互変換ができます。mutableなのがちょっと残念ですが、immutable ArrayBufferが入ればimmutableにできるようになるのでしょうか？
+
+## Java
+
+Javaの文字列はUTF-16を想定した16ビット整数列です。普通にやるとASCII文字列の効率が悪いので、JEP 254で文字列の内容がLatin-1のみの場合はコンパクトな表現を使えるようにしています。
+
+* [JEP 254: Compact Strings](https://openjdk.org/jeps/254)
+
+Unicodeコードポイントを取得するために、`codePointAt` や `codePoints` などのメソッドが提供されています。
+
+デフォルトではinternされない（ので `==` を使うと同じ内容の文字列でも異なると判定されることがある）のですが、`intern` メソッドで明示的にinternすることができます。
 
 ### Ruby
 
@@ -381,9 +395,11 @@ C#の文字列は長いことUTF-16コードユニットと書記素クラスタ
 
 ### Swift
 
-Swiftの文字列 `String` は抽象的なUnicodeスカラー値の列で、`Character` は書記素クラスターに対応しているようです。
+Swiftの文字列 `String` は内部的には抽象的なUnicodeスカラー値の列ですが、構成要素である `Character` は書記素クラスター（！）に対応しているようです。
 
-文字列からはUTF-8/UTF-16/UTF-32のビューを取得できます。
+Swiftの文字列の比較演算子はUnicode正規化を考慮するようで、イテレーターが `Character` を返すことと合わせて、文字列を「人間にとっての文字の列」として扱いたいという気合を感じます。
+
+もちろん、Unicodeスカラー値としての処理もできて、文字列からはUTF-8/UTF-16/UTF-32のビューを取得できます。
 
 Swift 5で内部表現をUTF-8にしたという話が2019年ごろにありました。
 
@@ -419,6 +435,35 @@ Unicodeスカラー値を表す `Uchar.t` という型も用意されている�
 * [OCaml library : String](https://ocaml.org/manual/5.4/api/String.html)
 * [OCaml library : Uchar](https://ocaml.org/manual/5.4/api/Uchar.html)
 
+### D言語
+
+D言語にはいくつかの文字型と文字列型があり、必要に応じてUTF-8、UTF-16、UTF-32を扱えるようです。具体的には、
+
+* `char` / `string`: UTF-8コードユニット／UTF-8文字列
+* `wchar` / `wstring`: UTF-16コードユニット／UTF-16文字列
+* `dchar` / `dstring`: UTF-32コードユニット／UTF-32文字列
+
+です。各文字列は不変で、具体的には `immutable(char)[]` / `immutable(wchar)[]` / `immutable(dchar)[]` のエイリアスとなっています。可変な文字列が欲しかったら通常の配列型を使えるようです。
+
+* [Characters - D Programming Language](https://dlang.org/book/characters.html)
+* [Arrays - D Programming Language](https://dlang.org/spec/arrays.html#strings)
+
+### Scheme
+
+R7RS-smallによると、文字列はUnicode文字の列ですが、実装次第では文字列の要素としてUnicode文字の一部（Latin-1やBMP）しかサポートしないことが許されるようです。
+
+`string-ref` 手続きには「There is no requirement for this procedure to execute in constant time.」という説明があるので、内部表現がUTF-8でそれをUnicodeスカラー値の列として見せることも許容されていそうです。
+
+`string-set!` 手続きがあることから、`make-string` 手続きで可変な文字列を構築できるようです。
+
+* <https://standards.scheme.org/official/r7rs.pdf>
+
+Schemeにはbytevectorというデータ型もあり、`string->utf8` および `utf8->string` 手続きによりUTF-8のエンコード・デコードができます。
+
+Scheme処理系の一つであるGuileは内部的にUTF-32とLatin-1のハイブリッド表現を採用していることはすでに紹介しました。
+
+* Guile: [String Internals (Guile Reference Manual)](https://www.gnu.org/software/guile/manual/html_node/String-Internals.html)
+
 ## で、結局新言語での文字列型はどうするべきか
 
 しがらみのない新言語を作る場合は、UTF-8を基本とするのが良いと思います。つまり、
@@ -441,3 +486,5 @@ Windowsに対応させる場合、ワイド版のAPIを使ってUnicode文字列
 文字型はどうでしょうか。UTF-8などの可変長エンコーディングを前提にする場合は、「コードユニットに対応する型」を用意する必要はそこまでないでしょう。文字型が欲しかったらUnicodeコードポイントを表す型か、Unicodeスカラー値を表す型を用意しましょう。
 
 私が開発しているLunarMLでの文字列事情もそのうち紹介できたらと思います。
+
+【追記】LunarMLの文字列事情を書きました→「[LunarMLでのUnicode文字列の扱い／文字列型はいくつ用意すれば十分か](https://blog.miz-ar.info/2025/12/lunarml-unicode-string/)」
