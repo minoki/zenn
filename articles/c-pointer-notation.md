@@ -91,7 +91,7 @@ C23の新機能の一つが、`typeof` 演算子です。`typeof` 演算子は�
   do { \
     typeof(a) tmp = a; \
     a = b; \
-    b = a; \
+    b = tmp; \
   } while(0)
 ```
 
