@@ -195,3 +195,5 @@ C23に `typeof` を導入した提案N2927（最終的なC23ではもう一つ�
 * [N3450: Function pointers are more readable with typeof()](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3450.txt)
 
 C23の他の新機能については「[次期C標準 (C23) の内容が固まったらしい](https://zenn.dev/mod_poppo/articles/next-c-language)」を参照してください。
+
+【追記】`typeof` からこの記事の機能（型名をいい感じにする）だけを取り出したものを `_Typeas` としよう、という提案がC2yに向けて出ているようです：[N3759: Add operator _Typeas](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3759.txt)
