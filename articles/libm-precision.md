@@ -840,3 +840,10 @@ pow(75.7, 0.5)=8.700574693662482 [0x1.166b1b9eb5f04p+3]
 * [Accuracy of Low-Precision Elementary and Special Functions Using Verified Numerical Computations](https://www.jstage.jst.go.jp/article/jasse/12/1/12_113/_article)
 
 この記事に関連して、X (旧Twitter) でいくつかの情報提供を頂きました。ここで感謝の意を表明しておきます。
+
+【追記】JavaScript (ECMAScript) の数学関数についての話題の記事がすでにあったのでリンクを貼っておきます。最新の仕様では `Math.sqrt` が正しい丸めになったようです。
+
+* [JavaScriptの数値計算はどれくらい正確なのか](https://zenn.dev/uhyo/articles/javascript-math-accuracy)
+* [ENCA 14日目: Math.sqrt 精度の正確さ保証](https://zenn.dev/pixiv/articles/407e91e63c089e)
+
+2番目の記事に言及がありますが、ECMAScriptの仕様でfdlibmが推奨されているようです。
