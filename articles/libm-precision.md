@@ -450,6 +450,8 @@ pow(75.7, 0.5)=8.700574693662482 [0x1.166b1b9eb5f04p3]
 
 特筆すべきは、`pow(_, 2.0)` と `pow(_, 0.5)` が正しい丸めで計算されることです。これは他の入力についても簡単なプログラムを書いて検証できます。V8の `pow` 関数の実装は[src/numbers/ieee754.cc](https://github.com/v8/v8/blob/c8113b24b80598cca1baa7b1e0c831d070aa8ab3/src/numbers/ieee754.cc)にあり、そこでは指数が2.0と0.5の場合を特別扱いしているのが見て取れます。つまり、上の方に書いた `pow` についての注意は、「V8では `x**2` は `x*x` と同じ意味になる」という但し書きがつくことになります。
 
+【追記】V8ではfdlibmベースの実装を使っているようです：[src/base/ieee754.cc](https://github.com/v8/v8/blob/af38f0127dc7150c2450f04586d599b6e67d061c/src/base/ieee754.cc)
+
 ### JavaScript (Bun)
 
 JavaScriptランタイムはNode.js/V8以外にもあります。JavaScriptCoreを使っているというBunも試してみましょう。
@@ -586,6 +588,8 @@ pow(75.7, 0.5)=8.700574693662482 [0x1.166b1b9eb5f04p3]
 x86-64 macOSとx86-64 glibcでの実行結果が（ここで試した範囲では）同一であることは特筆すべきでしょう。AArch64 macOSでは `pow(4.7, -2.7)` がちょっと違います。
 
 Node.jsと同じように、JVMも自前で数学関数の実装を持っているのかもしれません。
+
+【追記】OpenJDKではfdlibmのJava移植版を使っているようです：[src/java.base/share/classes/java/lang/FdLibm.java](https://github.com/openjdk/jdk/blob/a61a1d32a2bbf227081b9da6d101071ceb73076a/src/java.base/share/classes/java/lang/FdLibm.java)
 
 ### C#
 
@@ -831,6 +835,8 @@ pow(75.7, 0.5)=8.700574693662482 [0x1.166b1b9eb5f04p+3]
 ので、「実行環境に依存せず数学関数の実装を固定できる」ことになります。
 
 まあ、WebAssemblyといってもNaNのビットパターンまでは規定していなかったりするので、「[NaNのビットパターンを使ってWebAssemblyからCPUの命令セットを推測する](https://zenn.dev/mod_poppo/articles/detect-isa-via-nan)」みたいなことが可能だったりしますが、NaNは数じゃないのでこの記事の用途では問題ないでしょう。それが問題になるようだったら、Deterministic profileというやつでなんとかしてください。
+
+【追記】ゲームのリプレイで数学関数の再現性が必要になり、fdlibmをWasmにコンパイルした話へのリンクを貼っておきます：[Block Pong: Web 技術を駆使したゲームアプリの実装舞台裏](https://docs.google.com/presentation/d/1OmFQahgOZvd5kqI-P3oXaW5tn75IqId9lKKo1SVne30/edit?slide=id.ga3ca5d56fe_0_34#slide=id.ga3ca5d56fe_0_34)
 
 ## おしまい
 
