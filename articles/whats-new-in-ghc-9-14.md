@@ -8,9 +8,9 @@ published: true
 
 English version: [An Unofficial Guide to What's New in GHC 9.14 - Mizuki's Blog](https://minoki.github.io/posts/2025-08-31-whats-new-in-ghc-9-14.html)
 
-GHC 9.14.1-alpha1が2025年8月20日にリリースされました。
+GHC 9.14.1が2025年12月19日にリリースされました。
 
-* [GHC 9.14.1-alpha1 released - Announcements - Haskell Community](https://discourse.haskell.org/t/ghc-9-14-1-alpha1-released/12786)
+* [GHC 9.14.1 is now available - Announcements - Haskell Community](https://discourse.haskell.org/t/ghc-9-14-1-is-now-available/13430)
 
 この記事では、GHC 9.14の新機能を筆者の独断と偏見に基づき確認していきます。過去の類似の記事は
 
@@ -26,12 +26,13 @@ GHC 9.14.1-alpha1が2025年8月20日にリリースされました。
 
 この記事は網羅的な紹介記事とはなっていません。特に、筆者が詳しくないRTSやTemplate Haskell周りはカバーできていません。是非、公式のリリースノート類も参照してください：
 
-* [2.1. Version 9.14.1 — Glasgow Haskell Compiler 9.14.0.20250819 User's Guide](https://downloads.haskell.org/ghc/9.14.0.20250819/docs/users_guide/9.14.1-notes.html)
+* [2.1. Version 9.14.1 — Glasgow Haskell Compiler 9.14.1 User's Guide](https://downloads.haskell.org/ghc/9.14.1/docs/users_guide/9.14.1-notes.html)
     * [docs/users_guide/9.14.1-notes.rst · ghc-9.14 · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/blob/ghc-9.14/docs/users_guide/9.14.1-notes.rst)
-<!-- * [Changelog for base-4.22.0.0 | Hackage](https://hackage.haskell.org/package/base-4.22.0.0/changelog) -->
-* [libraries/base/changelog.md · ghc-9.14 · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/blob/ghc-9.14/libraries/base/changelog.md)
+* [Changelog for base-4.22.0.0 | Hackage](https://hackage.haskell.org/package/base-4.22.0.0/changelog)
+    * [libraries/base/changelog.md · ghc-9.14 · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/blob/ghc-9.14/libraries/base/changelog.md)
 * [9.14 · Wiki · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/wikis/migration/9.14)
 
+:::details アルファ版について
 GHCのアルファ版をGHCupで試す場合は、prereleaseチャンネルを追加します。詳しくは「[Release channels - User Guide - GHCup](https://www.haskell.org/ghcup/guide/#release-channels)」を参照してください。
 
 ```
@@ -40,6 +41,7 @@ $ ghcup install ghc 9.14.0.20250819
 ```
 
 新機能の記事をアルファ版の段階で公開するのは、より多くの人にアルファ版を試して頂くのが目的です。そうすれば、正式リリースまでの間に少しでも多く問題を洗い出すことができるでしょう。というわけで、是非試してみてください。
+:::
 
 # 長期サポート（LTS）
 
@@ -636,6 +638,120 @@ ghci> Main.main
 Hello, Haskell!
 someFunc, revised^2
 ```
+
+## スタックへのアノテーション
+
+* [Add stack annotation primop (#26218) · Issue · ghc/ghc](https://gitlab.haskell.org/ghc/ghc/-/issues/26218)
+* [Add primop to annotate the call stack with arbitrary data (!14538) · Merge requests · Glasgow Haskell Compiler / GHC · GitLab](https://gitlab.haskell.org/ghc/ghc/-/merge_requests/14538)
+* [Better Haskell stack traces via user annotations - Well-Typed: The Haskell Consultants](https://well-typed.com/blog/2025/09/better-haskell-stack-traces/)
+
+Haskellプログラムでエラーが起こった時にいい感じのスタックトレースを出す方法としては、
+
+* プロファイリングを有効にする
+* HasCallStack制約を使う
+
+などの方法がありました。これらについては「[Haskellでのデバッグ手法](https://zenn.dev/mod_poppo/books/haskell-forest/viewer/debug)」も見てください。
+
+今回、スタックに独自のアノテーションを付加するAPIが提供されるようになりました。ghc-experimentalパッケージの [`GHC.Stack.Annotation.Experimental` モジュール](https://hackage-content.haskell.org/package/ghc-experimental-9.1401.0/docs/GHC-Stack-Annotation-Experimental.html)で以下の関数が提供されます：
+
+```haskell
+module GHC.Stack.Annotation.Experimental where
+
+-- IO版
+annotateStackIO :: (Typeable a, StackAnnotation a) => a -> IO b -> IO b
+annotateStackStringIO :: String -> IO b -> IO b
+annotateStackShowIO :: Show a => a -> IO b -> IO b
+annotateCallStackIO :: HasCallStack => IO a -> IO a
+
+-- 純粋関数版
+annotateStack :: (Typeable a, StackAnnotation a) => a -> b -> b
+annotateStackString :: String -> b -> b
+annotateStackShow :: (Typeable a, Show a) => a -> b -> b
+annotateCallStack :: HasCallStack => b -> b
+```
+
+使用例は以下のようになります：
+
+```haskell
+import Control.Exception (throw, ErrorCall(..))
+import Control.Exception.Backtrace (setBacktraceMechanismState, BacktraceMechanism(IPEBacktrace))
+import GHC.Stack.Annotation.Experimental (annotateCallStack, annotateStackString)
+
+foo :: Int -> Int
+foo n | n < 0 = throw $ ErrorCall "negative!" -- 現状だと error 関数ではうまくいかない
+      | otherwise = n^2
+
+bar :: Int -> Int
+bar n = annotateStackString "bar" $ foo (n^2 - 3 * n) -- 任意の文字列を付加する
+
+baz :: Int -> Int
+baz n = annotateCallStack $ bar n -- 呼び出し位置を付加する
+
+main = do
+  setBacktraceMechanismState IPEBacktrace True -- IPEバックトレースを有効にする
+  print (baz 2)
+```
+
+`annotateStack` 系の関数が付加するアノテーションは、IPEバックトレースというものを有効にすると表示されるようになるので、`setBacktraceMechanismState IPEBacktrace True` を呼び出しています。
+
+実行例も見てみましょう：
+
+```
+$ ghc-9.14 -fforce-recomp stackanntest.hs
+$ ./stackanntest                                          
+stackanntest: Uncaught exception ghc-internal:GHC.Internal.Exception.ErrorCall:
+
+negative!
+
+IPE backtrace:
+  bar
+  annotateCallStack, called at stackanntest.hs:13:9 in main:Main
+HasCallStack backtrace:
+  collectExceptionAnnotation, called at libraries/ghc-internal/src/GHC/Internal/Exception.hs:170:37 in ghc-internal:GHC.Internal.Exception
+  toExceptionWithBacktrace, called at libraries/ghc-internal/src/GHC/Internal/Exception.hs:90:42 in ghc-internal:GHC.Internal.Exception
+  throw, called at stackanntest.hs:6:17 in main:Main
+```
+
+「IPE backtrace」のところにアノテーションが表示されています。
+
+IO版の使用例は次のようになります：
+
+```haskell
+import Control.Exception (throwIO, ErrorCall(..))
+import Control.Exception.Backtrace (setBacktraceMechanismState, BacktraceMechanism(IPEBacktrace))
+import GHC.Stack.Annotation.Experimental (annotateCallStackIO, annotateStackStringIO)
+
+fooIO :: Int -> IO Int
+fooIO n | n < 0 = throwIO $ ErrorCall "negative!"
+        | otherwise = pure $ n^2
+
+barIO :: Int -> IO Int
+barIO n = annotateStackStringIO "bar" $ fooIO (n^2 - 3 * n)
+
+bazIO :: Int -> IO Int
+bazIO n = annotateCallStackIO $ barIO n
+
+main = do
+  setBacktraceMechanismState IPEBacktrace True
+  x <- bazIO 2
+  print x
+```
+
+```
+$ ghc-9.14 -fforce-recomp stackanntest_io.hs
+$ ./stackanntest_io 
+stackanntest_io: Uncaught exception ghc-internal:GHC.Internal.Exception.ErrorCall:
+
+negative!
+
+IPE backtrace:
+  bar
+  annotateCallStackIO, called at stackanntest_io.hs:13:11 in main:Main
+HasCallStack backtrace:
+  throwIO, called at stackanntest_io.hs:6:19 in main:Main
+```
+
+`GHC.Stack.Annotation.Experimental` モジュールは新しいモジュールなので、古いGHCでは使えません。古いGHCで共通のコードを使いたい場合は、[ghc-stack-annotations パッケージ](https://hackage.haskell.org/package/ghc-stack-annotations)を使うと良いでしょう。
 
 ## ライブラリー
 
