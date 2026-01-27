@@ -2,7 +2,7 @@
 title: "IEEE 754-2019のminimum/maximum/minimumNumber/maximumNumber演算を実装する"
 emoji: "📚"
 type: "tech" # tech: 技術記事 / idea: アイデア
-topics: [ieee754, c言語]
+topics: [浮動小数点数, ieee754, c言語]
 published: true
 ---
 
@@ -518,3 +518,5 @@ float32x4_t my_fminimum_num_floatx4(float32x4_t x, float32x4_t y)
 ## おしまい
 
 IEEE 754-2019のminimum/maximum/minimumNumber/maximumNumberを実装してみました。C23準拠のlibcを実装したかったり、SIMDを使うコードで性質の良いmin/maxが欲しくなった場合は参考にしてください。
+
+【追記】コンパイラーの最適化で利用できそうな話題として「[IEEE 754-2019のmin/max命令とx86のmin/max命令の関係を考える](x86-and-ieee754-min-max)」を書きました。
