@@ -1,5 +1,5 @@
 ---
-title: "IEEE 754-2019のmin/max命令とx86のmin/max命令の関係を考える"
+title: "IEEE 754-2019のmin/max演算とx86のmin/max命令の関係を考える"
 emoji: "📑"
 type: "tech" # tech: 技術記事 / idea: アイデア
 topics: [浮動小数点数, ieee754, x86]
